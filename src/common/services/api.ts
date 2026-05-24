@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+// En développement: utilise le proxy Vite (/api)
+// En production: utilise l'URL complète du backend
+const baseURL = import.meta.env.VITE_API_URL || '/api';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -24,7 +28,7 @@ api.interceptors.response.use(
         const tokens = localStorage.getItem('tokens');
         if (!tokens) throw new Error('No tokens');
         const { refreshToken } = JSON.parse(tokens) as { refreshToken: string };
-        const { data } = await axios.post('/api/auth/refresh', { refreshToken });
+        const { data } = await axios.post(`${baseURL}/auth/refresh`, { refreshToken });
         localStorage.setItem('tokens', JSON.stringify(data.tokens));
         original.headers.Authorization = `Bearer ${data.tokens.accessToken}`;
         return api(original);
