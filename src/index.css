@@ -36,7 +36,6 @@ html, body, #root {
 body {
   @apply bg-k2l-gray-100 font-body text-k2l-gray-900 antialiased;
   padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
