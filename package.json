@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "env:local": "node scripts/switch-env.js local",
+    "env:prod": "node scripts/switch-env.js prod",
+    "switch-env": "node scripts/switch-env-interactive.js"
   },
   "dependencies": {
     "axios": "^1.9.0",
