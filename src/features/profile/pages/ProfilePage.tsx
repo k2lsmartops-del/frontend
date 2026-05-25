@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import {
   RiUserLine, RiLogoutBoxRLine, RiMailLine, RiPhoneLine,
-  RiShieldUserLine, RiMapPin2Line, RiCalendarLine,
+  RiShieldUserLine, RiMapPin2Line, RiCalendarLine, RiFileList3Line,
 } from '@/common/icons';
 import { useAuthStore } from '@/common/stores/auth.store';
 import { useOnlineStatus } from '@/common/hooks/useOnlineStatus';
@@ -105,6 +105,17 @@ export default function ProfilePage() {
             {isOnline ? 'En ligne' : 'Hors-ligne'}
           </span>
         </div>
+      </div>
+
+      {/* Historique button */}
+      <div className="mx-4 mt-4">
+        <button
+          onClick={() => navigate('/history')}
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-k2l-navy py-3.5 font-head text-sm font-semibold text-white transition-all active:scale-[0.98]"
+        >
+          <RiFileList3Line className="text-lg" />
+          Historique des soumissions
+        </button>
       </div>
 
       {/* Logout button */}

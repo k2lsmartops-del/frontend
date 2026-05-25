@@ -1,11 +1,10 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { RiHome5Line, RiHome5Fill, RiUserLine, RiUserFill, RiStore2Line, RiStore2Fill, RiFileList3Line, RiFileList3Fill, RiSettings4Line, RiSettings4Fill } from '@/common/icons';
+import { RiHome5Line, RiHome5Fill, RiUserLine, RiUserFill, RiStore2Line, RiStore2Fill, RiSettings4Line, RiSettings4Fill } from '@/common/icons';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Accueil', icon: RiHome5Line, iconActive: RiHome5Fill },
   { path: '/prospect', label: 'Prospect', icon: RiUserLine, iconActive: RiUserFill },
   { path: '/marchand', label: 'Marchand', icon: RiStore2Line, iconActive: RiStore2Fill },
-  { path: '/history', label: 'Historique', icon: RiFileList3Line, iconActive: RiFileList3Fill },
   { path: '/profile', label: 'Profil', icon: RiSettings4Line, iconActive: RiSettings4Fill },
 ];
 

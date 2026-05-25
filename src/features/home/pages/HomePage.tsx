@@ -2,7 +2,7 @@ import { type ReactNode, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   RiUserLine, RiStore2Line, RiFileList3Line, RiRefreshLine,
-  RiWifiLine, RiWifiOffLine, RiLoader4Line,
+  RiWifiLine, RiWifiOffLine, RiLoader4Line, RiEditLine, RiDeleteBinLine,
 } from '@/common/icons';
 import { useAuthStore } from '@/common/stores/auth.store';
 import { useToastStore } from '@/common/stores/toast.store';
@@ -48,6 +48,21 @@ export default function HomePage() {
   const [marchands, setMarchands] = useState(0);
   const [valides, setValides] = useState(0);
   const [recent, setRecent] = useState<Submission[]>([]);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const handleDeleteRecent = async (id: string) => {
+    if (!confirm('Supprimer cette soumission ?')) return;
+    setDeleting(id);
+    try {
+      await api.delete(`/submissions/${id}`);
+      setRecent((prev) => prev.filter((s) => s.id !== id));
+      showToast('Soumission supprimee', 'success');
+    } catch {
+      showToast('Erreur lors de la suppression', 'error');
+    } finally {
+      setDeleting(null);
+    }
+  };
   const [pendingCount, setPendingCount] = useState(0);
   const [syncing, setSyncing] = useState(false);
 
@@ -157,24 +172,46 @@ export default function HomePage() {
             Les dernieres soumissions apparaitront ici
           </div>
         ) : (
-          recent.map((s) => (
-            <div key={s.id} className="flex items-center gap-3 rounded-md bg-white px-3.5 py-3 shadow-sm">
-              <div className={`flex h-8 w-8 items-center justify-center rounded-full ${s.type === 'PROSPECT' ? 'bg-k2l-primary-light' : 'bg-k2l-amber-light'}`}>
-                {s.type === 'PROSPECT'
-                  ? <RiUserLine className="text-sm text-k2l-navy" />
-                  : <RiStore2Line className="text-sm text-[#854F0B]" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="truncate text-[13px] font-medium text-k2l-gray-900">
-                  {s.prospectFullName || s.merchantName || '—'}
+          recent.map((s) => {
+            const canEdit = s.status === 'DRAFT' || s.status === 'SUBMITTED';
+            return (
+              <div key={s.id} className="rounded-md bg-white px-3.5 py-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${s.type === 'PROSPECT' ? 'bg-k2l-primary-light' : 'bg-k2l-amber-light'}`}>
+                    {s.type === 'PROSPECT'
+                      ? <RiUserLine className="text-sm text-k2l-navy" />
+                      : <RiStore2Line className="text-sm text-[#854F0B]" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="truncate text-[13px] font-medium text-k2l-gray-900">
+                      {s.prospectFullName || s.merchantName || '—'}
+                    </div>
+                    <div className="text-[11px] text-k2l-gray-400">{s.type === 'PROSPECT' ? 'Prospect' : 'Marchand'}</div>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_STYLES[s.status] ?? ''}`}>
+                    {STATUS_LABELS[s.status] ?? s.status}
+                  </span>
                 </div>
-                <div className="text-[11px] text-k2l-gray-400">{s.type === 'PROSPECT' ? 'Prospect' : 'Marchand'}</div>
+                {canEdit && (
+                  <div className="mt-2 flex items-center gap-3 border-t border-k2l-gray-100 pt-2">
+                    <button
+                      onClick={() => navigate(`/submissions/${s.id}/edit`)}
+                      className="flex items-center gap-1 text-[11px] font-medium text-k2l-primary"
+                    >
+                      <RiEditLine className="text-xs" /> Modifier
+                    </button>
+                    <button
+                      onClick={() => handleDeleteRecent(s.id)}
+                      disabled={deleting === s.id}
+                      className="flex items-center gap-1 text-[11px] font-medium text-k2l-red disabled:opacity-50"
+                    >
+                      <RiDeleteBinLine className="text-xs" /> Supprimer
+                    </button>
+                  </div>
+                )}
               </div>
-              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_STYLES[s.status] ?? ''}`}>
-                {STATUS_LABELS[s.status] ?? s.status}
-              </span>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
