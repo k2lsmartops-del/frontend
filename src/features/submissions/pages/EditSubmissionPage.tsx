@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   RiArrowLeftLine, RiLoader4Line, RiLockLine,
-  RiMapPinLine, RiUserLine, RiStore2Line, RiFileList2Line,
+  RiMapPinLine, RiUserLine, RiStore2Line, RiFileList2Line, RiCameraLine,
 } from '@/common/icons';
 import { useToastStore } from '@/common/stores/toast.store';
 import { useOnlineStatus } from '@/common/hooks/useOnlineStatus';
@@ -10,14 +10,32 @@ import api from '@/common/services/api';
 import FormCard from '@/common/components/FormCard';
 import FormInput from '@/common/components/FormInput';
 import FormSelect from '@/common/components/FormSelect';
+import PhotoCapture from '@/common/components/PhotoCapture';
+import type { PhotoCategory } from '@/lib/offlineDb';
 
 const COMMUNES = ['', 'Marcory', 'Yopougon', 'Adjame', 'Plateau', 'Cocody', 'Abobo', 'Treichville', 'Port-Bouet'];
 const PROFESSIONS = ['', 'Commercant', 'Fonctionnaire', 'Etudiant', 'Artisan', 'Agriculteur', 'Autre'];
+
+interface PhotoMeta {
+  url: string;
+  publicId: string;
+  category: PhotoCategory;
+  width: number;
+  height: number;
+  bytes: number;
+}
+
+interface ExistingPhoto {
+  id: string;
+  url: string;
+  category: string;
+}
 
 interface SubmissionData {
   id: string;
   type: string;
   status: string;
+  clientUuid: string;
   commune: string;
   quartier: string;
   addressNote: string;
@@ -35,6 +53,7 @@ interface SubmissionData {
   merchantPhone?: string;
   merchantActivity?: string;
   merchantRccm?: string;
+  photos?: ExistingPhoto[];
 }
 
 export default function EditSubmissionPage() {
@@ -49,6 +68,20 @@ export default function EditSubmissionPage() {
   const [blocked, setBlocked] = useState(false);
   const [blockedStatus, setBlockedStatus] = useState('');
   const [form, setForm] = useState<SubmissionData | null>(null);
+  const [newPhotos, setNewPhotos] = useState<PhotoMeta[]>([]);
+
+  const onPhotoUploaded = (meta: PhotoMeta) => {
+    setNewPhotos((prev) => {
+      const filtered = prev.filter((p) => p.category !== meta.category);
+      return [...filtered, meta];
+    });
+  };
+
+  const getExistingPhotoUrl = (category: string) => {
+    const newP = newPhotos.find((p) => p.category === category);
+    if (newP) return newP.url;
+    return form?.photos?.find((p) => p.category === category)?.url;
+  };
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -129,6 +162,18 @@ export default function EditSubmissionPage() {
         payload.merchantPhone = form.merchantPhone;
         payload.merchantActivity = form.merchantActivity;
         payload.merchantRccm = form.merchantRccm;
+      }
+
+      // Inclure les nouvelles photos si modifiées
+      if (newPhotos.length > 0) {
+        payload.photos = newPhotos.map((p) => ({
+          cloudinaryPublicId: p.publicId,
+          url: p.url,
+          category: p.category,
+          width: p.width,
+          height: p.height,
+          bytes: p.bytes,
+        }));
       }
 
       await api.patch(`/submissions/${id}`, payload);
@@ -229,6 +274,52 @@ export default function EditSubmissionPage() {
             <FormInput label="RCCM" value={form.merchantRccm || ''} onChange={set('merchantRccm')} />
           </FormCard>
         )}
+
+        {/* Photos */}
+        <FormCard title="Photos" icon={RiCameraLine}>
+          {form.type === 'PROSPECT' ? (
+            <>
+              <PhotoCapture
+                category="APP_SCREEN"
+                label="Ecran avec l'app installee"
+                clientUuid={form.clientUuid}
+                onUploaded={onPhotoUploaded}
+                existingUrl={getExistingPhotoUrl('APP_SCREEN')}
+              />
+              <PhotoCapture
+                category="ID_DOCUMENT"
+                label="CNI du client"
+                clientUuid={form.clientUuid}
+                onUploaded={onPhotoUploaded}
+                existingUrl={getExistingPhotoUrl('ID_DOCUMENT')}
+              />
+            </>
+          ) : (
+            <>
+              <PhotoCapture
+                category="STOREFRONT"
+                label="Facade du commerce"
+                clientUuid={form.clientUuid}
+                onUploaded={onPhotoUploaded}
+                existingUrl={getExistingPhotoUrl('STOREFRONT')}
+              />
+              <PhotoCapture
+                category="QR_CODE"
+                label="QR Code"
+                clientUuid={form.clientUuid}
+                onUploaded={onPhotoUploaded}
+                existingUrl={getExistingPhotoUrl('QR_CODE')}
+              />
+              <PhotoCapture
+                category="ID_DOCUMENT"
+                label="CNI du proprietaire"
+                clientUuid={form.clientUuid}
+                onUploaded={onPhotoUploaded}
+                existingUrl={getExistingPhotoUrl('ID_DOCUMENT')}
+              />
+            </>
+          )}
+        </FormCard>
 
         {/* Observations */}
         <FormCard title="Observations" icon={RiFileList2Line}>
