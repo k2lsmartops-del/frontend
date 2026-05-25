@@ -13,23 +13,26 @@ export default function BottomNav() {
   const navigate = useNavigate();
 
   return (
-    <nav className="flex shrink-0 border-t border-k2l-gray-200 bg-white pt-2" style={{ paddingBottom: 'env(safe-area-inset-bottom, 1px)' }}>
-      {NAV_ITEMS.map((item) => {
-        const active = location.pathname === item.path;
-        const Icon = active ? item.iconActive : item.icon;
-        return (
-          <button
-            key={item.path}
-            onClick={() => navigate(item.path)}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-1.5 font-body text-[10px] transition-colors ${
-              active ? 'text-k2l-primary' : 'text-k2l-gray-400'
-            }`}
-          >
-            <Icon className="text-[22px]" />
-            <span>{item.label}</span>
-          </button>
-        );
-      })}
-    </nav>
+<nav
+  className="flex shrink-0 border-t border-k2l-gray-200 bg-white"
+  style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
+>
+  {NAV_ITEMS.map((item) => {
+    const active = location.pathname === item.path;
+    const Icon = active ? item.iconActive : item.icon;
+    return (
+      <button
+        key={item.path}
+        onClick={() => navigate(item.path)}
+        className={`flex flex-1 flex-col items-center gap-1 pt-2.5 pb-1 font-body text-[10px] transition-colors ${
+          active ? 'text-k2l-primary' : 'text-k2l-gray-400'
+        }`}
+      >
+        <Icon className="text-[22px]" />
+        <span className="leading-none">{item.label}</span>
+      </button>
+    );
+  })}
+</nav>
   );
 }
