@@ -32,6 +32,7 @@ export default function BottomNav() {
 
   return (
     <nav
+      aria-label="Navigation principale"
       className="flex shrink-0 border-t border-k2l-gray-200 bg-white"
       style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
     >
@@ -43,11 +44,13 @@ export default function BottomNav() {
           <button
             key={item.path}
             onClick={() => navigate(item.path)}
+            aria-current={active ? 'page' : undefined}
+            aria-label={item.label}
             className={`relative flex flex-1 flex-col items-center gap-1 pt-2.5 pb-1 font-body text-[10px] transition-colors ${
               active ? 'text-k2l-primary' : 'text-k2l-gray-400'
             }`}
           >
-            <Icon className="text-[22px]" />
+            <Icon className="text-[22px]" aria-hidden="true" />
             <span className="leading-none">{item.label}</span>
           </button>
         );

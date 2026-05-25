@@ -141,10 +141,32 @@ body {
     user-select: text;
   }
 
+  /* Autoriser aussi la sélection sur les données copiables (n° commande, ref...) */
+  .selectable,
+  .data-value,
+  code,
+  pre {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
   /* Empêche le pull-to-refresh iOS */
   body {
     overscroll-behavior-y: none;
   }
+}
+
+/* ========================================
+   PWA : Anti double-tap zoom (remplace user-scalable=no sans bloquer
+   le pinch-zoom d'accessibilité) — Section 20
+   ======================================== */
+button,
+a,
+[role="button"],
+input,
+select,
+textarea {
+  touch-action: manipulation;
 }
 
 /* ========================================
@@ -154,4 +176,17 @@ input,
 select,
 textarea {
   font-size: 16px;
+}
+
+/* ========================================
+   PWA : Accessibilité — prefers-reduced-motion
+   ======================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
