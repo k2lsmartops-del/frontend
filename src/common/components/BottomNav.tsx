@@ -13,7 +13,7 @@ export default function BottomNav() {
   const navigate = useNavigate();
 
   return (
-    <nav className="flex shrink-0 border-t border-k2l-gray-200 bg-white pt-2 pb-2" style={{ paddingBottom: 'calc(8px + env(safe-area-inset-bottom))' }}>
+    <nav className="flex shrink-0 border-t border-k2l-gray-200 bg-white pt-2" style={{ paddingBottom: 'env(safe-area-inset-bottom, 1px)' }}>
       {NAV_ITEMS.map((item) => {
         const active = location.pathname === item.path;
         const Icon = active ? item.iconActive : item.icon;
