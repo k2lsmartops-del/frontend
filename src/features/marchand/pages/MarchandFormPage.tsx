@@ -1,19 +1,20 @@
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import type { IconType } from 'react-icons';
 import {
-  RiArrowLeftLine, RiCameraLine, RiCloseLine, RiLoader4Line,
+  RiArrowLeftLine, RiCameraLine, RiLoader4Line,
   RiShoppingCartLine, RiMedicineBottleLine, RiRestaurant2Line, RiBuilding2Line,
   RiStore2Line, RiMapPinLine,
 } from '@/common/icons';
 import FormCard from '@/common/components/FormCard';
 import FormInput from '@/common/components/FormInput';
 import FormSelect from '@/common/components/FormSelect';
-import GpsWidget from '@/common/components/GpsWidget';
-import { useGeolocation } from '@/common/hooks/useGeolocation';
+import GpsCapture, { type GpsData } from '@/common/components/GpsCapture';
+import PhotoCapture from '@/common/components/PhotoCapture';
 import { useToastStore } from '@/common/stores/toast.store';
-import { submissionService } from '@/features/submissions/services/submission.service';
+import { createSubmission } from '@/lib/submissionService';
+import type { PhotoCategory } from '@/lib/offlineDb';
 
 const COMMUNES = ['Marcory', 'Yopougon', 'Adjame', 'Plateau', 'Cocody', 'Abobo', 'Treichville', 'Port-Bouet'];
 
@@ -25,10 +26,19 @@ const TYPES_COMMERCE: CommerceType[] = [
   { value: 'autre', label: 'Autre', icon: RiBuilding2Line },
 ];
 
+interface PhotoMeta {
+  url: string;
+  publicId: string;
+  category: PhotoCategory;
+  width: number;
+  height: number;
+  bytes: number;
+}
+
 export default function MarchandFormPage() {
   const navigate = useNavigate();
   const showToast = useToastStore((s) => s.show);
-  const { gps, loading: gpsLoading, capture: captureGps, reset: resetGps } = useGeolocation();
+  const clientUuid = useMemo(() => uuidv4(), []);
 
   const [typeCommerce, setTypeCommerce] = useState('boutique');
   const [nom, setNom] = useState('');
@@ -37,35 +47,37 @@ export default function MarchandFormPage() {
   const [rccm, setRccm] = useState('');
   const [commune, setCommune] = useState(COMMUNES[0]);
   const [adresse, setAdresse] = useState('');
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [gps, setGps] = useState<GpsData | null>(null);
+  const [photos, setPhotos] = useState<PhotoMeta[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
-  const addPhoto = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.capture = 'environment';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = () => setPhotos((prev) => [...prev, reader.result as string]);
-        reader.readAsDataURL(file);
-      }
-    };
-    input.click();
-  };
+  const onGpsCapture = useCallback((data: GpsData) => setGps(data), []);
 
-  const removePhoto = (index: number) => setPhotos((prev) => prev.filter((_, i) => i !== index));
+  const onPhotoUploaded = useCallback((meta: PhotoMeta) => {
+    setPhotos((prev) => {
+      const filtered = prev.filter((p) => p.category !== meta.category);
+      return [...filtered, meta];
+    });
+  }, []);
 
-  const handleSubmit = async () => {
-    if (!nom.trim()) { showToast('Nom du commerce obligatoire', 'error'); return; }
-    if (!tel.trim()) { showToast('Telephone obligatoire', 'error'); return; }
+  const hasPhoto = (cat: PhotoCategory) => photos.some((p) => p.category === cat);
+
+  const handleSubmit = async (asDraft = false) => {
+    if (!asDraft) {
+      if (!nom.trim()) { showToast('Nom du commerce obligatoire', 'error'); return; }
+      if (!proprio.trim()) { showToast('Nom proprietaire obligatoire', 'error'); return; }
+      if (!tel.trim()) { showToast('Telephone obligatoire', 'error'); return; }
+      if (!hasPhoto('STOREFRONT')) { showToast('Photo facade obligatoire', 'error'); return; }
+      if (!hasPhoto('QR_CODE')) { showToast('Photo QR code obligatoire', 'error'); return; }
+      if (!hasPhoto('ID_DOCUMENT')) { showToast('Photo CNI obligatoire', 'error'); return; }
+    }
+
     setSubmitting(true);
     try {
-      await submissionService.create({
+      await createSubmission('MARCHAND', {
         type: 'MARCHAND',
-        clientUuid: uuidv4(),
+        clientUuid,
+        requestedStatus: asDraft ? 'DRAFT' : 'SUBMITTED',
         commune,
         addressNote: adresse || undefined,
         latitude: gps?.latitude,
@@ -77,8 +89,16 @@ export default function MarchandFormPage() {
         merchantPhone: tel,
         merchantActivity: typeCommerce,
         merchantRccm: rccm || undefined,
+        photos: photos.map((p) => ({
+          cloudinaryPublicId: p.publicId,
+          url: p.url,
+          category: p.category,
+          width: p.width,
+          height: p.height,
+          bytes: p.bytes,
+        })),
       });
-      showToast('Marchand enrole !', 'success');
+      showToast(asDraft ? 'Brouillon sauvegarde' : 'Marchand enregistre !', 'success');
       navigate('/', { replace: true });
     } catch {
       showToast('Erreur lors de la soumission', 'error');
@@ -95,7 +115,7 @@ export default function MarchandFormPage() {
           <RiArrowLeftLine className="text-base" /> Retour
         </button>
         <span className="font-head text-[17px] font-semibold text-white">Enroler Marchand</span>
-        <button onClick={() => showToast('Brouillon sauvegarde', 'success')} className="rounded-sm bg-white/15 px-3 py-1.5 text-xs font-medium text-white">
+        <button onClick={() => handleSubmit(true)} disabled={submitting} className="rounded-sm bg-white/15 px-3 py-1.5 text-xs font-medium text-white">
           Brouillon
         </button>
       </div>
@@ -110,6 +130,7 @@ export default function MarchandFormPage() {
               return (
                 <button
                   key={t.value}
+                  type="button"
                   onClick={() => setTypeCommerce(t.value)}
                   className={`flex flex-col items-center rounded-sm border-[1.5px] px-2.5 py-3 transition-all ${
                     typeCommerce === t.value
@@ -128,9 +149,9 @@ export default function MarchandFormPage() {
         {/* Infos commerce */}
         <FormCard title="Informations du commerce" icon={RiStore2Line}>
           <FormInput label="Nom du commerce *" value={nom} onChange={setNom} placeholder="Ex: Boutique Fatima" />
-          <FormInput label="Nom du proprietaire" value={proprio} onChange={setProprio} placeholder="Nom complet" />
+          <FormInput label="Nom du proprietaire *" value={proprio} onChange={setProprio} placeholder="Nom complet" />
           <div className="grid grid-cols-2 gap-2.5">
-            <FormInput label="Telephone *" value={tel} onChange={setTel} placeholder="07 00 00 00" type="tel" />
+            <FormInput label="Telephone *" value={tel} onChange={setTel} placeholder="+225 07 00 00 00 00" type="tel" />
             <FormInput label="NCC / RCCM" value={rccm} onChange={setRccm} placeholder="Optionnel" />
           </div>
         </FormCard>
@@ -139,36 +160,33 @@ export default function MarchandFormPage() {
         <FormCard title="Localisation" icon={RiMapPinLine}>
           <FormSelect label="Commune *" value={commune} onChange={setCommune} options={COMMUNES} />
           <FormInput label="Adresse / Description" value={adresse} onChange={setAdresse} placeholder="Ex: Face a la mairie, kiosque N 3..." />
-          <GpsWidget gps={gps} loading={gpsLoading} onCapture={captureGps} onReset={resetGps} />
+          <GpsCapture onCapture={onGpsCapture} />
         </FormCard>
 
-        {/* Photos */}
-        <div className="rounded-lg bg-white p-4 shadow-[0_1px_8px_rgba(0,0,0,0.06)]">
-          <div className="mb-3.5 flex items-center gap-2 font-head text-[13px] font-semibold text-k2l-navy">
-            <RiCameraLine className="text-base" /> Photos du commerce
-          </div>
-          <button onClick={addPhoto}
-            className="w-full rounded-md border-2 border-dashed border-k2l-gray-200 p-5 text-center transition-colors hover:border-k2l-primary hover:bg-k2l-primary-light">
-            <RiCameraLine className="mx-auto mb-2 text-2xl text-k2l-gray-400" />
-            <div className="text-[13px] text-k2l-gray-400">Photographier le commerce</div>
-            <div className="mt-1 text-[11px] text-k2l-gray-400">Devanture, enseigne, interieur</div>
-          </button>
-          {photos.length > 0 && (
-            <div className="mt-2.5 flex flex-wrap gap-2">
-              {photos.map((src, i) => (
-                <div key={i} className="relative h-[60px] w-[60px] overflow-hidden rounded-sm border border-k2l-primary-mid bg-k2l-primary-light">
-                  <img src={src} className="h-full w-full object-cover" alt="" />
-                  <button onClick={() => removePhoto(i)} className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-k2l-red/85 text-white">
-                    <RiCloseLine className="text-[10px]" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Photos obligatoires */}
+        <FormCard title="Photos obligatoires" icon={RiCameraLine}>
+          <PhotoCapture
+            category="STOREFRONT"
+            label="Facade du commerce *"
+            clientUuid={clientUuid}
+            onUploaded={onPhotoUploaded}
+          />
+          <PhotoCapture
+            category="QR_CODE"
+            label="QR code marchand installe *"
+            clientUuid={clientUuid}
+            onUploaded={onPhotoUploaded}
+          />
+          <PhotoCapture
+            category="ID_DOCUMENT"
+            label="CNI du proprietaire *"
+            clientUuid={clientUuid}
+            onUploaded={onPhotoUploaded}
+          />
+        </FormCard>
 
         {/* Submit */}
-        <button onClick={handleSubmit} disabled={submitting}
+        <button onClick={() => handleSubmit(false)} disabled={submitting}
           className="w-full rounded-md bg-k2l-primary py-4 font-head text-base font-semibold text-white transition-all active:scale-[0.98] active:bg-k2l-navy disabled:opacity-60">
           {submitting ? <RiLoader4Line className="mx-auto animate-spin text-xl" /> : 'Enroler le marchand'}
         </button>
