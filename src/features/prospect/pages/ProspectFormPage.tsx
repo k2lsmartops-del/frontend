@@ -14,9 +14,8 @@ import type { PhotoCategory } from '@/lib/offlineDb';
 const COMMUNES = ['Marcory', 'Yopougon', 'Adjame', 'Plateau', 'Cocody', 'Abobo', 'Treichville', 'Port-Bouet'];
 const GENDERS = [{ value: 'HOMME', label: 'Homme' }, { value: 'FEMME', label: 'Femme' }];
 const APP_STATUSES = [
-  { value: 'NOT_INSTALLED', label: 'Pas installee' },
-  { value: 'INSTALLED', label: 'Installee' },
-  { value: 'ACTIVATED', label: 'Activee' },
+  { value: 'INSTALLED', label: 'Installée' },
+  { value: 'INSTALLED_ACTIVATED', label: 'Installée + Activée' },
 ];
 const PROFESSIONS = [
   'Commercant', 'Fonctionnaire', 'Enseignant', 'Etudiant', 'Agriculteur',
@@ -45,7 +44,7 @@ export default function ProspectFormPage() {
   const [commune, setCommune] = useState(COMMUNES[0]);
   const [quartier, setQuartier] = useState('');
   const [phoneType, setPhoneType] = useState('');
-  const [appStatus, setAppStatus] = useState('NOT_INSTALLED');
+  const [appStatus, setAppStatus] = useState('INSTALLED');
   const [bankAccount, setBankAccount] = useState('');
   const [observations, setObservations] = useState('');
   const [gps, setGps] = useState<GpsData | null>(null);
@@ -89,7 +88,7 @@ export default function ProspectFormPage() {
         prospectProfession: profession,
         prospectGender: gender,
         prospectAge: age ? parseInt(age) : undefined,
-        appStatus: appStatus as 'NOT_INSTALLED' | 'INSTALLED' | 'ACTIVATED',
+        appStatus: appStatus as 'INSTALLED' | 'INSTALLED_ACTIVATED',
         phoneType: phoneType || undefined,
         bankAccount: bankAccount || undefined,
         observations: observations || undefined,
