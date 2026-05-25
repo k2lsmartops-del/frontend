@@ -28,31 +28,130 @@
   --radius-xl: 20px;
 }
 
-html, body, #root {
+/* ========================================
+   PWA : Configuration de base (html/body/root)
+   ======================================== */
+html {
   height: 100%;
+  width: 100%;
   overflow: hidden;
 }
 
 body {
   @apply bg-k2l-gray-100 font-body text-k2l-gray-900 antialiased;
-  padding-top: env(safe-area-inset-top);
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
   touch-action: manipulation;
+  /* Empêche le pull-to-refresh iOS qui casserait l'app */
+  overscroll-behavior-y: none;
 }
 
-/* Scroll fluide style mobile */
+#root {
+  height: 100%;
+  min-height: 100vh;
+  min-height: -webkit-fill-available; /* Fix barre URL Safari iOS */
+  position: relative;
+  overflow: hidden;
+}
+
+/* ========================================
+   PWA : Barre de couleur dans la zone de l'encoche (iPhone X+)
+   La même couleur que theme-color du manifest (k2l-navy)
+   ======================================== */
+#root::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: constant(safe-area-inset-top); /* iOS < 11.2 */
+  height: env(safe-area-inset-top);       /* iOS >= 11.2 */
+  background: #1C2E4F;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* ========================================
+   PWA : Classes utilitaires safe areas
+   ======================================== */
+.pt-safe-top {
+  padding-top: constant(safe-area-inset-top);
+  padding-top: env(safe-area-inset-top);
+}
+
+.pb-safe-bottom {
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pl-safe-left {
+  padding-left: constant(safe-area-inset-left);
+  padding-left: env(safe-area-inset-left);
+}
+
+.pr-safe-right {
+  padding-right: constant(safe-area-inset-right);
+  padding-right: env(safe-area-inset-right);
+}
+
+.min-h-screen-safe {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+/* ========================================
+   PWA : Scroll fluide et masquage scrollbar
+   ======================================== */
 * {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
 }
 
-/* Masquer scrollbar sur mobile mais garder le scroll */
-::-webkit-scrollbar { 
+::-webkit-scrollbar {
   width: 0px;
   height: 0px;
 }
 
-/* Effet de rebond iOS */
 .overscroll-y-contain {
   overscroll-behavior-y: contain;
+}
+
+/* ========================================
+   PWA : Mode standalone (app INSTALLÉE)
+   ======================================== */
+@media (display-mode: standalone) {
+  /* Comportement natif : pas de sélection de texte, pas de menu long-press */
+  * {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+
+  /* MAIS autoriser la sélection dans les champs de saisie */
+  input,
+  textarea,
+  [contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* Empêche le pull-to-refresh iOS */
+  body {
+    overscroll-behavior-y: none;
+  }
+}
+
+/* ========================================
+   PWA : Anti-zoom sur les inputs iOS (font-size < 16px déclenche le zoom)
+   ======================================== */
+input,
+select,
+textarea {
+  font-size: 16px;
 }

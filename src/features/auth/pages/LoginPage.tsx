@@ -39,7 +39,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-k2l-navy-deep via-k2l-navy to-k2l-primary px-7 py-10 gap-8">
+    <div
+      className="flex min-h-screen-safe flex-col items-center justify-center bg-gradient-to-br from-k2l-navy-deep via-k2l-navy to-k2l-primary px-7 py-10 gap-8"
+      style={{
+        paddingTop: 'calc(env(safe-area-inset-top) + 2.5rem)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom) + 2.5rem)',
+        paddingLeft: 'calc(env(safe-area-inset-left) + 1.75rem)',
+        paddingRight: 'calc(env(safe-area-inset-right) + 1.75rem)',
+      }}
+    >
       <div className="text-center">
         <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-2xl bg-white/95 shadow-lg">
           <img src="/logo.jpeg" alt="K2L SmartOPs" className="h-16 w-16 object-contain" />

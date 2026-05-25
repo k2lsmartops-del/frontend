@@ -3,10 +3,14 @@
   "short_name": "K2L Terrain",
   "description": "Application de gestion commerciale terrain K2L",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#F5F4F0",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#F3F4F6",
   "theme_color": "#1C2E4F",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
+  "categories": ["business", "productivity"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/logo.jpeg",
