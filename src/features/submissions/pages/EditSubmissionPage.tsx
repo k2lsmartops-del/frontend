@@ -258,7 +258,7 @@ export default function EditSubmissionPage() {
             <FormSelect label="Profession" value={form.prospectProfession || ''} onChange={set('prospectProfession')} options={PROFESSIONS} />
             <FormSelect label="Genre" value={form.prospectGender || ''} onChange={set('prospectGender')} options={['', 'HOMME', 'FEMME']} />
             <FormInput label="Âge" value={form.prospectAge || ''} onChange={set('prospectAge')} />
-            <FormSelect label="Statut app" value={form.appStatus || ''} onChange={set('appStatus')} options={['', 'INSTALLED', 'INSTALLED_ACTIVATED']} />
+            <FormSelect label="Statut app" value={form.appStatus || ''} onChange={set('appStatus')} options={[{ value: '', label: '— Choisir —' }, { value: 'INSTALLED', label: 'Installée' }, { value: 'INSTALLED_ACTIVATED', label: 'Installée + Activée' }]} />
             <FormInput label="Type téléphone" value={form.phoneType || ''} onChange={set('phoneType')} />
             <FormSelect label="Compte bancaire" value={form.bankAccount || ''} onChange={set('bankAccount')} options={['', 'OUI', 'NON']} />
           </FormCard>
