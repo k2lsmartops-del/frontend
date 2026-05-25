@@ -36,4 +36,12 @@ export {
   RiEditLine,
   RiFileList2Line,
   RiDeleteBinLine,
+  RiSettings4Line,
+  RiSettings4Fill,
+  RiLogoutBoxRLine,
+  RiMailLine,
+  RiPhoneFill,
+  RiShieldUserLine,
+  RiMapPin2Line,
+  RiCalendarLine,
 } from 'react-icons/ri';
