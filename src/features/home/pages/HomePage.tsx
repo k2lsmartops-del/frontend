@@ -11,6 +11,24 @@ import api from '@/common/services/api';
 import { db } from '@/lib/offlineDb';
 import { syncAllPending } from '@/lib/syncService';
 
+const STATUS_LABELS: Record<string, string> = {
+  DRAFT: 'Brouillon',
+  SUBMITTED: 'En attente',
+  SUPERVISOR_APPROVED: 'Valide N1',
+  VALIDATED: 'Valide',
+  REJECTED_L1: 'Rejete N1',
+  REJECTED_L2: 'Rejete N2',
+};
+
+const STATUS_STYLES: Record<string, string> = {
+  DRAFT: 'bg-k2l-gray-100 text-k2l-gray-600',
+  SUBMITTED: 'bg-k2l-amber-light text-[#854F0B]',
+  SUPERVISOR_APPROVED: 'bg-k2l-primary-light text-k2l-primary',
+  VALIDATED: 'bg-k2l-success-light text-k2l-success',
+  REJECTED_L1: 'bg-k2l-red-light text-k2l-red',
+  REJECTED_L2: 'bg-k2l-red-light text-k2l-red',
+};
+
 interface Submission {
   id: string;
   type: string;
@@ -152,15 +170,8 @@ export default function HomePage() {
                 </div>
                 <div className="text-[11px] text-k2l-gray-400">{s.type === 'PROSPECT' ? 'Prospect' : 'Marchand'}</div>
               </div>
-              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                s.status === 'VALIDATED' ? 'bg-k2l-success/10 text-k2l-success' :
-                s.status === 'SUBMITTED' ? 'bg-k2l-primary-light text-k2l-primary' :
-                s.status === 'DRAFT' ? 'bg-k2l-gray-100 text-k2l-gray-400' :
-                'bg-k2l-amber-light text-[#854F0B]'
-              }`}>
-                {s.status === 'VALIDATED' ? 'Valide' :
-                 s.status === 'SUBMITTED' ? 'Soumis' :
-                 s.status === 'DRAFT' ? 'Brouillon' : s.status}
+              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_STYLES[s.status] ?? ''}`}>
+                {STATUS_LABELS[s.status] ?? s.status}
               </span>
             </div>
           ))

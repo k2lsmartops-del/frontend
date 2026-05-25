@@ -35,4 +35,5 @@ export {
   RiShieldCheckLine,
   RiEditLine,
   RiFileList2Line,
+  RiDeleteBinLine,
 } from 'react-icons/ri';

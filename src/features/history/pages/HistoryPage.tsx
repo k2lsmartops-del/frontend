@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RiArrowLeftLine, RiUserLine, RiStore2Line, RiDownloadLine, RiEditLine } from '@/common/icons';
+import { RiArrowLeftLine, RiUserLine, RiStore2Line, RiDownloadLine, RiEditLine, RiDeleteBinLine } from '@/common/icons';
 import { submissionService } from '@/features/submissions/services/submission.service';
+import api from '@/common/services/api';
+import { useToastStore } from '@/common/stores/toast.store';
 import type { Submission } from '@/common/types';
 
 type Filter = 'all' | 'prospect' | 'marchand' | 'pending' | 'validated';
@@ -34,9 +36,29 @@ const STATUS_STYLES: Record<string, string> = {
 
 export default function HistoryPage() {
   const navigate = useNavigate();
+  const showToast = useToastStore((s) => s.show);
   const [filter, setFilter] = useState<Filter>('all');
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('Supprimer cette soumission ?')) return;
+    setDeleting(id);
+    try {
+      await api.delete(`/submissions/${id}`);
+      setSubmissions((prev) => prev.filter((s) => s.id !== id));
+      showToast('Soumission supprimee', 'success');
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        'Erreur lors de la suppression';
+      showToast(msg, 'error');
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -119,9 +141,21 @@ export default function HistoryPage() {
                     {STATUS_LABELS[s.status] ?? s.status}
                   </span>
                   {canEdit && (
-                    <span className="flex items-center gap-1 text-[10px] font-medium text-k2l-primary">
-                      <RiEditLine className="text-xs" /> Modifier
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); navigate(`/submissions/${s.id}/edit`); }}
+                        className="flex items-center gap-0.5 text-[10px] font-medium text-k2l-primary"
+                      >
+                        <RiEditLine className="text-xs" /> Modifier
+                      </button>
+                      <button
+                        onClick={(e) => handleDelete(s.id, e)}
+                        disabled={deleting === s.id}
+                        className="flex items-center gap-0.5 text-[10px] font-medium text-k2l-red disabled:opacity-50"
+                      >
+                        <RiDeleteBinLine className="text-xs" /> Supprimer
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
