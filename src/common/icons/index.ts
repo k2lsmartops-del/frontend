@@ -44,4 +44,7 @@ export {
   RiShieldUserLine,
   RiMapPin2Line,
   RiCalendarLine,
+  RiTeamLine,
+  RiTeamFill,
+  RiCheckboxCircleFill,
 } from 'react-icons/ri';
