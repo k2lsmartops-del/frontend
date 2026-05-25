@@ -1,12 +1,24 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   RiUserLine, RiStore2Line, RiFileList3Line, RiRefreshLine,
-  RiWifiLine, RiWifiOffLine,
+  RiWifiLine, RiWifiOffLine, RiLoader4Line,
 } from '@/common/icons';
 import { useAuthStore } from '@/common/stores/auth.store';
 import { useToastStore } from '@/common/stores/toast.store';
 import { useOnlineStatus } from '@/common/hooks/useOnlineStatus';
+import api from '@/common/services/api';
+import { db } from '@/lib/offlineDb';
+import { syncAllPending } from '@/lib/syncService';
+
+interface Submission {
+  id: string;
+  type: string;
+  status: string;
+  prospectFullName?: string;
+  merchantName?: string;
+  createdAt: string;
+}
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -14,8 +26,57 @@ export default function HomePage() {
   const showToast = useToastStore((s) => s.show);
   const isOnline = useOnlineStatus();
 
+  const [prospects, setProspects] = useState(0);
+  const [marchands, setMarchands] = useState(0);
+  const [valides, setValides] = useState(0);
+  const [recent, setRecent] = useState<Submission[]>([]);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+
+  const loadData = useCallback(async () => {
+    try {
+      const { data } = await api.get('/submissions', { params: { limit: 10 } });
+      const items: Submission[] = data.data || [];
+      setRecent(items.slice(0, 5));
+      setProspects(data.meta?.total ? items.filter((s) => s.type === 'PROSPECT').length : 0);
+      setMarchands(items.filter((s) => s.type === 'MARCHAND').length);
+      setValides(items.filter((s) => s.status === 'VALIDATED').length);
+
+      // Compteurs complets via des requêtes séparées
+      const [pRes, mRes] = await Promise.all([
+        api.get('/submissions', { params: { type: 'PROSPECT', limit: 1 } }),
+        api.get('/submissions', { params: { type: 'MARCHAND', limit: 1 } }),
+      ]);
+      setProspects(pRes.data.meta?.total ?? 0);
+      setMarchands(mRes.data.meta?.total ?? 0);
+      setValides(items.filter((s) => s.status === 'VALIDATED').length);
+    } catch {
+      // Silencieux si offline
+    }
+
+    // Pending local
+    const pending = await db.submissions.where('syncStatus').equals('pending').count();
+    setPendingCount(pending);
+  }, []);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadData(); }, []);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      await syncAllPending();
+      showToast('Synchronisation terminee', 'success');
+      await loadData();
+    } catch {
+      showToast('Erreur de synchronisation', 'error');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const initials = user?.fullName
-    .split(' ')
+    ?.split(' ')
     .map((w) => w[0])
     .join('')
     .slice(0, 2)
@@ -44,9 +105,9 @@ export default function HomePage() {
       {/* KPIs */}
       <div className="-mt-5 mb-4 grid grid-cols-3 gap-2.5 px-4">
         {[
-          { label: 'Prospects', value: '--', color: 'text-k2l-primary' },
-          { label: 'Marchands', value: '--', color: 'text-k2l-amber' },
-          { label: 'Valides', value: '--', color: 'text-k2l-success' },
+          { label: 'Prospects', value: String(prospects), color: 'text-k2l-primary' },
+          { label: 'Marchands', value: String(marchands), color: 'text-k2l-amber' },
+          { label: 'Valides', value: String(valides), color: 'text-k2l-success' },
         ].map((kpi) => (
           <div key={kpi.label} className="rounded-md bg-white px-2.5 py-3 text-center shadow-[0_2px_12px_rgba(0,0,0,0.07)]">
             <div className={`font-head text-[22px] font-bold ${kpi.color}`}>{kpi.value}</div>
@@ -61,15 +122,49 @@ export default function HomePage() {
         <ActionCard icon={<RiUserLine className="text-xl text-k2l-navy" />} bgIcon="bg-k2l-primary-light" label="Nouveau Prospect" sub="Client banque" onClick={() => navigate('/prospect')} />
         <ActionCard icon={<RiStore2Line className="text-xl text-[#854F0B]" />} bgIcon="bg-k2l-amber-light" label="Enroler Marchand" sub="Commerce partenaire" onClick={() => navigate('/marchand')} />
         <ActionCard icon={<RiFileList3Line className="text-xl text-k2l-primary" />} bgIcon="bg-k2l-primary-light" label="Historique" sub="Mes soumissions" onClick={() => navigate('/history')} />
-        <ActionCard icon={<RiRefreshLine className="text-xl text-k2l-red" />} bgIcon="bg-k2l-red-light" label="Synchroniser" sub="0 en attente" onClick={() => showToast('Synchronisation en cours...', 'info')} />
+        <ActionCard
+          icon={syncing ? <RiLoader4Line className="animate-spin text-xl text-k2l-red" /> : <RiRefreshLine className="text-xl text-k2l-red" />}
+          bgIcon="bg-k2l-red-light"
+          label="Synchroniser"
+          sub={`${pendingCount} en attente`}
+          onClick={handleSync}
+        />
       </div>
 
       {/* Recent */}
       <div className="mb-2.5 px-4 font-head text-[13px] font-semibold uppercase tracking-wider text-k2l-gray-600">Activite recente</div>
-      <div className="px-4 pb-6">
-        <div className="rounded-md bg-white p-8 text-center text-sm text-k2l-gray-400 shadow-sm">
-          Les dernieres soumissions apparaitront ici
-        </div>
+      <div className="space-y-2 px-4 pb-6">
+        {recent.length === 0 ? (
+          <div className="rounded-md bg-white p-8 text-center text-sm text-k2l-gray-400 shadow-sm">
+            Les dernieres soumissions apparaitront ici
+          </div>
+        ) : (
+          recent.map((s) => (
+            <div key={s.id} className="flex items-center gap-3 rounded-md bg-white px-3.5 py-3 shadow-sm">
+              <div className={`flex h-8 w-8 items-center justify-center rounded-full ${s.type === 'PROSPECT' ? 'bg-k2l-primary-light' : 'bg-k2l-amber-light'}`}>
+                {s.type === 'PROSPECT'
+                  ? <RiUserLine className="text-sm text-k2l-navy" />
+                  : <RiStore2Line className="text-sm text-[#854F0B]" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="truncate text-[13px] font-medium text-k2l-gray-900">
+                  {s.prospectFullName || s.merchantName || '—'}
+                </div>
+                <div className="text-[11px] text-k2l-gray-400">{s.type === 'PROSPECT' ? 'Prospect' : 'Marchand'}</div>
+              </div>
+              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                s.status === 'VALIDATED' ? 'bg-k2l-success/10 text-k2l-success' :
+                s.status === 'SUBMITTED' ? 'bg-k2l-primary-light text-k2l-primary' :
+                s.status === 'DRAFT' ? 'bg-k2l-gray-100 text-k2l-gray-400' :
+                'bg-k2l-amber-light text-[#854F0B]'
+              }`}>
+                {s.status === 'VALIDATED' ? 'Valide' :
+                 s.status === 'SUBMITTED' ? 'Soumis' :
+                 s.status === 'DRAFT' ? 'Brouillon' : s.status}
+              </span>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
