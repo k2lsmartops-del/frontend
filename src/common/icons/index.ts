@@ -33,4 +33,6 @@ export {
   RiEyeLine,
   RiLockLine,
   RiShieldCheckLine,
+  RiEditLine,
+  RiFileList2Line,
 } from 'react-icons/ri';

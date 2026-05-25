@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RiArrowLeftLine, RiUserLine, RiStore2Line, RiDownloadLine } from '@/common/icons';
+import { RiArrowLeftLine, RiUserLine, RiStore2Line, RiDownloadLine, RiEditLine } from '@/common/icons';
 import { submissionService } from '@/features/submissions/services/submission.service';
 import type { Submission } from '@/common/types';
 
@@ -90,33 +90,43 @@ export default function HistoryPage() {
         ) : submissions.length === 0 ? (
           <div className="py-10 text-center text-sm text-k2l-gray-400">Aucune soumission pour ce filtre</div>
         ) : (
-          submissions.map((s) => (
-            <div key={s.id} className="flex cursor-pointer items-start gap-3 rounded-md bg-white p-3.5 shadow-[0_1px_6px_rgba(0,0,0,0.05)]">
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-sm text-xl ${
-                s.type === 'PROSPECT' ? 'bg-k2l-primary-light' : 'bg-k2l-amber-light'
-              }`}>
-                {s.type === 'PROSPECT'
-                  ? <RiUserLine className="text-lg text-k2l-navy" />
-                  : <RiStore2Line className="text-lg text-[#854F0B]" />}
-              </div>
-              <div className="flex-1">
-                <div className="text-sm font-medium text-k2l-gray-900">
-                  {s.type === 'PROSPECT' ? s.prospectFullName : s.merchantName}
+          submissions.map((s) => {
+            const canEdit = s.status === 'DRAFT' || s.status === 'SUBMITTED';
+            return (
+              <div key={s.id} className="flex cursor-pointer items-start gap-3 rounded-md bg-white p-3.5 shadow-[0_1px_6px_rgba(0,0,0,0.05)]"
+                onClick={() => canEdit && navigate(`/submissions/${s.id}/edit`)}
+              >
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-sm text-xl ${
+                  s.type === 'PROSPECT' ? 'bg-k2l-primary-light' : 'bg-k2l-amber-light'
+                }`}>
+                  {s.type === 'PROSPECT'
+                    ? <RiUserLine className="text-lg text-k2l-navy" />
+                    : <RiStore2Line className="text-lg text-[#854F0B]" />}
                 </div>
-                <div className="mt-0.5 text-[11px] text-k2l-gray-400">
-                  {s.type === 'PROSPECT' ? 'Prospect' : 'Marchand'} · {s.commune} · {s.type === 'PROSPECT' ? s.prospectPhone : s.merchantPhone}
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-k2l-gray-900">
+                    {s.type === 'PROSPECT' ? s.prospectFullName : s.merchantName}
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-k2l-gray-400">
+                    {s.type === 'PROSPECT' ? 'Prospect' : 'Marchand'} · {s.commune} · {s.type === 'PROSPECT' ? s.prospectPhone : s.merchantPhone}
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1.5">
+                  <span className="text-[11px] text-k2l-gray-400">
+                    {new Date(s.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${STATUS_STYLES[s.status] ?? ''}`}>
+                    {STATUS_LABELS[s.status] ?? s.status}
+                  </span>
+                  {canEdit && (
+                    <span className="flex items-center gap-1 text-[10px] font-medium text-k2l-primary">
+                      <RiEditLine className="text-xs" /> Modifier
+                    </span>
+                  )}
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-1.5">
-                <span className="text-[11px] text-k2l-gray-400">
-                  {new Date(s.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                </span>
-                <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${STATUS_STYLES[s.status] ?? ''}`}>
-                  {STATUS_LABELS[s.status] ?? s.status}
-                </span>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
