@@ -13,6 +13,7 @@ import ProfilePage from '@/features/profile/pages/ProfilePage';
 // Supervisor pages
 import SupervisorHomePage from '@/features/supervisor/pages/SupervisorHomePage';
 import ValidationQueuePage from '@/features/supervisor/pages/ValidationQueuePage';
+import SubmissionDetailPage from '@/features/supervisor/pages/SubmissionDetailPage';
 import TeamPage from '@/features/supervisor/pages/TeamPage';
 import { useAuthStore } from '@/common/stores/auth.store';
 
@@ -44,7 +45,7 @@ export default function App() {
             <Route path="submissions/:id/edit" element={<EditSubmissionPage />} />
             {/* Supervisor routes */}
             <Route path="validation" element={<ValidationQueuePage />} />
-            <Route path="validation/:id" element={<ValidationQueuePage />} />
+            <Route path="validation/:id" element={<SubmissionDetailPage />} />
             <Route path="team" element={<TeamPage />} />
             {/* Common routes */}
             <Route path="profile" element={<ProfilePage />} />
