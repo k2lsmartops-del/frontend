@@ -174,6 +174,14 @@ export default function SupervisorHomePage() {
             recent.map((s) => {
               const name = s.prospectFullName || s.merchantName || '—';
               const initials = name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+              const statusConfig: Record<string, { label: string; bg: string; text: string }> = {
+                SUBMITTED: { label: 'En attente', bg: 'bg-k2l-amber-light', text: 'text-[#854F0B]' },
+                SUPERVISOR_APPROVED: { label: 'Validé L1', bg: 'bg-k2l-success-light', text: 'text-k2l-success' },
+                VALIDATED: { label: 'Validé', bg: 'bg-k2l-success-light', text: 'text-k2l-success' },
+                REJECTED_L1: { label: 'Rejeté', bg: 'bg-k2l-red-light', text: 'text-k2l-red' },
+                REJECTED_L2: { label: 'Rejeté L2', bg: 'bg-k2l-red-light', text: 'text-k2l-red' },
+              };
+              const status = statusConfig[s.status] || { label: s.status, bg: 'bg-k2l-gray-100', text: 'text-k2l-gray-500' };
               return (
                 <div
                   key={s.id}
@@ -184,7 +192,12 @@ export default function SupervisorHomePage() {
                     {initials}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="truncate text-[13px] font-medium text-k2l-gray-900">{name}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-[13px] font-medium text-k2l-gray-900">{name}</span>
+                      <span className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold ${status.bg} ${status.text}`}>
+                        {status.label}
+                      </span>
+                    </div>
                     <div className="text-[11px] text-k2l-gray-400">
                       {s.type === 'PROSPECT' ? 'Prospect' : 'Marchand'} · {formatTimeAgo(s.createdAt)}
                     </div>

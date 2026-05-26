@@ -32,6 +32,7 @@ export default function ValidationQueuePage() {
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [processing, setProcessing] = useState(false);
+  const [photoIndex, setPhotoIndex] = useState(0);
 
   const loadSubmissions = useCallback(async () => {
     try {
@@ -57,7 +58,7 @@ export default function ValidationQueuePage() {
     if (!current) return;
     setProcessing(true);
     try {
-      await api.patch(`/submissions/${current.id}/approve-l1`);
+      await api.patch(`/submissions/${current.id}/approve-l1`, {});
       showToast('Fiche validée', 'success');
       // Retirer de la liste et passer à la suivante
       setSubmissions((prev) => prev.filter((s) => s.id !== current.id));
@@ -92,7 +93,10 @@ export default function ValidationQueuePage() {
   };
 
   const goNext = () => {
-    if (currentIndex < total - 1) setCurrentIndex(currentIndex + 1);
+    if (currentIndex < total - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setPhotoIndex(0);
+    }
   };
 
   // Formatage date relative
@@ -147,7 +151,8 @@ export default function ValidationQueuePage() {
   const phone = current?.prospectPhone || current?.merchantPhone || '—';
   const age = current?.prospectAge ? `${current.prospectAge} ans` : '';
   const location = [current?.commune, current?.quartier].filter(Boolean).join(', ');
-  const photo = current?.photos?.[0]?.url;
+  const photos = current?.photos || [];
+  const photo = photos[photoIndex]?.url;
 
   return (
     <div className="flex min-h-full flex-col bg-k2l-gray-100">
@@ -167,22 +172,50 @@ export default function ValidationQueuePage() {
       </div>
 
       {/* Photo / Placeholder */}
-      <div className="relative flex h-40 items-center justify-center bg-k2l-success-light">
+      <div className="relative flex h-56 items-center justify-center bg-k2l-gray-200">
         {photo ? (
-          <img src={photo} alt="Document" className="h-full w-full object-cover" />
+          <img 
+            src={photo} 
+            alt={`Photo ${photoIndex + 1}`} 
+            className="h-full w-full object-contain bg-black/5"
+            onClick={() => window.open(photo, '_blank')}
+          />
         ) : (
-          <span className="text-5xl">🪪</span>
-        )}
-        {/* Navigation photos (dots) */}
-        {current?.photos && current.photos.length > 1 && (
-          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-            {current.photos.map((_, i) => (
-              <span
-                key={i}
-                className={`h-2 w-2 rounded-full ${i === 0 ? 'bg-k2l-navy' : 'bg-k2l-success'}`}
-              />
-            ))}
+          <div className="flex flex-col items-center gap-2 text-k2l-gray-400">
+            <span className="text-5xl">🪪</span>
+            <span className="text-xs">Aucune photo</span>
           </div>
+        )}
+        {/* Navigation photos (arrows + dots) */}
+        {photos.length > 1 && (
+          <>
+            <button
+              onClick={() => setPhotoIndex((i) => Math.max(0, i - 1))}
+              disabled={photoIndex === 0}
+              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white disabled:opacity-30"
+            >
+              ←
+            </button>
+            <button
+              onClick={() => setPhotoIndex((i) => Math.min(photos.length - 1, i + 1))}
+              disabled={photoIndex === photos.length - 1}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white disabled:opacity-30"
+            >
+              →
+            </button>
+            <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+              {photos.map((p, i) => (
+                <button
+                  key={p.id}
+                  onClick={() => setPhotoIndex(i)}
+                  className={`h-2.5 w-2.5 rounded-full transition-all ${i === photoIndex ? 'bg-k2l-navy scale-125' : 'bg-white/70'}`}
+                />
+              ))}
+            </div>
+            <div className="absolute top-2 right-2 rounded bg-black/50 px-2 py-0.5 text-[10px] text-white">
+              {photoIndex + 1} / {photos.length}
+            </div>
+          </>
         )}
       </div>
 
