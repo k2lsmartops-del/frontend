@@ -66,8 +66,11 @@ export default function SupervisorHomePage() {
         totalAgents,
       });
 
-      // Activité récente (dernières validations)
-      setRecent((pendingData.data || []).slice(0, 3));
+      // Activité récente — TOUTES les soumissions récentes (pas seulement en attente)
+      const { data: recentData } = await api.get('/submissions', {
+        params: { limit: 10 },
+      });
+      setRecent((recentData.data || []).slice(0, 5));
     } catch (err) {
       console.error('Erreur chargement données superviseur:', err);
     } finally {
@@ -168,7 +171,7 @@ export default function SupervisorHomePage() {
             </div>
           ) : recent.length === 0 ? (
             <div className="rounded-xl bg-white p-6 text-center text-sm text-k2l-gray-400 shadow-sm">
-              Aucune soumission en attente
+              Aucune activité récente
             </div>
           ) : (
             recent.map((s) => {
