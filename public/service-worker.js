@@ -4,7 +4,7 @@
 // Mise à jour contrôlée : pas de skipWaiting automatique (section 17)
 // ========================================
 
-const CACHE_VERSION = '1.0.0';
+const CACHE_VERSION = '1.0.1';
 const CACHE_NAME = `k2l-static-v${CACHE_VERSION}`;
 const API_CACHE = `k2l-api-v${CACHE_VERSION}`;
 const IMAGE_CACHE = `k2l-images-v${CACHE_VERSION}`;
