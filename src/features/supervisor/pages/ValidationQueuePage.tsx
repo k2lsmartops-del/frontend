@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  RiArrowLeftLine, RiLoader4Line, RiUserLine, RiStore2Line,
-  RiCheckboxCircleLine, RiCloseLine,
+  RiArrowLeftLine, RiArrowLeftSLine, RiArrowRightSLine, RiArrowRightLine,
+  RiLoader4Line, RiUserLine, RiStore2Line,
+  RiCheckboxCircleLine, RiCloseLine, RiImageLine,
 } from '@/common/icons';
 import { useToastStore } from '@/common/stores/toast.store';
 import api from '@/common/services/api';
@@ -166,7 +167,7 @@ export default function ValidationQueuePage() {
             Fiche {currentIndex + 1} / {total}
           </span>
           <button onClick={goNext} disabled={currentIndex >= total - 1} className="text-[13px] text-white/80 disabled:opacity-40">
-            Suivant →
+            Suivant <RiArrowRightLine className="inline" />
           </button>
         </div>
       </div>
@@ -182,7 +183,7 @@ export default function ValidationQueuePage() {
           />
         ) : (
           <div className="flex flex-col items-center gap-2 text-k2l-gray-400">
-            <span className="text-5xl">🪪</span>
+            <RiImageLine className="text-5xl" />
             <span className="text-xs">Aucune photo</span>
           </div>
         )}
@@ -194,14 +195,14 @@ export default function ValidationQueuePage() {
               disabled={photoIndex === 0}
               className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white disabled:opacity-30"
             >
-              ←
+              <RiArrowLeftSLine className="text-lg" />
             </button>
             <button
               onClick={() => setPhotoIndex((i) => Math.min(photos.length - 1, i + 1))}
               disabled={photoIndex === photos.length - 1}
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white disabled:opacity-30"
             >
-              →
+              <RiArrowRightSLine className="text-lg" />
             </button>
             <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
               {photos.map((p, i) => (

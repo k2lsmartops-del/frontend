@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import type { ReactNode } from 'react';
 import {
-  RiArrowLeftLine, RiLoader4Line, RiUserLine, RiStore2Line,
-  RiCheckboxCircleLine, RiCloseLine, RiMapPinLine, RiPhoneLine,
+  RiArrowLeftLine, RiArrowLeftSLine, RiArrowRightSLine,
+  RiLoader4Line, RiUserLine, RiStore2Line,
+  RiCheckboxCircleLine, RiCheckboxCircleFill, RiCloseLine, RiCloseCircleFill,
+  RiMapPinLine, RiPhoneLine, RiTimeLine, RiDraftLine, RiImageLine,
 } from '@/common/icons';
 import { useToastStore } from '@/common/stores/toast.store';
 import api from '@/common/services/api';
@@ -37,13 +40,13 @@ interface Submission {
   photos?: { id: string; url: string; category: string }[];
 }
 
-const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; icon: string }> = {
-  DRAFT: { label: 'Brouillon', bg: 'bg-k2l-gray-100', text: 'text-k2l-gray-600', icon: '📝' },
-  SUBMITTED: { label: 'En attente de validation', bg: 'bg-k2l-amber-light', text: 'text-[#854F0B]', icon: '⏳' },
-  SUPERVISOR_APPROVED: { label: 'Validé par superviseur', bg: 'bg-k2l-success-light', text: 'text-k2l-success', icon: '✅' },
-  VALIDATED: { label: 'Validé (final)', bg: 'bg-k2l-success-light', text: 'text-k2l-success', icon: '✅' },
-  REJECTED_L1: { label: 'Rejeté par superviseur', bg: 'bg-k2l-red-light', text: 'text-k2l-red', icon: '❌' },
-  REJECTED_L2: { label: 'Rejeté par coordinateur', bg: 'bg-k2l-red-light', text: 'text-k2l-red', icon: '❌' },
+const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; icon: ReactNode }> = {
+  DRAFT: { label: 'Brouillon', bg: 'bg-k2l-gray-100', text: 'text-k2l-gray-600', icon: <RiDraftLine className="text-xl" /> },
+  SUBMITTED: { label: 'En attente de validation', bg: 'bg-k2l-amber-light', text: 'text-[#854F0B]', icon: <RiTimeLine className="text-xl" /> },
+  SUPERVISOR_APPROVED: { label: 'Validé par superviseur', bg: 'bg-k2l-success-light', text: 'text-k2l-success', icon: <RiCheckboxCircleFill className="text-xl" /> },
+  VALIDATED: { label: 'Validé (final)', bg: 'bg-k2l-success-light', text: 'text-k2l-success', icon: <RiCheckboxCircleFill className="text-xl" /> },
+  REJECTED_L1: { label: 'Rejeté par superviseur', bg: 'bg-k2l-red-light', text: 'text-k2l-red', icon: <RiCloseCircleFill className="text-xl" /> },
+  REJECTED_L2: { label: 'Rejeté par coordinateur', bg: 'bg-k2l-red-light', text: 'text-k2l-red', icon: <RiCloseCircleFill className="text-xl" /> },
 };
 
 export default function SubmissionDetailPage() {
@@ -167,7 +170,7 @@ export default function SubmissionDetailPage() {
           />
         ) : (
           <div className="flex flex-col items-center gap-2 text-k2l-gray-400">
-            <span className="text-5xl">🪪</span>
+            <RiImageLine className="text-5xl" />
             <span className="text-xs">Aucune photo</span>
           </div>
         )}
@@ -178,14 +181,14 @@ export default function SubmissionDetailPage() {
               disabled={photoIndex === 0}
               className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white disabled:opacity-30"
             >
-              ←
+              <RiArrowLeftSLine className="text-lg" />
             </button>
             <button
               onClick={() => setPhotoIndex((i) => Math.min(photos.length - 1, i + 1))}
               disabled={photoIndex === photos.length - 1}
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white disabled:opacity-30"
             >
-              →
+              <RiArrowRightSLine className="text-lg" />
             </button>
             <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
               {photos.map((p, i) => (
