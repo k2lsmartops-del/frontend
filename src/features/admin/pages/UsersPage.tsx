@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { RiSearchLine, RiLoader4Line, RiEyeLine, RiEyeOffLine } from 'react-icons/ri';
 import api from '@/common/services/api';
-import { useAuthStore } from '@/common/stores/auth.store';
 
 interface User {
   id: string;
