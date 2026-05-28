@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppLayout from '@/common/components/AppLayout';
 import ProtectedRoute from '@/common/components/ProtectedRoute';
 import ErrorBoundary from '@/common/components/ErrorBoundary';
@@ -15,12 +15,27 @@ import SupervisorHomePage from '@/features/supervisor/pages/SupervisorHomePage';
 import ValidationQueuePage from '@/features/supervisor/pages/ValidationQueuePage';
 import SubmissionDetailPage from '@/features/supervisor/pages/SubmissionDetailPage';
 import TeamPage from '@/features/supervisor/pages/TeamPage';
+// Admin pages
+import AdminLayout from '@/features/admin/components/AdminLayout';
+import AdminDashboardPage from '@/features/admin/pages/AdminDashboardPage';
+import UsersPage from '@/features/admin/pages/UsersPage';
+import ZonesPage from '@/features/admin/pages/ZonesPage';
+import SecteursPage from '@/features/admin/pages/SecteursPage';
+import ValidationCoordinateurPage from '@/features/admin/pages/ValidationCoordinateurPage';
 import { useAuthStore } from '@/common/stores/auth.store';
 
 function RoleBasedHomePage() {
   const user = useAuthStore((s) => s.user);
   if (user?.role === 'SUPERVISEUR') return <SupervisorHomePage />;
   return <HomePage />;
+}
+
+function RoleBasedRoot() {
+  const user = useAuthStore((s) => s.user);
+  if (user?.role === 'ADMIN' || user?.role === 'COORDINATEUR') {
+    return <Navigate to="/admin" replace />;
+  }
+  return <RoleBasedHomePage />;
 }
 
 export default function App() {
@@ -30,6 +45,24 @@ export default function App() {
         <UpdatePrompt />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+
+          {/* Admin / Coordinator desktop back-office */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<AdminDashboardPage />} />
+            <Route path="users" element={<UsersPage />} />
+            <Route path="zones" element={<ZonesPage />} />
+            <Route path="secteurs" element={<SecteursPage />} />
+            <Route path="validations" element={<ValidationCoordinateurPage />} />
+          </Route>
+
+          {/* Mobile PWA routes */}
           <Route
             element={
               <ProtectedRoute>
@@ -37,7 +70,7 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<RoleBasedHomePage />} />
+            <Route index element={<RoleBasedRoot />} />
             {/* Commercial routes */}
             <Route path="prospect" element={<ProspectFormPage />} />
             <Route path="marchand" element={<MarchandFormPage />} />

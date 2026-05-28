@@ -18,8 +18,10 @@ export interface User {
   avatarUrl?: string | null;
   gender?: Gender | null;
   zoneId?: string | null;
+  secteurId?: string | null;
   supervisorId?: string | null;
   zone?: { id: string; name: string } | null;
+  secteur?: { id: string; name: string } | null;
   supervisor?: { id: string; fullName: string; matricule: string } | null;
   createdAt: string;
 }
