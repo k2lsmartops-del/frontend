@@ -22,7 +22,6 @@ import UsersPage from '@/features/admin/pages/UsersPage';
 import ZonesPage from '@/features/admin/pages/ZonesPage';
 import SecteursPage from '@/features/admin/pages/SecteursPage';
 import ValidationCoordinateurPage from '@/features/admin/pages/ValidationCoordinateurPage';
-import CommerciauxPage from '@/features/admin/pages/CommerciauxPage';
 import { useAuthStore } from '@/common/stores/auth.store';
 
 function RoleBasedHomePage() {
@@ -33,7 +32,7 @@ function RoleBasedHomePage() {
 
 function RoleBasedRoot() {
   const user = useAuthStore((s) => s.user);
-  if (user?.role === 'ADMIN' || user?.role === 'COORDINATEUR' || user?.role === 'SUPERVISEUR') {
+  if (user?.role === 'ADMIN' || user?.role === 'COORDINATEUR') {
     return <Navigate to="/admin" replace />;
   }
   return <RoleBasedHomePage />;
@@ -61,7 +60,6 @@ export default function App() {
             <Route path="zones" element={<ZonesPage />} />
             <Route path="secteurs" element={<SecteursPage />} />
             <Route path="validations" element={<ValidationCoordinateurPage />} />
-            <Route path="commerciaux" element={<CommerciauxPage />} />
           </Route>
 
           {/* Mobile PWA routes */}

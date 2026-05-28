@@ -9,7 +9,6 @@ import {
   RiSearchLine,
   RiLeafLine,
   RiCheckboxCircleLine,
-  RiUserLine,
 } from 'react-icons/ri';
 
 interface NavItem {
@@ -20,12 +19,11 @@ interface NavItem {
 }
 
 const adminNav: NavItem[] = [
-  { to: '/admin', icon: RiHome5Line, label: 'Tableau de bord', roles: ['ADMIN', 'COORDINATEUR', 'SUPERVISEUR'] },
+  { to: '/admin', icon: RiHome5Line, label: 'Tableau de bord', roles: ['ADMIN', 'COORDINATEUR'] },
   { to: '/admin/validations', icon: RiCheckboxCircleLine, label: 'Validations', roles: ['COORDINATEUR'] },
   { to: '/admin/zones', icon: RiMapPin2Line, label: 'Zones', roles: ['ADMIN'] },
   { to: '/admin/secteurs', icon: RiSettings4Line, label: 'Secteurs', roles: ['ADMIN', 'COORDINATEUR'] },
   { to: '/admin/users', icon: RiTeamLine, label: 'Utilisateurs', roles: ['ADMIN', 'COORDINATEUR'] },
-  { to: '/admin/commerciaux', icon: RiUserLine, label: 'Mes Commerciaux', roles: ['SUPERVISEUR'] },
 ];
 
 export default function AdminLayout() {
