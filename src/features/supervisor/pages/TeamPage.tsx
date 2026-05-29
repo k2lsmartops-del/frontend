@@ -33,6 +33,7 @@ export default function TeamPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState<string | null>(null);
 
   const loadTeam = useCallback(async () => {
     try {
@@ -88,17 +89,23 @@ export default function TeamPage() {
           phone: formData.phone,
           email: formData.email || null,
         });
+        setShowForm(false);
+        setEditingId(null);
+        setFormData({ fullName: '', phone: '', email: '', password: '' });
+        loadTeam();
       } else {
         await api.post('/users', {
           ...formData,
           role: 'COMMERCIAL',
           email: formData.email || null,
         });
+        // Afficher le mot de passe entré
+        setShowPassword(formData.password);
+        setShowForm(false);
+        setEditingId(null);
+        setFormData({ fullName: '', phone: '', email: '', password: '' });
+        loadTeam();
       }
-      setShowForm(false);
-      setEditingId(null);
-      setFormData({ fullName: '', phone: '', email: '', password: '' });
-      loadTeam();
     } catch (err: unknown) {
       setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Erreur');
     } finally {
@@ -209,6 +216,30 @@ export default function TeamPage() {
               {saving ? 'Enregistrement...' : editingId ? 'Enregistrer' : 'Créer'}
             </button>
           </form>
+        </div>
+      )}
+
+      {/* Modal mot de passe après création */}
+      {showPassword && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6">
+          <div className="w-full max-w-sm rounded-xl bg-white p-5">
+            <h3 className="mb-2 font-head text-sm font-semibold">Commercial créé !</h3>
+            <p className="mb-2 text-xs text-k2l-gray-600">
+              Voici le mot de passe à communiquer au commercial :
+            </p>
+            <div className="mb-4 rounded-lg bg-k2l-gray-100 p-3 text-center font-mono text-lg font-bold text-k2l-primary">
+              {showPassword}
+            </div>
+            <p className="mb-4 text-[10px] text-k2l-gray-400">
+              Le commercial devra changer ce mot de passe à sa première connexion.
+            </p>
+            <button
+              onClick={() => setShowPassword(null)}
+              className="w-full rounded-lg bg-k2l-primary py-2.5 text-sm font-semibold text-white"
+            >
+              OK
+            </button>
+          </div>
         </div>
       )}
 
