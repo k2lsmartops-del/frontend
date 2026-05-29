@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RiLoader4Line, RiAddLine, RiCloseLine, RiDeleteBinLine, RiEditLine, RiEyeLine, RiEyeOffLine } from 'react-icons/ri';
+import { RiLoader4Line, RiAddLine, RiCloseLine, RiDeleteBinLine, RiEditLine, RiEyeLine, RiEyeOffLine, RiMore2Fill, RiCheckLine, RiStopLine } from 'react-icons/ri';
 import api from '@/common/services/api';
 
 interface TeamMember {
@@ -34,6 +34,20 @@ export default function TeamPage() {
   const [error, setError] = useState('');
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [menuOpen, setMenuOpen] = useState<string | null>(null);
+
+  const handleToggleActive = async (member: TeamMember) => {
+    try {
+      if (member.status === 'ACTIF') {
+        await api.patch(`/users/${member.id}/deactivate`);
+      } else {
+        await api.patch(`/users/${member.id}/activate`);
+      }
+      loadTeam();
+    } catch (err: unknown) {
+      setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Erreur');
+    }
+  };
 
   const loadTeam = useCallback(async () => {
     try {
@@ -331,17 +345,36 @@ export default function TeamPage() {
                 {/* Actions */}
                 <div className="flex items-center gap-1">
                   <button
+                    onClick={() => handleToggleActive(member)}
+                    className={`rounded-lg p-2 ${member.status === 'ACTIF' ? 'text-k2l-red hover:bg-k2l-red/10' : 'text-k2l-success hover:bg-k2l-success/10'}`}
+                    title={member.status === 'ACTIF' ? 'Désactiver' : 'Activer'}
+                  >
+                    {member.status === 'ACTIF' ? <RiStopLine className="text-lg" /> : <RiCheckLine className="text-lg" />}
+                  </button>
+                  <button
                     onClick={() => handleEdit(member)}
                     className="rounded-lg p-2 text-k2l-gray-400 hover:bg-k2l-gray-100"
                   >
                     <RiEditLine className="text-lg" />
                   </button>
-                  <button
-                    onClick={() => setConfirmRemove(member.id)}
-                    className="rounded-lg p-2 text-k2l-red hover:bg-k2l-red/10"
-                  >
-                    <RiDeleteBinLine className="text-lg" />
-                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={() => setMenuOpen(menuOpen === member.id ? null : member.id)}
+                      className="rounded-lg p-2 text-k2l-gray-400 hover:bg-k2l-gray-100"
+                    >
+                      <RiMore2Fill className="text-lg" />
+                    </button>
+                    {menuOpen === member.id && (
+                      <div className="absolute right-0 top-full z-10 mt-1 w-32 rounded-lg bg-white shadow-lg">
+                        <button
+                          onClick={() => { setConfirmRemove(member.id); setMenuOpen(null); }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-xs font-medium text-k2l-red hover:bg-k2l-red/5"
+                        >
+                          <RiDeleteBinLine /> Retirer
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Taux validation */}
