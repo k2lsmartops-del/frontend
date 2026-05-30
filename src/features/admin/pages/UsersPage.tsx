@@ -197,17 +197,20 @@ export default function UsersPage() {
 
         {/* Ligne 2: Filtres zone + statut + recherche */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Zone filter */}
-          <select
-            value={zoneFilter}
-            onChange={(e) => { setZoneFilter(e.target.value); setPage(1); }}
-            className="rounded-lg border border-k2l-gray-200 bg-white px-3 py-1.5 text-xs font-medium outline-none hover:border-[#1D9E75] transition-colors"
-          >
-            <option value="">📍 Toutes les zones</option>
-            {zones.map((z) => (
-              <option key={z.id} value={z.id}>{z.name}</option>
-            ))}
-          </select>
+          {/* Zone filter - PROMINENT */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-k2l-gray-400 uppercase tracking-wider">Zone :</span>
+            <select
+              value={zoneFilter}
+              onChange={(e) => { setZoneFilter(e.target.value); setPage(1); }}
+              className="rounded-lg border-2 border-[#1D9E75] bg-white px-4 py-2 text-sm font-semibold text-[#1D9E75] outline-none hover:bg-[#1D9E75]/5 transition-colors cursor-pointer"
+            >
+              <option value="">📍 Toutes les zones</option>
+              {zones.map((z) => (
+                <option key={z.id} value={z.id}>{z.name}</option>
+              ))}
+            </select>
+          </div>
 
           {/* Statut filter dropdown */}
           <select
