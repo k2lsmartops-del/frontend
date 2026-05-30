@@ -48,7 +48,7 @@ function DashboardAdmin() {
       try {
         const [zonesRes, usersRes] = await Promise.all([
           api.get('/zones'),
-          api.get('/users?limit=100'),
+          api.get('/users?limit=1000'),
         ]);
         setZones(Array.isArray(zonesRes.data) ? zonesRes.data : []);
         setUsers(usersRes.data?.data || []);
