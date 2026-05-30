@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RiWifiLine, RiWifiOffLine } from '@/common/icons';
+import { RiEyeLine, RiEyeOffLine } from 'react-icons/ri';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '@/common/stores/auth.store';
 import { useToastStore } from '@/common/stores/toast.store';
@@ -14,6 +15,7 @@ export default function LoginPage() {
 
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -66,8 +68,17 @@ export default function LoginPage() {
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-k2l-gray-600">Mot de passe</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="********"
-              className="w-full rounded-sm border-[1.5px] border-k2l-gray-200 bg-white px-3.5 py-3 font-body text-[15px] text-k2l-gray-900 outline-none transition-colors focus:border-k2l-primary" />
+            <div className="relative">
+              <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="********"
+                className="w-full rounded-sm border-[1.5px] border-k2l-gray-200 bg-white px-3.5 py-3 font-body text-[15px] text-k2l-gray-900 outline-none transition-colors focus:border-k2l-primary pr-10" />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-k2l-gray-400 hover:text-k2l-gray-600"
+              >
+                {showPassword ? <RiEyeOffLine className="text-lg" /> : <RiEyeLine className="text-lg" />}
+              </button>
+            </div>
           </div>
           <button type="button" disabled={loading} onClick={handleLogin}
             className="w-full rounded-md bg-k2l-primary py-3.5 font-head text-[15px] font-semibold tracking-wide text-white transition-all active:scale-[0.98] active:bg-k2l-navy disabled:opacity-60">
