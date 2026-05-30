@@ -154,8 +154,8 @@ export default function SecteursPage() {
       <div className="mb-5 rounded-2xl border border-k2l-gray-200 border-l-[5px] border-l-[#1D9E75] bg-white p-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-k2l-success-light text-2xl">
-              🗂️
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-k2l-success-light">
+              <RiMapPinLine className="text-2xl text-[#1D9E75]" />
             </div>
             <div className="flex-1">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-k2l-gray-400">Zone sélectionnée</p>
@@ -454,7 +454,6 @@ function SecteurFormModal({ secteur, zoneId, zoneName, supervisors, onSave, onCl
   const [name, setName] = useState(secteur?.name || '');
   const [supervisorId, setSupervisorId] = useState(secteur?.supervisor?.id || '');
   const [quartiers, setQuartiers] = useState<Quartier[]>([]);
-  const [currentQuartiers, setCurrentQuartiers] = useState<Quartier[]>([]);
   const [selectedQuartiers, setSelectedQuartiers] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [loadingQuartiers, setLoadingQuartiers] = useState(true);
@@ -471,7 +470,6 @@ function SecteurFormModal({ secteur, zoneId, zoneName, supervisors, onSave, onCl
         if (secteur) {
           const secteurRes = await api.get(`/secteurs/${secteur.id}`);
           const current: Quartier[] = secteurRes.data.quartiers || [];
-          setCurrentQuartiers(current);
           setSelectedQuartiers(current.map((q: Quartier) => q.id));
           // Fusionner : disponibles + actuels du secteur
           const allQuartiers = [...available, ...current];
@@ -584,7 +582,6 @@ function SecteurFormModal({ secteur, zoneId, zoneName, supervisors, onSave, onCl
                       <div className="flex flex-wrap gap-1">
                         {communeQuartiers.map((q) => {
                           const isSelected = selectedQuartiers.includes(q.id);
-                          const isCurrent = currentQuartiers.some((cq) => cq.id === q.id);
                           return (
                             <button
                               type="button"
@@ -635,140 +632,3 @@ function SecteurFormModal({ secteur, zoneId, zoneName, supervisors, onSave, onCl
   );
 }
 
-interface SecteurFormProps {
-  secteur: Secteur | null;
-  zoneId: string;
-  supervisors: Supervisor[];
-  onSaved: () => void;
-  onCancel: () => void;
-}
-
-function SecteurForm({ secteur, zoneId, supervisors, onSaved, onCancel }: SecteurFormProps) {
-  const [name, setName] = useState(secteur?.name || '');
-  const [supervisorId, setSupervisorId] = useState(secteur?.supervisor?.id || '');
-  const [quartiers, setQuartiers] = useState<Quartier[]>([]);
-  const [currentQuartiers, setCurrentQuartiers] = useState<Quartier[]>([]);
-  const [selectedQuartiers, setSelectedQuartiers] = useState<string[]>([]);
-  const [saving, setSaving] = useState(false);
-  const [loadingQuartiers, setLoadingQuartiers] = useState(true);
-
-  useEffect(() => {
-    const loadQuartiers = async () => {
-      setLoadingQuartiers(true);
-      try {
-        // Charger les quartiers disponibles (non assignés)
-        const availableRes = await api.get(`/zones/${zoneId}/quartiers-disponibles`);
-        const available: Quartier[] = availableRes.data;
-
-        // Si on édite un secteur, charger aussi ses quartiers actuels
-        if (secteur) {
-          const secteurRes = await api.get(`/secteurs/${secteur.id}`);
-          const current: Quartier[] = secteurRes.data.quartiers || [];
-          setCurrentQuartiers(current);
-          setSelectedQuartiers(current.map((q: Quartier) => q.id));
-          // Fusionner : disponibles + actuels du secteur
-          const allQuartiers = [...available, ...current];
-          // Dédupliquer par id
-          const unique = allQuartiers.filter((q, i, arr) => arr.findIndex((x) => x.id === q.id) === i);
-          setQuartiers(unique);
-        } else {
-          setQuartiers(available);
-        }
-      } catch { /* ignore */ }
-      finally { setLoadingQuartiers(false); }
-    };
-    loadQuartiers();
-  }, [zoneId, secteur]);
-
-  const toggleQuartier = (id: string) => {
-    setSelectedQuartiers((prev) => prev.includes(id) ? prev.filter((q) => q !== id) : [...prev, id]);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      const payload = { name, supervisorId: supervisorId || null, quartierIds: selectedQuartiers.length > 0 ? selectedQuartiers : undefined };
-      if (secteur) {
-        await api.patch(`/secteurs/${secteur.id}`, payload);
-      } else {
-        await api.post('/secteurs', { ...payload, zoneId });
-      }
-      onSaved();
-    } catch (err: unknown) {
-      alert((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Erreur');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-k2l-gray-200 bg-white p-5">
-      <h3 className="mb-4 font-head text-sm font-semibold">{secteur ? 'Modifier le secteur' : 'Creer un secteur'}</h3>
-      <div className="space-y-3 text-[13px]">
-        <div>
-          <label className="text-[12px] text-k2l-gray-400">Nom du secteur</label>
-          <input required value={name} onChange={(e) => setName(e.target.value)} className="mt-1 w-full rounded-lg border border-k2l-gray-200 bg-k2l-gray-100 px-3 py-2.5 outline-none focus:border-[#1D9E75]" placeholder="Ex: Secteur 5" />
-        </div>
-        <div>
-          <label className="text-[12px] text-k2l-gray-400">Superviseur du secteur</label>
-          <select value={supervisorId} onChange={(e) => setSupervisorId(e.target.value)} className="mt-1 w-full rounded-lg border border-k2l-gray-200 bg-k2l-gray-100 px-3 py-2.5 outline-none">
-            <option value="">-- Aucun superviseur --</option>
-            {supervisors.map((s) => (
-              <option key={s.id} value={s.id}>{s.fullName} ({s.matricule})</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="text-[12px] text-k2l-gray-400">
-            {secteur ? `Quartiers du secteur (${selectedQuartiers.length} sélectionné(s))` : `Quartiers disponibles (${quartiers.length})`}
-          </label>
-          {loadingQuartiers ? (
-            <div className="mt-2 text-center text-k2l-gray-400 text-[12px]">Chargement...</div>
-          ) : (
-            <div className="mt-1.5 max-h-56 overflow-y-auto space-y-2">
-              {/* Grouper par commune */}
-              {Object.entries(
-                quartiers.reduce((acc, q) => {
-                  const communeName = q.commune.name;
-                  if (!acc[communeName]) acc[communeName] = [];
-                  acc[communeName].push(q);
-                  return acc;
-                }, {} as Record<string, Quartier[]>)
-              ).map(([communeName, communeQuartiers]) => (
-                <div key={communeName}>
-                  <div className="text-[10px] font-semibold text-k2l-gray-500 mb-1">{communeName} ({communeQuartiers.length})</div>
-                  <div className="flex flex-wrap gap-1">
-                    {communeQuartiers.map((q) => {
-                      const isSelected = selectedQuartiers.includes(q.id);
-                      const isCurrent = currentQuartiers.some((cq) => cq.id === q.id);
-                      return (
-                        <button type="button" key={q.id} onClick={() => toggleQuartier(q.id)}
-                          className={`rounded-full px-2.5 py-1 text-[11px] font-semibold border transition-colors ${
-                            isSelected 
-                              ? 'bg-[#E1F5EE] text-[#0F6E56] border-[#9FE1CB]' 
-                              : isCurrent 
-                                ? 'bg-k2l-amber/10 text-k2l-amber border-k2l-amber/30'
-                                : 'bg-k2l-gray-100 text-k2l-gray-600 border-k2l-gray-200'
-                          }`}>
-                          {q.name} {isSelected && '✕'}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-              {quartiers.length === 0 && <span className="text-k2l-gray-400">Aucun quartier disponible</span>}
-            </div>
-          )}
-        </div>
-        <div className="flex gap-2 pt-2">
-          <button type="button" onClick={onCancel} className="flex-1 rounded-lg border border-k2l-gray-200 py-2.5 text-[13px] font-semibold text-k2l-gray-600 hover:bg-k2l-gray-100">Annuler</button>
-          <button type="submit" disabled={saving || !name} className="flex-1 rounded-lg bg-[#1D9E75] py-2.5 text-[13px] font-semibold text-white hover:bg-[#0F6E56] disabled:opacity-50">
-            {saving ? 'Enregistrement...' : (secteur ? 'Enregistrer' : 'Creer')}
-          </button>
-        </div>
-      </div>
-    </form>
-  );
-}
