@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { RiSearchLine, RiLoader4Line, RiEyeLine, RiEyeOffLine, RiFileExcel2Line } from 'react-icons/ri';
+import { useState, useEffect, useMemo } from 'react';
+import { RiSearchLine, RiLoader4Line, RiEyeLine, RiEyeOffLine, RiFileExcel2Line, RiUserLine, RiTeamLine, RiShieldUserLine, RiBriefcaseLine, RiPencilLine, RiLockPasswordLine, RiCheckLine, RiCloseLine, RiPauseLine, RiMapPinLine } from 'react-icons/ri';
 import api from '@/common/services/api';
 import ImportTeamModal from '../components/ImportTeamModal';
 
@@ -27,20 +27,6 @@ interface Zone {
   name: string;
 }
 
-const ROLE_BADGE: Record<string, string> = {
-  ADMIN: 'bg-[#FCEBEB] text-[#A32D2D]',
-  COORDINATEUR: 'bg-[#E6F1FB] text-[#1F5C99]',
-  SUPERVISEUR: 'bg-[#E6F1FB] text-[#1F5C99]',
-  COMMERCIAL: 'bg-k2l-gray-100 text-k2l-gray-600',
-};
-
-const STATUS_BADGE: Record<string, string> = {
-  ACTIF: 'bg-[#E1F5EE] text-[#0F6E56]',
-  SUSPENDU: 'bg-[#FAEEDA] text-[#854F0B]',
-  EN_ATTENTE: 'bg-[#FAEEDA] text-[#854F0B]',
-  DESACTIVE: 'bg-k2l-gray-100 text-k2l-gray-600',
-};
-
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
@@ -50,6 +36,7 @@ export default function UsersPage() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('');
   const [zoneFilter, setZoneFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
@@ -60,13 +47,36 @@ export default function UsersPage() {
     api.get('/zones').then((res) => setZones(res.data || [])).catch(() => {});
   }, []);
 
-  const loadUsers = useCallback(async () => {
+  // Charger les utilisateurs
+  useEffect(() => {
+    const loadUsers = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({ page: String(page), limit: '100' });
+        if (search) params.set('search', search);
+        if (roleFilter) params.set('role', roleFilter);
+        if (zoneFilter) params.set('zoneId', zoneFilter);
+        if (statusFilter) params.set('status', statusFilter);
+        const res = await api.get(`/users?${params}`);
+        setUsers(res.data.data || []);
+        setTotal(res.data.meta?.total || 0);
+      } catch {
+        // ignore
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadUsers();
+  }, [page, search, roleFilter, zoneFilter, statusFilter]);
+
+  const loadUsers = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(page), limit: '50' });
+      const params = new URLSearchParams({ page: String(page), limit: '100' });
       if (search) params.set('search', search);
       if (roleFilter) params.set('role', roleFilter);
       if (zoneFilter) params.set('zoneId', zoneFilter);
+      if (statusFilter) params.set('status', statusFilter);
       const res = await api.get(`/users?${params}`);
       setUsers(res.data.data || []);
       setTotal(res.data.meta?.total || 0);
@@ -75,9 +85,7 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, roleFilter, zoneFilter]);
-
-  useEffect(() => { loadUsers(); }, [loadUsers]);
+  };
 
   const handleAction = async (userId: string, action: string) => {
     try {
@@ -95,174 +103,171 @@ export default function UsersPage() {
     }
   };
 
+  // KPIs calculés
+  const kpis = useMemo(() => {
+    const totalUsers = users.length;
+    const activeCoordinators = users.filter((u) => u.role === 'COORDINATEUR' && u.isActive).length;
+    const activeSupervisors = users.filter((u) => u.role === 'SUPERVISEUR' && u.isActive).length;
+    const activeCommercials = users.filter((u) => u.role === 'COMMERCIAL' && u.isActive).length;
+    
+    return { totalUsers, activeCoordinators, activeSupervisors, activeCommercials };
+  }, [users]);
+
+  // Filtres par rôle
   const roleFilters = [
-    { label: 'Tous', value: '' },
-    { label: 'Coordinateurs', value: 'COORDINATEUR' },
-    { label: 'Superviseurs', value: 'SUPERVISEUR' },
-    { label: 'Commerciaux', value: 'COMMERCIAL' },
+    { label: 'Tous', value: '', count: users.length },
+    { label: 'Coordinateurs', value: 'COORDINATEUR', count: users.filter((u) => u.role === 'COORDINATEUR').length },
+    { label: 'Superviseurs', value: 'SUPERVISEUR', count: users.filter((u) => u.role === 'SUPERVISEUR').length },
+    { label: 'Commerciaux', value: 'COMMERCIAL', count: users.filter((u) => u.role === 'COMMERCIAL').length },
+  ];
+
+  // Filtres par statut
+  const statusFilters = [
+    { label: 'Tous statuts', value: '' },
+    { label: 'Actifs', value: 'ACTIF' },
+    { label: 'Suspendus', value: 'SUSPENDU' },
+    { label: 'Désactivés', value: 'DESACTIVE' },
   ];
 
 
   return (
     <div>
-      {/* Stats bar */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex gap-5 text-[13px]">
-          <span><b className="font-head text-lg">{total}</b> <span className="text-k2l-gray-400">utilisateur(s)</span></span>
+      {/* Header avec actions */}
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <h1 className="font-head text-2xl font-bold text-k2l-gray-900">Gestion des utilisateurs</h1>
+          <p className="mt-1 text-sm text-k2l-gray-400">{total} utilisateur(s) au total</p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => setShowImport(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-[#1D9E75] px-4 py-2.5 text-[13px] font-semibold text-[#1D9E75] hover:bg-[#1D9E75]/5 transition-colors"
+            className="flex items-center gap-2 rounded-lg border-2 border-[#1D9E75] px-4 py-2.5 text-[13px] font-semibold text-[#1D9E75] hover:bg-[#1D9E75]/5 transition-colors"
           >
-            <RiFileExcel2Line className="text-base" /> Importer Excel
+            <RiFileExcel2Line className="text-lg" /> Importer Excel
           </button>
           <button
             onClick={() => setShowCreate(!showCreate)}
-            className="rounded-lg bg-k2l-success px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-k2l-success/90 transition-colors"
+            className="flex items-center gap-2 rounded-lg bg-[#1D9E75] px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-[#0F6E56] transition-colors"
           >
-            + Nouvel utilisateur
+            <RiUserLine className="text-lg" /> Nouvel utilisateur
           </button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        {roleFilters.map((f) => (
-          <button
-            key={f.value}
-            onClick={() => { setRoleFilter(f.value); setPage(1); }}
-            className={`rounded-full px-3.5 py-1.5 text-xs font-medium border transition-colors ${
-              roleFilter === f.value
-                ? 'bg-[#1D9E75] text-white border-[#1D9E75]'
-                : 'bg-white text-k2l-gray-600 border-k2l-gray-200 hover:border-[#1D9E75]'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
+      {/* Bandeau KPI */}
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+        <KpiCard
+          label="Total utilisateurs"
+          value={kpis.totalUsers}
+          icon={<RiTeamLine />}
+          color="blue"
+        />
+        <KpiCard
+          label="Coordinateurs actifs"
+          value={kpis.activeCoordinators}
+          icon={<RiShieldUserLine />}
+          color="blue"
+        />
+        <KpiCard
+          label="Superviseurs actifs"
+          value={kpis.activeSupervisors}
+          icon={<RiBriefcaseLine />}
+          color="blue"
+        />
+        <KpiCard
+          label="Commerciaux actifs"
+          value={kpis.activeCommercials}
+          icon={<RiUserLine />}
+          color="green"
+        />
+      </div>
 
-        {/* Zone filter */}
-        <select
-          value={zoneFilter}
-          onChange={(e) => { setZoneFilter(e.target.value); setPage(1); }}
-          className={`rounded-full px-3.5 py-1.5 text-xs font-medium border transition-colors outline-none ${
-            zoneFilter
-              ? 'bg-[#1F5C99] text-white border-[#1F5C99]'
-              : 'bg-white text-k2l-gray-600 border-k2l-gray-200'
-          }`}
-        >
-          <option value="">Toutes les zones</option>
-          {zones.map((z) => (
-            <option key={z.id} value={z.id}>{z.name}</option>
+      {/* Toolbar filtres */}
+      <div className="mb-4 space-y-3">
+        {/* Ligne 1: Filtres par rôle */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-k2l-gray-400 uppercase tracking-wider">Rôle :</span>
+          {roleFilters.map((f) => (
+            <button
+              key={f.value}
+              onClick={() => { setRoleFilter(f.value); setPage(1); }}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                roleFilter === f.value
+                  ? 'bg-[#1D9E75] text-white'
+                  : 'bg-white text-k2l-gray-600 border border-k2l-gray-200 hover:border-[#1D9E75]'
+              }`}
+            >
+              {f.label} ({f.count})
+            </button>
           ))}
-        </select>
+        </div>
 
-        <div className="ml-auto flex items-center gap-2 rounded-lg border border-k2l-gray-200 bg-white px-3 py-2">
-          <RiSearchLine className="text-sm text-k2l-gray-400" />
-          <input
-            type="text"
-            placeholder="Rechercher..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-44 bg-transparent text-xs outline-none placeholder:text-k2l-gray-400"
-          />
+        {/* Ligne 2: Filtres par statut + zone + recherche */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-k2l-gray-400 uppercase tracking-wider">Statut :</span>
+          {statusFilters.map((f) => (
+            <button
+              key={f.value}
+              onClick={() => { setStatusFilter(f.value); setPage(1); }}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                statusFilter === f.value
+                  ? 'bg-[#1F5C99] text-white'
+                  : 'bg-white text-k2l-gray-600 border border-k2l-gray-200 hover:border-[#1F5C99]'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+
+          {/* Zone filter */}
+          <select
+            value={zoneFilter}
+            onChange={(e) => { setZoneFilter(e.target.value); setPage(1); }}
+            className="rounded-lg border border-k2l-gray-200 bg-white px-3 py-1.5 text-xs font-medium outline-none hover:border-[#1D9E75] transition-colors"
+          >
+            <option value="">📍 Toutes les zones</option>
+            {zones.map((z) => (
+              <option key={z.id} value={z.id}>{z.name}</option>
+            ))}
+          </select>
+
+          {/* Recherche */}
+          <div className="ml-auto flex items-center gap-2 rounded-lg border border-k2l-gray-200 bg-white px-3 py-2">
+            <RiSearchLine className="text-sm text-k2l-gray-400" />
+            <input
+              type="text"
+              placeholder="Rechercher par nom, matricule, téléphone..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="w-64 bg-transparent text-[13px] outline-none placeholder:text-k2l-gray-400"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-k2l-gray-200 bg-white">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <RiLoader4Line className="animate-spin text-2xl text-[#1D9E75]" />
-          </div>
-        ) : (
-          <table className="w-full text-[13px]">
-            <thead>
-              <tr className="border-b border-k2l-gray-200">
-                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-k2l-gray-400">Utilisateur</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-k2l-gray-400">Role</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-k2l-gray-400">Rattachement</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-k2l-gray-400">Statut</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-k2l-gray-400">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u.id} className="border-b border-k2l-gray-100 last:border-b-0 hover:bg-k2l-gray-100/50">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E1F5EE] text-[11px] font-bold text-[#0F6E56] font-head">
-                        {u.fullName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="font-medium">{u.fullName}</div>
-                        <div className="text-[11px] text-k2l-gray-400">{u.matricule}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${ROLE_BADGE[u.role] || ''}`}>
-                      {u.role}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-k2l-gray-600 text-[12px]">
-                    {u.role === 'COORDINATEUR' && (u.zone?.name ? `Zone: ${u.zone.name}` : 'Aucune zone')}
-                    {u.role === 'SUPERVISEUR' && (
-                      u.secteur?.name 
-                        ? <span>
-                            {u.zone?.coordinator?.fullName && <span className="text-k2l-primary font-medium">Coord: {u.zone.coordinator.fullName}</span>}
-                            {u.zone?.coordinator?.fullName && u.secteur?.name && <span className="text-k2l-gray-300"> · </span>}
-                            <span>{u.secteur.name}</span>
-                          </span>
-                        : 'Aucun secteur'
-                    )}
-                    {u.role === 'COMMERCIAL' && (
-                      u.supervisor?.fullName 
-                        ? <span>
-                            {u.zone?.coordinator?.fullName && <span className="text-k2l-primary font-medium">Coord: {u.zone.coordinator.fullName}</span>}
-                            {u.zone?.coordinator?.fullName && <span className="text-k2l-gray-300"> · </span>}
-                            <span>Sup: {u.supervisor.fullName}</span>
-                          </span>
-                        : (u.secteur?.name ? `Secteur: ${u.secteur.name}` : 'Non assigné')
-                    )}
-                    {u.role === 'ADMIN' && <span className="text-k2l-gray-400">—</span>}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_BADGE[u.status] || ''}`}>
-                      {u.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 flex gap-2">
-                    {u.role !== 'ADMIN' && (
-                      <button
-                        onClick={() => setEditUser(u)}
-                        className="rounded border border-[#1F5C99] px-2 py-1 text-[11px] text-[#1F5C99] hover:bg-[#1F5C99]/10"
-                      >
-                        Modifier
-                      </button>
-                    )}
-                    <select
-                      onChange={(e) => { if (e.target.value) { handleAction(u.id, e.target.value); e.target.value = ''; } }}
-                      className="rounded border border-k2l-gray-200 bg-transparent px-2 py-1 text-[11px] outline-none"
-                      defaultValue=""
-                    >
-                      <option value="" disabled>Actions</option>
-                      {u.isActive && <option value="deactivate">Désactiver</option>}
-                      {!u.isActive && <option value="activate">Activer</option>}
-                      {u.isActive && <option value="suspend">Suspendre</option>}
-                      <option value="reset">Reset MdP</option>
-                    </select>
-                  </td>
-                </tr>
-              ))}
-              {users.length === 0 && (
-                <tr><td colSpan={5} className="px-4 py-8 text-center text-k2l-gray-400">Aucun utilisateur</td></tr>
-              )}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {/* Grille de cartes */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <RiLoader4Line className="animate-spin text-3xl text-[#1D9E75]" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {users.map((user) => (
+            <UserCard
+              key={user.id}
+              user={user}
+              onEdit={() => setEditUser(user)}
+              onResetPassword={() => setResetPasswordUser(user)}
+              onAction={handleAction}
+            />
+          ))}
+          {users.length === 0 && (
+            <div className="col-span-3 rounded-xl border border-k2l-gray-200 bg-white p-12 text-center">
+              <p className="text-k2l-gray-400">Aucun utilisateur trouvé</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Pagination */}
       {total > 20 && (
@@ -289,6 +294,218 @@ export default function UsersPage() {
           onSuccess={loadUsers}
         />
       )}
+    </div>
+  );
+}
+
+/* ─── Composants ─── */
+
+interface KpiCardProps {
+  label: string;
+  value: string | number;
+  icon: React.ReactNode;
+  color: 'green' | 'blue';
+}
+
+function KpiCard({ label, value, icon, color }: KpiCardProps) {
+  const colorClasses = {
+    green: 'bg-k2l-success-light text-[#1D9E75]',
+    blue: 'bg-[#E6F1FB] text-[#1F5C99]',
+  };
+
+  return (
+    <div className="relative rounded-xl border border-k2l-gray-200 bg-white p-5">
+      <div className={`absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-lg ${colorClasses[color]} text-xl`}>
+        {icon}
+      </div>
+      <p className="text-xs font-medium text-k2l-gray-400 uppercase tracking-wider">{label}</p>
+      <p className="mt-2 font-head text-3xl font-bold text-k2l-gray-900">{value}</p>
+    </div>
+  );
+}
+
+interface UserCardProps {
+  user: User;
+  onEdit: () => void;
+  onResetPassword: () => void;
+  onAction: (userId: string, action: string) => void;
+}
+
+function UserCard({ user, onEdit, onResetPassword, onAction }: UserCardProps) {
+  // Couleur de l'avatar selon le rôle
+  const avatarColors = {
+    ADMIN: 'bg-[#FCEBEB] text-[#A32D2D]',
+    COORDINATEUR: 'bg-[#E6F1FB] text-[#1F5C99]',
+    SUPERVISEUR: 'bg-[#E6F1FB] text-[#1F5C99]',
+    COMMERCIAL: 'bg-k2l-success-light text-[#0F6E56]',
+  };
+
+  // Couleur de la bordure selon le statut
+  const borderColors = {
+    ACTIF: 'border-l-[#1D9E75]',
+    SUSPENDU: 'border-l-[#EF9F27]',
+    EN_ATTENTE: 'border-l-[#EF9F27]',
+    DESACTIVE: 'border-l-k2l-gray-300',
+  };
+
+  // Badge rôle
+  const roleBadges = {
+    ADMIN: 'bg-[#FCEBEB] text-[#A32D2D]',
+    COORDINATEUR: 'bg-[#E6F1FB] text-[#1F5C99]',
+    SUPERVISEUR: 'bg-[#E6F1FB] text-[#1F5C99]',
+    COMMERCIAL: 'bg-k2l-gray-100 text-k2l-gray-600',
+  };
+
+  // Badge statut
+  const statusBadges = {
+    ACTIF: 'bg-k2l-success-light text-[#0F6E56]',
+    SUSPENDU: 'bg-k2l-amber-light text-[#854F0B]',
+    EN_ATTENTE: 'bg-k2l-amber-light text-[#854F0B]',
+    DESACTIVE: 'bg-k2l-gray-100 text-k2l-gray-600',
+  };
+
+  const initials = user.fullName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '??';
+
+  return (
+    <div
+      className={`group relative rounded-xl border-l-[5px] ${borderColors[user.status as keyof typeof borderColors]} border-y border-r border-k2l-gray-200 bg-white p-5 transition-all hover:-translate-y-1 hover:shadow-lg`}
+    >
+      {/* Header: Avatar + Nom + Badges */}
+      <div className="mb-4 flex items-start gap-3">
+        <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${avatarColors[user.role as keyof typeof avatarColors]} text-sm font-bold font-head`}>
+          {initials}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-head text-base font-bold text-k2l-gray-900 truncate">{user.fullName}</h3>
+          <p className="text-[11px] text-k2l-gray-400">{user.matricule}</p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${roleBadges[user.role as keyof typeof roleBadges]}`}>
+              {user.role}
+            </span>
+            <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusBadges[user.status as keyof typeof statusBadges]}`}>
+              {user.status}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Contact */}
+      <div className="mb-3 space-y-1 text-[12px]">
+        <div className="flex items-center gap-2 text-k2l-gray-600">
+          <span className="font-medium">📱</span>
+          <span>{user.phone}</span>
+        </div>
+      </div>
+
+      {/* Hiérarchie / Rattachement */}
+      <div className="mb-3 rounded-lg bg-k2l-gray-100 p-3">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-k2l-gray-400 mb-1.5">Rattachement</p>
+        {user.role === 'COORDINATEUR' && (
+          <div className="text-[12px] text-k2l-gray-600">
+            {user.zone?.name ? (
+              <div className="flex items-center gap-1.5">
+                <RiMapPinLine className="text-[#1F5C99]" />
+                <span className="font-medium">{user.zone.name}</span>
+              </div>
+            ) : (
+              <span className="text-k2l-gray-400 italic">Aucune zone assignée</span>
+            )}
+          </div>
+        )}
+        {user.role === 'SUPERVISEUR' && (
+          <div className="text-[12px] space-y-1">
+            {user.zone?.coordinator?.fullName && (
+              <div className="flex items-center gap-1.5 text-[#1F5C99]">
+                <RiShieldUserLine />
+                <span className="font-medium">Coord: {user.zone.coordinator.fullName}</span>
+              </div>
+            )}
+            {user.secteur?.name ? (
+              <div className="flex items-center gap-1.5 text-k2l-gray-600">
+                <RiMapPinLine />
+                <span>{user.secteur.name}</span>
+              </div>
+            ) : (
+              <span className="text-k2l-gray-400 italic">Aucun secteur assigné</span>
+            )}
+          </div>
+        )}
+        {user.role === 'COMMERCIAL' && (
+          <div className="text-[12px] space-y-1">
+            {user.zone?.coordinator?.fullName && (
+              <div className="flex items-center gap-1.5 text-[#1F5C99]">
+                <RiShieldUserLine />
+                <span className="font-medium">Coord: {user.zone.coordinator.fullName}</span>
+              </div>
+            )}
+            {user.supervisor?.fullName ? (
+              <div className="flex items-center gap-1.5 text-k2l-gray-600">
+                <RiBriefcaseLine />
+                <span>Sup: {user.supervisor.fullName}</span>
+              </div>
+            ) : user.secteur?.name ? (
+              <div className="flex items-center gap-1.5 text-k2l-gray-600">
+                <RiMapPinLine />
+                <span>Secteur: {user.secteur.name}</span>
+              </div>
+            ) : (
+              <span className="text-k2l-gray-400 italic">Non assigné</span>
+            )}
+          </div>
+        )}
+        {user.role === 'ADMIN' && (
+          <span className="text-[12px] text-k2l-gray-400 italic">Administrateur système</span>
+        )}
+      </div>
+
+      {/* Actions (hover) */}
+      <div className="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+        {user.role !== 'ADMIN' && (
+          <button
+            onClick={onEdit}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#1F5C99] px-3 py-2 text-[11px] font-semibold text-white hover:bg-[#1F5C99]/90 transition-colors"
+          >
+            <RiPencilLine /> Modifier
+          </button>
+        )}
+        <button
+          onClick={onResetPassword}
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#EF9F27] px-3 py-2 text-[11px] font-semibold text-white hover:bg-[#EF9F27]/90 transition-colors"
+        >
+          <RiLockPasswordLine /> Reset MdP
+        </button>
+      </div>
+
+      {/* Actions rapides (statut) */}
+      <div className="mt-2 flex gap-1">
+        {user.isActive && (
+          <>
+            <button
+              onClick={() => onAction(user.id, 'suspend')}
+              className="flex flex-1 items-center justify-center gap-1 rounded border border-k2l-amber px-2 py-1.5 text-[10px] font-semibold text-k2l-amber hover:bg-k2l-amber-light transition-colors"
+              title="Suspendre"
+            >
+              <RiPauseLine /> Suspendre
+            </button>
+            <button
+              onClick={() => onAction(user.id, 'deactivate')}
+              className="flex flex-1 items-center justify-center gap-1 rounded border border-k2l-gray-400 px-2 py-1.5 text-[10px] font-semibold text-k2l-gray-600 hover:bg-k2l-gray-100 transition-colors"
+              title="Désactiver"
+            >
+              <RiCloseLine /> Désactiver
+            </button>
+          </>
+        )}
+        {!user.isActive && (
+          <button
+            onClick={() => onAction(user.id, 'activate')}
+            className="flex flex-1 items-center justify-center gap-1 rounded border border-[#1D9E75] px-2 py-1.5 text-[10px] font-semibold text-[#1D9E75] hover:bg-k2l-success-light transition-colors"
+            title="Activer"
+          >
+            <RiCheckLine /> Activer
+          </button>
+        )}
+      </div>
     </div>
   );
 }
