@@ -52,7 +52,7 @@ export default function UsersPage() {
     const loadUsers = async () => {
       setLoading(true);
       try {
-        const params = new URLSearchParams({ page: String(page), limit: '100' });
+        const params = new URLSearchParams({ page: String(page), limit: '500' });
         if (search) params.set('search', search);
         if (roleFilter) params.set('role', roleFilter);
         if (zoneFilter) params.set('zoneId', zoneFilter);
@@ -72,7 +72,7 @@ export default function UsersPage() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(page), limit: '100' });
+      const params = new URLSearchParams({ page: String(page), limit: '500' });
       if (search) params.set('search', search);
       if (roleFilter) params.set('role', roleFilter);
       if (zoneFilter) params.set('zoneId', zoneFilter);
@@ -121,13 +121,6 @@ export default function UsersPage() {
     { label: 'Commerciaux', value: 'COMMERCIAL', count: users.filter((u) => u.role === 'COMMERCIAL').length },
   ];
 
-  // Filtres par statut
-  const statusFilters = [
-    { label: 'Tous statuts', value: '' },
-    { label: 'Actifs', value: 'ACTIF' },
-    { label: 'Suspendus', value: 'SUSPENDU' },
-    { label: 'Désactivés', value: 'DESACTIVE' },
-  ];
 
 
   return (
@@ -202,23 +195,8 @@ export default function UsersPage() {
           ))}
         </div>
 
-        {/* Ligne 2: Filtres par statut + zone + recherche */}
+        {/* Ligne 2: Filtres zone + statut + recherche */}
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold text-k2l-gray-400 uppercase tracking-wider">Statut :</span>
-          {statusFilters.map((f) => (
-            <button
-              key={f.value}
-              onClick={() => { setStatusFilter(f.value); setPage(1); }}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                statusFilter === f.value
-                  ? 'bg-[#1F5C99] text-white'
-                  : 'bg-white text-k2l-gray-600 border border-k2l-gray-200 hover:border-[#1F5C99]'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-
           {/* Zone filter */}
           <select
             value={zoneFilter}
@@ -229,6 +207,18 @@ export default function UsersPage() {
             {zones.map((z) => (
               <option key={z.id} value={z.id}>{z.name}</option>
             ))}
+          </select>
+
+          {/* Statut filter dropdown */}
+          <select
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+            className="rounded-lg border border-k2l-gray-200 bg-white px-3 py-1.5 text-xs font-medium outline-none hover:border-[#1F5C99] transition-colors"
+          >
+            <option value="">� Tous les statuts</option>
+            <option value="ACTIF">✓ Actifs</option>
+            <option value="SUSPENDU">⚠ Suspendus</option>
+            <option value="DESACTIVE">✕ Désactivés</option>
           </select>
 
           {/* Recherche */}
@@ -251,7 +241,7 @@ export default function UsersPage() {
           <RiLoader4Line className="animate-spin text-3xl text-[#1D9E75]" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {users.map((user) => (
             <UserCard
               key={user.id}
@@ -368,17 +358,17 @@ function UserCard({ user, onEdit, onResetPassword, onAction }: UserCardProps) {
 
   return (
     <div
-      className={`group relative rounded-xl border-l-[5px] ${borderColors[user.status as keyof typeof borderColors]} border-y border-r border-k2l-gray-200 bg-white p-5 transition-all hover:-translate-y-1 hover:shadow-lg`}
+      className={`group relative rounded-xl border-l-[4px] ${borderColors[user.status as keyof typeof borderColors]} border-y border-r border-k2l-gray-200 bg-white p-3 transition-all hover:-translate-y-1 hover:shadow-lg`}
     >
       {/* Header: Avatar + Nom + Badges */}
-      <div className="mb-4 flex items-start gap-3">
-        <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${avatarColors[user.role as keyof typeof avatarColors]} text-sm font-bold font-head`}>
+      <div className="mb-2 flex items-start gap-2">
+        <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${avatarColors[user.role as keyof typeof avatarColors]} text-xs font-bold font-head`}>
           {initials}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-head text-base font-bold text-k2l-gray-900 truncate">{user.fullName}</h3>
-          <p className="text-[11px] text-k2l-gray-400">{user.matricule}</p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <h3 className="font-head text-sm font-bold text-k2l-gray-900 truncate">{user.fullName}</h3>
+          <p className="text-[10px] text-k2l-gray-400">{user.matricule}</p>
+          <div className="mt-1 flex flex-wrap gap-1">
             <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${roleBadges[user.role as keyof typeof roleBadges]}`}>
               {user.role}
             </span>
@@ -390,18 +380,18 @@ function UserCard({ user, onEdit, onResetPassword, onAction }: UserCardProps) {
       </div>
 
       {/* Contact */}
-      <div className="mb-3 space-y-1 text-[12px]">
-        <div className="flex items-center gap-2 text-k2l-gray-600">
-          <span className="font-medium">📱</span>
+      <div className="mb-2 text-[11px]">
+        <div className="flex items-center gap-1.5 text-k2l-gray-600">
+          <span>📱</span>
           <span>{user.phone}</span>
         </div>
       </div>
 
       {/* Hiérarchie / Rattachement */}
-      <div className="mb-3 rounded-lg bg-k2l-gray-100 p-3">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-k2l-gray-400 mb-1.5">Rattachement</p>
+      <div className="mb-2 rounded-lg bg-k2l-gray-100 p-2">
+        <p className="text-[9px] font-semibold uppercase tracking-wider text-k2l-gray-400 mb-1">Rattachement</p>
         {user.role === 'COORDINATEUR' && (
-          <div className="text-[12px] text-k2l-gray-600">
+          <div className="text-[11px] text-k2l-gray-600">
             {user.zone?.name ? (
               <div className="flex items-center gap-1.5">
                 <RiMapPinLine className="text-[#1F5C99]" />
@@ -413,7 +403,7 @@ function UserCard({ user, onEdit, onResetPassword, onAction }: UserCardProps) {
           </div>
         )}
         {user.role === 'SUPERVISEUR' && (
-          <div className="text-[12px] space-y-1">
+          <div className="text-[11px] space-y-0.5">
             {user.zone?.coordinator?.fullName && (
               <div className="flex items-center gap-1.5 text-[#1F5C99]">
                 <RiShieldUserLine />
@@ -431,7 +421,7 @@ function UserCard({ user, onEdit, onResetPassword, onAction }: UserCardProps) {
           </div>
         )}
         {user.role === 'COMMERCIAL' && (
-          <div className="text-[12px] space-y-1">
+          <div className="text-[11px] space-y-0.5">
             {user.zone?.coordinator?.fullName && (
               <div className="flex items-center gap-1.5 text-[#1F5C99]">
                 <RiShieldUserLine />
@@ -454,52 +444,52 @@ function UserCard({ user, onEdit, onResetPassword, onAction }: UserCardProps) {
           </div>
         )}
         {user.role === 'ADMIN' && (
-          <span className="text-[12px] text-k2l-gray-400 italic">Administrateur système</span>
+          <span className="text-[11px] text-k2l-gray-400 italic">Admin système</span>
         )}
       </div>
 
       {/* Actions (hover) */}
-      <div className="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
         {user.role !== 'ADMIN' && (
           <button
             onClick={onEdit}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#1F5C99] px-3 py-2 text-[11px] font-semibold text-white hover:bg-[#1F5C99]/90 transition-colors"
+            className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#1F5C99] px-2 py-1.5 text-[10px] font-semibold text-white hover:bg-[#1F5C99]/90 transition-colors"
           >
             <RiPencilLine /> Modifier
           </button>
         )}
         <button
           onClick={onResetPassword}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#EF9F27] px-3 py-2 text-[11px] font-semibold text-white hover:bg-[#EF9F27]/90 transition-colors"
+          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#EF9F27] px-2 py-1.5 text-[10px] font-semibold text-white hover:bg-[#EF9F27]/90 transition-colors"
         >
-          <RiLockPasswordLine /> Reset MdP
+          <RiLockPasswordLine /> MdP
         </button>
       </div>
 
       {/* Actions rapides (statut) */}
-      <div className="mt-2 flex gap-1">
+      <div className="mt-1.5 flex gap-1">
         {user.isActive && (
           <>
             <button
               onClick={() => onAction(user.id, 'suspend')}
-              className="flex flex-1 items-center justify-center gap-1 rounded border border-k2l-amber px-2 py-1.5 text-[10px] font-semibold text-k2l-amber hover:bg-k2l-amber-light transition-colors"
+              className="flex flex-1 items-center justify-center gap-0.5 rounded border border-k2l-amber px-1.5 py-1 text-[9px] font-semibold text-k2l-amber hover:bg-k2l-amber-light transition-colors"
               title="Suspendre"
             >
-              <RiPauseLine /> Suspendre
+              <RiPauseLine /> Susp.
             </button>
             <button
               onClick={() => onAction(user.id, 'deactivate')}
-              className="flex flex-1 items-center justify-center gap-1 rounded border border-k2l-gray-400 px-2 py-1.5 text-[10px] font-semibold text-k2l-gray-600 hover:bg-k2l-gray-100 transition-colors"
+              className="flex flex-1 items-center justify-center gap-0.5 rounded border border-k2l-gray-400 px-1.5 py-1 text-[9px] font-semibold text-k2l-gray-600 hover:bg-k2l-gray-100 transition-colors"
               title="Désactiver"
             >
-              <RiCloseLine /> Désactiver
+              <RiCloseLine /> Désact.
             </button>
           </>
         )}
         {!user.isActive && (
           <button
             onClick={() => onAction(user.id, 'activate')}
-            className="flex flex-1 items-center justify-center gap-1 rounded border border-[#1D9E75] px-2 py-1.5 text-[10px] font-semibold text-[#1D9E75] hover:bg-k2l-success-light transition-colors"
+            className="flex flex-1 items-center justify-center gap-0.5 rounded border border-[#1D9E75] px-1.5 py-1 text-[9px] font-semibold text-[#1D9E75] hover:bg-k2l-success-light transition-colors"
             title="Activer"
           >
             <RiCheckLine /> Activer
