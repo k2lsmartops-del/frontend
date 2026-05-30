@@ -53,6 +53,7 @@ export default function UsersPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
+  const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
 
   // Charger les zones au montage
   useEffect(() => {
@@ -84,8 +85,9 @@ export default function UsersPage() {
       else if (action === 'deactivate') await api.patch(`/users/${userId}/deactivate`);
       else if (action === 'suspend') await api.patch(`/users/${userId}/suspend`);
       else if (action === 'reset') {
-        const res = await api.post(`/users/${userId}/reset-password`);
-        alert(`Nouveau mot de passe : ${res.data.temporaryPassword}`);
+        const user = users.find((u) => u.id === userId);
+        if (user) setResetPasswordUser(user);
+        return;
       }
       loadUsers();
     } catch {
@@ -276,6 +278,9 @@ export default function UsersPage() {
 
       {/* Edit modal */}
       {editUser && <EditUserModal user={editUser} onClose={() => { setEditUser(null); loadUsers(); }} />}
+
+      {/* Reset Password modal */}
+      {resetPasswordUser && <ResetPasswordModal user={resetPasswordUser} onClose={() => { setResetPasswordUser(null); loadUsers(); }} />}
 
       {/* Import Excel modal */}
       {showImport && (
@@ -522,6 +527,108 @@ function EditUserModal({ user, onClose }: EditUserModalProps) {
           </button>
           <button type="submit" disabled={saving} className="flex-1 rounded-lg bg-[#1F5C99] py-2.5 text-[13px] font-semibold text-white hover:bg-[#1F5C99]/90 disabled:opacity-50">
             {saving ? 'Enregistrement...' : 'Enregistrer'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+interface ResetPasswordModalProps {
+  user: User;
+  onClose: () => void;
+}
+
+function ResetPasswordModal({ user, onClose }: ResetPasswordModalProps) {
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      setError('Les mots de passe ne correspondent pas');
+      return;
+    }
+    
+    if (newPassword.length < 8) {
+      setError('Le mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+    
+    setError('');
+    setSaving(true);
+    try {
+      await api.patch(`/users/${user.id}`, { password: newPassword });
+      alert('Mot de passe modifié avec succès');
+      onClose();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Erreur';
+      setError(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <form onSubmit={handleSubmit} className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+        <h2 className="mb-4 font-head text-lg font-semibold">Réinitialiser le mot de passe</h2>
+        <div className="mb-4 rounded-lg bg-k2l-gray-100 p-3">
+          <p className="text-[13px] text-k2l-gray-600">
+            <strong>{user.fullName}</strong>
+          </p>
+          <p className="text-[11px] text-k2l-gray-400">{user.matricule} · {user.phone}</p>
+        </div>
+        <div className="space-y-3 text-[13px]">
+          <div className="relative">
+            <label className="mb-1 block text-[11px] text-k2l-gray-400">Nouveau mot de passe</label>
+            <input 
+              required 
+              type={showPassword ? 'text' : 'password'} 
+              placeholder="Min. 8 caractères" 
+              value={newPassword} 
+              onChange={(e) => { setNewPassword(e.target.value); setError(''); }} 
+              className="w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 outline-none focus:border-k2l-primary pr-10" 
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-[34px] -translate-y-1/2 text-k2l-gray-400 hover:text-k2l-gray-600"
+            >
+              {showPassword ? <RiEyeOffLine /> : <RiEyeLine />}
+            </button>
+          </div>
+          <div className="relative">
+            <label className="mb-1 block text-[11px] text-k2l-gray-400">Confirmer le mot de passe</label>
+            <input 
+              required 
+              type={showConfirmPassword ? 'text' : 'password'} 
+              placeholder="Confirmer" 
+              value={confirmPassword} 
+              onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }} 
+              className="w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 outline-none focus:border-k2l-primary pr-10" 
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-[34px] -translate-y-1/2 text-k2l-gray-400 hover:text-k2l-gray-600"
+            >
+              {showConfirmPassword ? <RiEyeOffLine /> : <RiEyeLine />}
+            </button>
+          </div>
+          {error && <p className="text-xs text-k2l-red font-semibold">{error}</p>}
+        </div>
+        <div className="mt-5 flex gap-3">
+          <button type="button" onClick={onClose} className="flex-1 rounded-lg border border-k2l-gray-200 py-2.5 text-[13px] font-semibold text-k2l-gray-600 hover:bg-k2l-gray-100">
+            Annuler
+          </button>
+          <button type="submit" disabled={saving} className="flex-1 rounded-lg bg-k2l-red py-2.5 text-[13px] font-semibold text-white hover:bg-k2l-red/90 disabled:opacity-50">
+            {saving ? 'Modification...' : 'Modifier le mot de passe'}
           </button>
         </div>
       </form>
