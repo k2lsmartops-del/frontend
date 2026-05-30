@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RiSearchLine, RiLoader4Line, RiEyeLine, RiEyeOffLine } from 'react-icons/ri';
+import { RiSearchLine, RiLoader4Line, RiEyeLine, RiEyeOffLine, RiFileExcel2Line } from 'react-icons/ri';
 import api from '@/common/services/api';
+import ImportTeamModal from '../components/ImportTeamModal';
 
 interface User {
   id: string;
@@ -50,6 +51,7 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>('');
   const [zoneFilter, setZoneFilter] = useState<string>('');
   const [showCreate, setShowCreate] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
 
   // Charger les zones au montage
@@ -107,6 +109,12 @@ export default function UsersPage() {
           <span><b className="font-head text-lg">{total}</b> <span className="text-k2l-gray-400">utilisateur(s)</span></span>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={() => setShowImport(true)}
+            className="flex items-center gap-1.5 rounded-lg border border-[#1D9E75] px-4 py-2.5 text-[13px] font-semibold text-[#1D9E75] hover:bg-[#1D9E75]/5 transition-colors"
+          >
+            <RiFileExcel2Line className="text-base" /> Importer Excel
+          </button>
           <button
             onClick={() => setShowCreate(!showCreate)}
             className="rounded-lg bg-k2l-success px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-k2l-success/90 transition-colors"
@@ -268,6 +276,14 @@ export default function UsersPage() {
 
       {/* Edit modal */}
       {editUser && <EditUserModal user={editUser} onClose={() => { setEditUser(null); loadUsers(); }} />}
+
+      {/* Import Excel modal */}
+      {showImport && (
+        <ImportTeamModal
+          onClose={() => setShowImport(false)}
+          onSuccess={loadUsers}
+        />
+      )}
     </div>
   );
 }
