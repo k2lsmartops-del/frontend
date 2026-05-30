@@ -4,18 +4,30 @@ import { compressPhoto } from '@/lib/photoService';
 import { uploadToCloudinary } from '@/lib/uploadService';
 import { db } from '@/lib/offlineDb';
 
+interface UploadedMeta {
+  url: string;
+  publicId: string;
+  category: PhotoCategory;
+  width: number;
+  height: number;
+  bytes: number;
+}
+
 interface PhotoCaptureProps {
   category: PhotoCategory;
   label: string;
   clientUuid: string;
-  onUploaded: (data: {
-    url: string;
-    publicId: string;
-    category: PhotoCategory;
-    width: number;
-    height: number;
-    bytes: number;
-  }) => void;
+  /**
+   * Mode édition online : compresse + upload immédiat vers Cloudinary,
+   * puis renvoie les métadonnées via `onUploaded`. Aucun Blob stocké localement.
+   * Par défaut (false) : mode offline-first — on ne fait QUE compresser + stocker le Blob
+   * en IndexedDB. L'upload est différé au moment de la synchronisation.
+   */
+  uploadImmediately?: boolean;
+  /** Callback mode offline : la photo a été capturée + stockée localement. */
+  onCaptured?: (category: PhotoCategory) => void;
+  /** Callback mode online (uploadImmediately) : la photo a été uploadée. */
+  onUploaded?: (data: UploadedMeta) => void;
   /** URL existante (pour afficher un aperçu si déjà uploadé) */
   existingUrl?: string;
 }
@@ -24,12 +36,20 @@ type Status = 'idle' | 'compressing' | 'uploading' | 'done' | 'error';
 
 /**
  * Composant réutilisable de capture photo.
- * Flux : capture → compression → stockage Blob local → upload Cloudinary → callback URL.
+ *
+ * Offline-first (défaut) : capture → compression → stockage Blob local UNIQUEMENT.
+ *   L'upload vers Cloudinary est géré plus tard par le service de synchronisation
+ *   (sync atomique tout-ou-rien). Permet la capture en mode avion.
+ *
+ * Online (uploadImmediately) : capture → compression → upload immédiat → callback URL.
+ *   Utilisé pour l'édition d'une soumission déjà existante côté serveur.
  */
 export default function PhotoCapture({
   category,
   label,
   clientUuid,
+  uploadImmediately = false,
+  onCaptured,
   onUploaded,
   existingUrl,
 }: PhotoCaptureProps) {
@@ -46,7 +66,7 @@ export default function PhotoCapture({
     setError(null);
 
     try {
-      // 1. Compression
+      // 1. Compression (force JPEG)
       setStatus('compressing');
       setProgress(0);
       const compressed = await compressPhoto(file, category, (p) => setProgress(p));
@@ -55,7 +75,35 @@ export default function PhotoCapture({
       const url = URL.createObjectURL(compressed.blob);
       setPreview(url);
 
-      // 3. Stockage Blob local (IndexedDB)
+      if (uploadImmediately) {
+        // ── Mode online (édition) : upload immédiat, pas de stockage local ──
+        setStatus('uploading');
+        setProgress(50);
+        const result = await uploadToCloudinary(compressed.blob, (p) => setProgress(50 + p * 0.5));
+        setStatus('done');
+        setProgress(100);
+        onUploaded?.({
+          url: result.url,
+          publicId: result.publicId,
+          category,
+          width: result.width,
+          height: result.height,
+          bytes: result.bytes,
+        });
+        return;
+      }
+
+      // ── Mode offline-first : stockage Blob local UNIQUEMENT ──
+      // Remplacer toute photo précédente de cette catégorie (re-capture)
+      const existing = await db.photos
+        .where('clientUuid')
+        .equals(clientUuid)
+        .filter((p) => p.category === category)
+        .toArray();
+      if (existing.length > 0) {
+        await db.photos.bulkDelete(existing.map((p) => p.id!).filter(Boolean));
+      }
+
       await db.photos.add({
         clientUuid,
         category,
@@ -66,35 +114,12 @@ export default function PhotoCapture({
         uploaded: false,
       });
 
-      // 4. Upload vers Cloudinary
-      setStatus('uploading');
-      setProgress(50);
-      const result = await uploadToCloudinary(compressed.blob, (p) => setProgress(50 + p * 0.5));
-
-      // 5. Mettre à jour le statut local
-      await db.photos
-        .where('clientUuid')
-        .equals(clientUuid)
-        .and((p) => p.category === category)
-        .modify({
-          uploaded: true,
-          cloudinaryUrl: result.url,
-          cloudinaryPublicId: result.publicId,
-        });
-
       setStatus('done');
       setProgress(100);
-      onUploaded({
-        url: result.url,
-        publicId: result.publicId,
-        category,
-        width: result.width,
-        height: result.height,
-        bytes: result.bytes,
-      });
+      onCaptured?.(category);
     } catch (err) {
       setStatus('error');
-      setError(err instanceof Error ? err.message : 'Erreur upload');
+      setError(err instanceof Error ? err.message : 'Erreur lors de la capture');
     }
   };
 
@@ -118,7 +143,7 @@ export default function PhotoCapture({
           <img src={preview} alt={label} className="h-32 w-full object-cover" />
           {status === 'done' && (
             <span className="absolute right-1 top-1 rounded bg-k2l-success px-1.5 py-0.5 text-[9px] font-medium text-white">
-              OK
+              {uploadImmediately ? 'Envoyée' : 'Enregistrée'}
             </span>
           )}
         </div>
@@ -134,7 +159,7 @@ export default function PhotoCapture({
             />
           </div>
           <p className="mt-1 text-[10px] text-k2l-gray-400">
-            {status === 'compressing' ? 'Compression...' : 'Upload...'}
+            {status === 'compressing' ? 'Compression...' : 'Envoi...'}
           </p>
         </div>
       )}

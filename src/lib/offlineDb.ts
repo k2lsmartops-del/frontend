@@ -27,8 +27,9 @@ export interface OfflineSubmission {
   retryCount: number;
   lastError?: string;
   createdAt: string;        // ISO string
+  syncedAt?: string;        // ISO string — rempli quand synced (pour le nettoyage auto)
 
-  // Données du formulaire (JSON sérialisable)
+  // Données du formulaire (JSON sérialisable) — SANS les photos (gérées à part en Blob)
   formData: Record<string, unknown>;
 }
 
@@ -42,6 +43,11 @@ class AipDatabase extends Dexie {
     super('aip-terrain');
     this.version(1).stores({
       submissions: '++id, clientUuid, syncStatus, type, createdAt',
+      photos: '++id, clientUuid, category, uploaded',
+    });
+    // v2 : ajout de l'index syncedAt pour le nettoyage automatique des fiches synced
+    this.version(2).stores({
+      submissions: '++id, clientUuid, syncStatus, type, createdAt, syncedAt',
       photos: '++id, clientUuid, category, uploaded',
     });
   }

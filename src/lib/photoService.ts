@@ -40,6 +40,8 @@ export async function compressPhoto(
     useWebWorker: true,
     onProgress,
     initialQuality: opts.quality,
+    // Force la conversion en JPEG (iOS 17+ peut capturer en HEIC, non lisible côté serveur)
+    fileType: 'image/jpeg',
   });
 
   // Récupérer les dimensions de l'image compressée

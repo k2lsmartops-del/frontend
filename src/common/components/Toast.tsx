@@ -4,6 +4,7 @@ import {
   RiErrorWarningLine,
   RiWifiOffLine,
   RiInformationLine,
+  RiCloseLine,
 } from '@/common/icons';
 
 const ICONS = {
@@ -21,17 +22,26 @@ const BG: Record<string, string> = {
 };
 
 export default function Toast() {
-  const { message, type, visible } = useToastStore();
+  const { message, type, visible, persistent, hide } = useToastStore();
   const Icon = ICONS[type];
 
   return (
     <div
-      className={`pointer-events-none fixed bottom-24 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full px-5 py-3 text-[13px] font-medium text-white shadow-lg transition-all duration-300 ${BG[type]} ${
-        visible ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'
-      }`}
+      className={`fixed bottom-24 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full px-5 py-3 text-[13px] font-medium text-white shadow-lg transition-all duration-300 ${BG[type]} ${
+        persistent ? 'max-w-[90vw]' : 'whitespace-nowrap pointer-events-none'
+      } ${visible ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'}`}
     >
       <Icon className="h-4 w-4 shrink-0" />
-      {message}
+      <span className={persistent ? 'flex-1' : ''}>{message}</span>
+      {persistent && (
+        <button
+          onClick={hide}
+          aria-label="Fermer"
+          className="ml-1 shrink-0 rounded-full p-0.5 transition-colors hover:bg-white/20"
+        >
+          <RiCloseLine className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 }

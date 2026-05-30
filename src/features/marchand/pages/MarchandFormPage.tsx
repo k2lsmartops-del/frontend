@@ -26,15 +26,6 @@ const TYPES_COMMERCE: CommerceType[] = [
   { value: 'autre', label: 'Autre', icon: RiBuilding2Line },
 ];
 
-interface PhotoMeta {
-  url: string;
-  publicId: string;
-  category: PhotoCategory;
-  width: number;
-  height: number;
-  bytes: number;
-}
-
 export default function MarchandFormPage() {
   const navigate = useNavigate();
   const showToast = useToastStore((s) => s.show);
@@ -48,19 +39,16 @@ export default function MarchandFormPage() {
   const [commune, setCommune] = useState(COMMUNES[0]);
   const [adresse, setAdresse] = useState('');
   const [gps, setGps] = useState<GpsData | null>(null);
-  const [photos, setPhotos] = useState<PhotoMeta[]>([]);
+  const [captured, setCaptured] = useState<Set<PhotoCategory>>(new Set());
   const [submitting, setSubmitting] = useState(false);
 
   const onGpsCapture = useCallback((data: GpsData) => setGps(data), []);
 
-  const onPhotoUploaded = useCallback((meta: PhotoMeta) => {
-    setPhotos((prev) => {
-      const filtered = prev.filter((p) => p.category !== meta.category);
-      return [...filtered, meta];
-    });
+  const onPhotoCaptured = useCallback((category: PhotoCategory) => {
+    setCaptured((prev) => new Set(prev).add(category));
   }, []);
 
-  const hasPhoto = (cat: PhotoCategory) => photos.some((p) => p.category === cat);
+  const hasPhoto = (cat: PhotoCategory) => captured.has(cat);
 
   const handleSubmit = async (asDraft = false) => {
     if (!asDraft) {
@@ -89,14 +77,8 @@ export default function MarchandFormPage() {
         merchantPhone: tel,
         merchantActivity: typeCommerce,
         merchantRccm: rccm || undefined,
-        photos: photos.map((p) => ({
-          cloudinaryPublicId: p.publicId,
-          url: p.url,
-          category: p.category,
-          width: p.width,
-          height: p.height,
-          bytes: p.bytes,
-        })),
+        // Les photos sont stockées en Blob local (IndexedDB) et uploadées
+        // lors de la synchronisation atomique. On ne passe PAS d'URLs ici.
       });
       showToast(asDraft ? 'Brouillon sauvegarde' : 'Marchand enregistre !', 'success');
       navigate('/', { replace: true });
@@ -169,19 +151,19 @@ export default function MarchandFormPage() {
             category="STOREFRONT"
             label="Facade du commerce *"
             clientUuid={clientUuid}
-            onUploaded={onPhotoUploaded}
+            onCaptured={onPhotoCaptured}
           />
           <PhotoCapture
             category="QR_CODE"
             label="QR code marchand installe *"
             clientUuid={clientUuid}
-            onUploaded={onPhotoUploaded}
+            onCaptured={onPhotoCaptured}
           />
           <PhotoCapture
             category="ID_DOCUMENT"
             label="CNI du proprietaire *"
             clientUuid={clientUuid}
-            onUploaded={onPhotoUploaded}
+            onCaptured={onPhotoCaptured}
           />
         </FormCard>
 

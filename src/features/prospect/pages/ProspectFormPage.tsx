@@ -22,15 +22,6 @@ const PROFESSIONS = [
   'Artisan', 'Transporteur', 'Menagere', 'Sans emploi', 'Autre',
 ];
 
-interface PhotoMeta {
-  url: string;
-  publicId: string;
-  category: PhotoCategory;
-  width: number;
-  height: number;
-  bytes: number;
-}
-
 export default function ProspectFormPage() {
   const navigate = useNavigate();
   const showToast = useToastStore((s) => s.show);
@@ -48,19 +39,16 @@ export default function ProspectFormPage() {
   const [bankAccount, setBankAccount] = useState('');
   const [observations, setObservations] = useState('');
   const [gps, setGps] = useState<GpsData | null>(null);
-  const [photos, setPhotos] = useState<PhotoMeta[]>([]);
+  const [captured, setCaptured] = useState<Set<PhotoCategory>>(new Set());
   const [submitting, setSubmitting] = useState(false);
 
   const onGpsCapture = useCallback((data: GpsData) => setGps(data), []);
 
-  const onPhotoUploaded = useCallback((meta: PhotoMeta) => {
-    setPhotos((prev) => {
-      const filtered = prev.filter((p) => p.category !== meta.category);
-      return [...filtered, meta];
-    });
+  const onPhotoCaptured = useCallback((category: PhotoCategory) => {
+    setCaptured((prev) => new Set(prev).add(category));
   }, []);
 
-  const hasPhoto = (cat: PhotoCategory) => photos.some((p) => p.category === cat);
+  const hasPhoto = (cat: PhotoCategory) => captured.has(cat);
 
   const handleSubmit = async (asDraft = false) => {
     if (!asDraft) {
@@ -92,14 +80,8 @@ export default function ProspectFormPage() {
         phoneType: phoneType || undefined,
         bankAccount: bankAccount || undefined,
         observations: observations || undefined,
-        photos: photos.map((p) => ({
-          cloudinaryPublicId: p.publicId,
-          url: p.url,
-          category: p.category,
-          width: p.width,
-          height: p.height,
-          bytes: p.bytes,
-        })),
+        // Les photos sont stockées en Blob local (IndexedDB) et uploadées
+        // lors de la synchronisation atomique. On ne passe PAS d'URLs ici.
       });
       showToast(asDraft ? 'Brouillon sauvegarde' : 'Prospect enregistre !', 'success');
       navigate('/', { replace: true });
@@ -163,13 +145,13 @@ export default function ProspectFormPage() {
             category="APP_SCREEN"
             label="Ecran avec l'app installee *"
             clientUuid={clientUuid}
-            onUploaded={onPhotoUploaded}
+            onCaptured={onPhotoCaptured}
           />
           <PhotoCapture
             category="ID_DOCUMENT"
             label="CNI du client *"
             clientUuid={clientUuid}
-            onUploaded={onPhotoUploaded}
+            onCaptured={onPhotoCaptured}
           />
         </FormCard>
 

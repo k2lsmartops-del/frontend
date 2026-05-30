@@ -283,6 +283,7 @@ export default function EditSubmissionPage() {
                 category="APP_SCREEN"
                 label="Ecran avec l'app installee"
                 clientUuid={form.clientUuid}
+                uploadImmediately
                 onUploaded={onPhotoUploaded}
                 existingUrl={getExistingPhotoUrl('APP_SCREEN')}
               />
@@ -290,6 +291,7 @@ export default function EditSubmissionPage() {
                 category="ID_DOCUMENT"
                 label="CNI du client"
                 clientUuid={form.clientUuid}
+                uploadImmediately
                 onUploaded={onPhotoUploaded}
                 existingUrl={getExistingPhotoUrl('ID_DOCUMENT')}
               />
@@ -300,6 +302,7 @@ export default function EditSubmissionPage() {
                 category="STOREFRONT"
                 label="Facade du commerce"
                 clientUuid={form.clientUuid}
+                uploadImmediately
                 onUploaded={onPhotoUploaded}
                 existingUrl={getExistingPhotoUrl('STOREFRONT')}
               />
@@ -307,6 +310,7 @@ export default function EditSubmissionPage() {
                 category="QR_CODE"
                 label="QR Code"
                 clientUuid={form.clientUuid}
+                uploadImmediately
                 onUploaded={onPhotoUploaded}
                 existingUrl={getExistingPhotoUrl('QR_CODE')}
               />
@@ -314,6 +318,7 @@ export default function EditSubmissionPage() {
                 category="ID_DOCUMENT"
                 label="CNI du proprietaire"
                 clientUuid={form.clientUuid}
+                uploadImmediately
                 onUploaded={onPhotoUploaded}
                 existingUrl={getExistingPhotoUrl('ID_DOCUMENT')}
               />

@@ -9,6 +9,7 @@ import ProspectFormPage from '@/features/prospect/pages/ProspectFormPage';
 import MarchandFormPage from '@/features/marchand/pages/MarchandFormPage';
 import HistoryPage from '@/features/history/pages/HistoryPage';
 import EditSubmissionPage from '@/features/submissions/pages/EditSubmissionPage';
+import MesSoumissionsPage from '@/features/submissions/pages/MesSoumissionsPage';
 import ProfilePage from '@/features/profile/pages/ProfilePage';
 // Supervisor pages
 import SupervisorHomePage from '@/features/supervisor/pages/SupervisorHomePage';
@@ -75,6 +76,7 @@ export default function App() {
             <Route path="prospect" element={<ProspectFormPage />} />
             <Route path="marchand" element={<MarchandFormPage />} />
             <Route path="history" element={<HistoryPage />} />
+            <Route path="mes-soumissions" element={<MesSoumissionsPage />} />
             <Route path="submissions/:id/edit" element={<EditSubmissionPage />} />
             {/* Supervisor routes */}
             <Route path="validation" element={<ValidationQueuePage />} />

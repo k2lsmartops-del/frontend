@@ -6,7 +6,9 @@ interface ToastState {
   message: string;
   type: ToastType;
   visible: boolean;
-  show: (message: string, type?: ToastType) => void;
+  persistent: boolean;
+  /** Affiche un toast. Si `persistent`, il reste jusqu'à fermeture manuelle. */
+  show: (message: string, type?: ToastType, persistent?: boolean) => void;
   hide: () => void;
 }
 
@@ -16,11 +18,14 @@ export const useToastStore = create<ToastState>((set) => ({
   message: '',
   type: 'info',
   visible: false,
+  persistent: false,
 
-  show: (message, type = 'info') => {
+  show: (message, type = 'info', persistent = false) => {
     clearTimeout(timer);
-    set({ message, type, visible: true });
-    timer = setTimeout(() => set({ visible: false }), 2800);
+    set({ message, type, visible: true, persistent });
+    if (!persistent) {
+      timer = setTimeout(() => set({ visible: false }), 2800);
+    }
   },
 
   hide: () => {
