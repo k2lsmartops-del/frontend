@@ -75,14 +75,15 @@ export default function HomePage() {
       setMarchands(items.filter((s) => s.type === 'MARCHAND').length);
       setValides(items.filter((s) => s.status === 'VALIDATED').length);
 
-      // Compteurs complets via des requêtes séparées
-      const [pRes, mRes] = await Promise.all([
+      // Compteurs complets via des requêtes séparées (meta.total = total réel côté serveur)
+      const [pRes, mRes, vRes] = await Promise.all([
         api.get('/submissions', { params: { type: 'PROSPECT', limit: 1 } }),
         api.get('/submissions', { params: { type: 'MARCHAND', limit: 1 } }),
+        api.get('/submissions', { params: { status: 'VALIDATED', limit: 1 } }),
       ]);
       setProspects(pRes.data.meta?.total ?? 0);
       setMarchands(mRes.data.meta?.total ?? 0);
-      setValides(items.filter((s) => s.status === 'VALIDATED').length);
+      setValides(vRes.data.meta?.total ?? 0);
     } catch {
       // Silencieux si offline
     }
@@ -125,7 +126,12 @@ export default function HomePage() {
           </div>
           <div className="flex-1">
             <div className="font-head text-base font-semibold text-white">{user?.fullName ?? 'Agent K2L'}</div>
-            <div className="mt-0.5 text-xs text-white/70">{user?.zone?.name ?? 'Zone non assignee'}</div>
+            <div className="mt-0.5 truncate text-xs text-white/70">
+              {[user?.zone?.name, user?.secteur?.name].filter(Boolean).join(' · ') || 'Zone non assignee'}
+            </div>
+            {user?.matricule && (
+              <div className="text-[10px] text-white/50">{user.matricule}</div>
+            )}
           </div>
           <div className="flex items-center gap-1.5 rounded-full border border-white/30 bg-white/15 px-2.5 py-1">
             {isOnline
