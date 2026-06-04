@@ -110,7 +110,7 @@ export default function ProfilePage() {
       {/* Historique button */}
       <div className="mx-4 mt-4">
         <button
-          onClick={() => navigate('/history')}
+          onClick={() => navigate('/mes-soumissions')}
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-k2l-navy py-3.5 font-head text-sm font-semibold text-white transition-all active:scale-[0.98]"
         >
           <RiFileList3Line className="text-lg" />

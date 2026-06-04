@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import type { IconType } from 'react-icons';
@@ -15,8 +15,9 @@ import PhotoCapture from '@/common/components/PhotoCapture';
 import { useToastStore } from '@/common/stores/toast.store';
 import { createSubmission } from '@/lib/submissionService';
 import type { PhotoCategory } from '@/lib/offlineDb';
+import { useMyZoneCommunes, type Quartier } from '@/common/hooks/useMyZoneCommunes';
 
-const COMMUNES = ['Marcory', 'Yopougon', 'Adjame', 'Plateau', 'Cocody', 'Abobo', 'Treichville', 'Port-Bouet'];
+const OTHER_OPTION = '__OTHER__';
 
 interface CommerceType { value: string; label: string; icon: IconType }
 const TYPES_COMMERCE: CommerceType[] = [
@@ -31,16 +32,73 @@ export default function MarchandFormPage() {
   const showToast = useToastStore((s) => s.show);
   const clientUuid = useMemo(() => uuidv4(), []);
 
+  // Charger les communes/quartiers de la zone
+  const { data: zoneData, loading: loadingZone } = useMyZoneCommunes();
+
   const [typeCommerce, setTypeCommerce] = useState('boutique');
   const [nom, setNom] = useState('');
   const [proprio, setProprio] = useState('');
   const [tel, setTel] = useState('');
   const [rccm, setRccm] = useState('');
-  const [commune, setCommune] = useState(COMMUNES[0]);
+  
+  // Localisation - peut être ID (dropdown) ou texte libre (saisie manuelle)
+  const [communeId, setCommuneId] = useState<string>('');
+  const [communeManual, setCommuneManual] = useState('');
+  const [quartierId, setQuartierId] = useState<string>('');
+  const [quartierManual, setQuartierManual] = useState('');
+  const [isManualLocation, setIsManualLocation] = useState(false);
+  
   const [adresse, setAdresse] = useState('');
   const [gps, setGps] = useState<GpsData | null>(null);
   const [captured, setCaptured] = useState<Set<PhotoCategory>>(new Set());
   const [submitting, setSubmitting] = useState(false);
+
+  // Options communes pour le dropdown
+  const communeOptions = useMemo(() => {
+    const options = (zoneData?.communes || []).map(c => ({ value: c.id, label: c.name }));
+    options.push({ value: OTHER_OPTION, label: '📍 Autre (saisie manuelle)' });
+    return options;
+  }, [zoneData]);
+
+  // Quartiers de la commune sélectionnée
+  const availableQuartiers = useMemo<Quartier[]>(() => {
+    if (!communeId || communeId === OTHER_OPTION) return [];
+    const commune = zoneData?.communes.find(c => c.id === communeId);
+    return commune?.quartiers || [];
+  }, [communeId, zoneData]);
+
+  // Options quartiers pour le dropdown
+  const quartierOptions = useMemo(() => {
+    const options = availableQuartiers.map(q => ({ value: q.id, label: q.name }));
+    if (options.length > 0) {
+      options.push({ value: OTHER_OPTION, label: '📍 Autre quartier' });
+    }
+    return options;
+  }, [availableQuartiers]);
+
+  // Initialiser avec la première commune quand les données arrivent
+  useEffect(() => {
+    if (zoneData?.communes.length && communeId === '') {
+      setCommuneId(zoneData.communes[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoneData]);
+
+  // Gérer le changement de commune
+  const handleCommuneChange = (value: string) => {
+    setCommuneId(value);
+    setQuartierId('');
+    setQuartierManual('');
+    setIsManualLocation(value === OTHER_OPTION);
+  };
+
+  // Gérer le changement de quartier
+  const handleQuartierChange = (value: string) => {
+    setQuartierId(value);
+    if (value === OTHER_OPTION) {
+      setQuartierManual('');
+    }
+  };
 
   const onGpsCapture = useCallback((data: GpsData) => setGps(data), []);
 
@@ -60,13 +118,27 @@ export default function MarchandFormPage() {
       if (!hasPhoto('ID_DOCUMENT')) { showToast('Photo CNI obligatoire', 'error'); return; }
     }
 
+    // Déterminer les valeurs de commune/quartier à envoyer
+    const isManual = communeId === OTHER_OPTION;
+    const finalCommuneId = isManual ? undefined : communeId || undefined;
+    const finalQuartierId = (isManual || quartierId === OTHER_OPTION) ? undefined : quartierId || undefined;
+    const finalCommune = isManual ? communeManual : (zoneData?.communes.find(c => c.id === communeId)?.name || '');
+    const finalQuartier = isManual 
+      ? quartierManual 
+      : (quartierId === OTHER_OPTION 
+        ? quartierManual 
+        : availableQuartiers.find(q => q.id === quartierId)?.name || quartierManual || undefined);
+
     setSubmitting(true);
     try {
       await createSubmission('MARCHAND', {
         type: 'MARCHAND',
         clientUuid,
         requestedStatus: asDraft ? 'DRAFT' : 'SUBMITTED',
-        commune,
+        communeId: finalCommuneId,
+        quartierId: finalQuartierId,
+        commune: finalCommune,
+        quartier: finalQuartier || undefined,
         addressNote: adresse || undefined,
         latitude: gps?.latitude,
         longitude: gps?.longitude,
@@ -140,7 +212,52 @@ export default function MarchandFormPage() {
 
         {/* Localisation */}
         <FormCard title="Localisation" icon={RiMapPinLine}>
-          <FormSelect label="Commune *" value={commune} onChange={setCommune} options={COMMUNES} />
+          {loadingZone ? (
+            <div className="flex items-center justify-center py-4">
+              <RiLoader4Line className="animate-spin text-xl text-k2l-primary" />
+              <span className="ml-2 text-sm text-k2l-gray-500">Chargement des communes...</span>
+            </div>
+          ) : (
+            <>
+              {/* Sélection commune */}
+              <FormSelect 
+                label="Commune *" 
+                value={communeId} 
+                onChange={handleCommuneChange} 
+                options={communeOptions} 
+              />
+              
+              {/* Saisie manuelle commune si "Autre" */}
+              {isManualLocation && (
+                <FormInput 
+                  label="Nom de la commune *" 
+                  value={communeManual} 
+                  onChange={setCommuneManual} 
+                  placeholder="Entrez le nom de la commune" 
+                />
+              )}
+              
+              {/* Sélection quartier (si commune de la zone) */}
+              {!isManualLocation && quartierOptions.length > 0 && (
+                <FormSelect 
+                  label="Quartier" 
+                  value={quartierId} 
+                  onChange={handleQuartierChange} 
+                  options={[{ value: '', label: '-- Sélectionner --' }, ...quartierOptions]} 
+                />
+              )}
+              
+              {/* Saisie manuelle quartier */}
+              {(isManualLocation || quartierId === OTHER_OPTION || quartierOptions.length === 0) && (
+                <FormInput 
+                  label={isManualLocation ? "Quartier" : "Nom du quartier"}
+                  value={quartierManual} 
+                  onChange={setQuartierManual} 
+                  placeholder="Ex: Zone 4" 
+                />
+              )}
+            </>
+          )}
           <FormInput label="Adresse / Description" value={adresse} onChange={setAdresse} placeholder="Ex: Face a la mairie, kiosque N 3..." />
           <GpsCapture onCapture={onGpsCapture} />
         </FormCard>

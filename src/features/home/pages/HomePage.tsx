@@ -160,7 +160,7 @@ export default function HomePage() {
       <div className="mb-6 grid grid-cols-2 gap-3 px-4">
         <ActionCard icon={<RiUserLine className="text-xl text-k2l-navy" />} bgIcon="bg-k2l-primary-light" label="Nouveau Prospect" sub="Client banque" onClick={() => navigate('/prospect')} />
         <ActionCard icon={<RiStore2Line className="text-xl text-[#854F0B]" />} bgIcon="bg-k2l-amber-light" label="Enroler Marchand" sub="Commerce partenaire" onClick={() => navigate('/marchand')} />
-        <ActionCard icon={<RiFileList3Line className="text-xl text-k2l-primary" />} bgIcon="bg-k2l-primary-light" label="Historique" sub="Mes soumissions" onClick={() => navigate('/history')} />
+        <ActionCard icon={<RiFileList3Line className="text-xl text-k2l-primary" />} bgIcon="bg-k2l-primary-light" label="Historique" sub="Mes soumissions" onClick={() => navigate('/mes-soumissions')} />
         <ActionCard
           icon={syncing ? <RiLoader4Line className="animate-spin text-xl text-k2l-red" /> : <RiRefreshLine className="text-xl text-k2l-red" />}
           bgIcon="bg-k2l-red-light"

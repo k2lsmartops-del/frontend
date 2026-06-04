@@ -60,16 +60,29 @@ function scheduleProactiveRefresh(accessToken: string) {
 
 // Initialiser le refresh proactif au démarrage
 const tokens = localStorage.getItem('tokens');
-if (tokens) {
-  const { accessToken } = JSON.parse(tokens) as { accessToken: string };
-  scheduleProactiveRefresh(accessToken);
+if (tokens && tokens !== 'undefined') {
+  try {
+    const { accessToken } = JSON.parse(tokens) as { accessToken: string };
+    if (accessToken) {
+      scheduleProactiveRefresh(accessToken);
+    }
+  } catch {
+    console.warn('Tokens invalides dans localStorage, suppression...');
+    localStorage.removeItem('tokens');
+  }
 }
 
 api.interceptors.request.use((config) => {
   const tokens = localStorage.getItem('tokens');
-  if (tokens) {
-    const { accessToken } = JSON.parse(tokens) as { accessToken: string };
-    config.headers.Authorization = `Bearer ${accessToken}`;
+  if (tokens && tokens !== 'undefined') {
+    try {
+      const { accessToken } = JSON.parse(tokens) as { accessToken: string };
+      if (accessToken) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
+      }
+    } catch {
+      localStorage.removeItem('tokens');
+    }
   }
   return config;
 });
