@@ -59,7 +59,7 @@ export default function AdminLayout() {
           <div className="flex h-9 w-9 items-center justify-content-center rounded-lg bg-white/15 text-white">
             <RiLeafLine className="mx-auto text-lg" />
           </div>
-          <span className="font-head text-base font-bold text-white">K2L Terrain</span>
+          <span className="font-head text-base font-bold text-white">K2L SmartOps</span>
         </div>
 
         <div className="flex items-center gap-2.5 border-b border-white/10 px-5 py-3">
