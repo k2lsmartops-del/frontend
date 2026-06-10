@@ -12,8 +12,6 @@ import MesSoumissionsPage from '@/features/submissions/pages/MesSoumissionsPage'
 import ProfilePage from '@/features/profile/pages/ProfilePage';
 // Supervisor pages
 import SupervisorHomePage from '@/features/supervisor/pages/SupervisorHomePage';
-import ValidationQueuePage from '@/features/supervisor/pages/ValidationQueuePage';
-import SubmissionDetailPage from '@/features/supervisor/pages/SubmissionDetailPage';
 import TeamPage from '@/features/supervisor/pages/TeamPage';
 // Admin pages
 import AdminLayout from '@/features/admin/components/AdminLayout';
@@ -80,8 +78,6 @@ export default function App() {
             <Route path="mes-soumissions" element={<MesSoumissionsPage />} />
             <Route path="submissions/:id/edit" element={<EditSubmissionPage />} />
             {/* Supervisor routes */}
-            <Route path="validation" element={<ValidationQueuePage />} />
-            <Route path="validation/:id" element={<SubmissionDetailPage />} />
             <Route path="team" element={<TeamPage />} />
             {/* Common routes */}
             <Route path="profile" element={<ProfilePage />} />

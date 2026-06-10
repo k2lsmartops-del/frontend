@@ -1,8 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   RiHome5Line, RiHome5Fill, RiUserLine, RiUserFill, RiStore2Line, RiStore2Fill,
-  RiSettings4Line, RiSettings4Fill, RiCheckboxCircleLine, RiCheckboxCircleFill,
-  RiTeamLine, RiTeamFill,
+  RiSettings4Line, RiSettings4Fill, RiTeamLine, RiTeamFill,
 } from '@/common/icons';
 import { useAuthStore } from '@/common/stores/auth.store';
 
@@ -17,7 +16,6 @@ const COMMERCIAL_NAV = [
 // Navigation pour SUPERVISEUR
 const SUPERVISOR_NAV = [
   { path: '/', label: 'Accueil', icon: RiHome5Line, iconActive: RiHome5Fill },
-  { path: '/validation', label: 'À valider', icon: RiCheckboxCircleLine, iconActive: RiCheckboxCircleFill, badge: true },
   { path: '/team', label: 'Équipe', icon: RiTeamLine, iconActive: RiTeamFill },
   { path: '/profile', label: 'Profil', icon: RiSettings4Line, iconActive: RiSettings4Fill },
 ];
