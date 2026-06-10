@@ -55,6 +55,21 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
 
+          {/* Client portal (desktop web) */}
+          <Route
+            path="/client"
+            element={
+              <ProtectedRoute>
+                <ClientLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<ClientDashboardPage />} />
+            <Route path="submissions" element={<ClientSubmissionsPage />} />
+            <Route path="map" element={<ClientMapPage />} />
+            <Route path="reports" element={<ClientReportsPage />} />
+          </Route>
+
           {/* Admin / Coordinator desktop back-office */}
           <Route
             path="/admin"
@@ -70,21 +85,6 @@ export default function App() {
             <Route path="validations" element={<ValidationCoordinateurPage />} />
             <Route path="validation-history" element={<ValidationHistoryPage />} />
             <Route path="validation-map" element={<ValidationMapPage />} />
-          </Route>
-
-          {/* Client portal */}
-          <Route
-            path="/client"
-            element={
-              <ProtectedRoute>
-                <ClientLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<ClientDashboardPage />} />
-            <Route path="submissions" element={<ClientSubmissionsPage />} />
-            <Route path="map" element={<ClientMapPage />} />
-            <Route path="reports" element={<ClientReportsPage />} />
           </Route>
 
           {/* Mobile PWA routes */}
