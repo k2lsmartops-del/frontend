@@ -22,6 +22,12 @@ import ClustersPage from '@/features/admin/pages/ClustersPage';
 import ValidationCoordinateurPage from '@/features/admin/pages/ValidationCoordinateurPage';
 import ValidationHistoryPage from '@/features/admin/pages/ValidationHistoryPage';
 import ValidationMapPage from '@/features/admin/pages/ValidationMapPage';
+// Client pages
+import ClientLayout from '@/features/client/components/ClientLayout';
+import ClientDashboardPage from '@/features/client/pages/ClientDashboardPage';
+import ClientSubmissionsPage from '@/features/client/pages/ClientSubmissionsPage';
+import ClientMapPage from '@/features/client/pages/ClientMapPage';
+import ClientReportsPage from '@/features/client/pages/ClientReportsPage';
 import { useAuthStore } from '@/common/stores/auth.store';
 
 function RoleBasedHomePage() {
@@ -34,6 +40,9 @@ function RoleBasedRoot() {
   const user = useAuthStore((s) => s.user);
   if (user?.role === 'ADMIN' || user?.role === 'COORDINATEUR') {
     return <Navigate to="/admin" replace />;
+  }
+  if (user?.role === 'CLIENT') {
+    return <Navigate to="/client" replace />;
   }
   return <RoleBasedHomePage />;
 }
@@ -61,6 +70,21 @@ export default function App() {
             <Route path="validations" element={<ValidationCoordinateurPage />} />
             <Route path="validation-history" element={<ValidationHistoryPage />} />
             <Route path="validation-map" element={<ValidationMapPage />} />
+          </Route>
+
+          {/* Client portal */}
+          <Route
+            path="/client"
+            element={
+              <ProtectedRoute>
+                <ClientLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<ClientDashboardPage />} />
+            <Route path="submissions" element={<ClientSubmissionsPage />} />
+            <Route path="map" element={<ClientMapPage />} />
+            <Route path="reports" element={<ClientReportsPage />} />
           </Route>
 
           {/* Mobile PWA routes */}
