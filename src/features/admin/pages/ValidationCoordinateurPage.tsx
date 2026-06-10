@@ -63,7 +63,7 @@ export default function ValidationCoordinateurPage() {
     if (!current) return;
     setProcessing(true);
     try {
-      await api.patch(`/submissions/${current.id}/approve-l2`, {});
+      await api.patch(`/submissions/${current.id}/validate`, {});
       showToast('Fiche validée', 'success');
       setSubmissions((prev) => prev.filter((s) => s.id !== current.id));
       if (currentIndex >= submissions.length - 1) {
