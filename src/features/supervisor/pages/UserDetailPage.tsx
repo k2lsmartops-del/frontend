@@ -10,9 +10,6 @@ import {
   RiTimeLine,
   RiWifiLine,
   RiWifiOffLine,
-  RiDownloadLine,
-  RiCheckLine,
-  RiCloseLine,
   RiLoader4Line,
   RiBarChartLine,
 } from 'react-icons/ri';
@@ -175,38 +172,6 @@ export default function UserDetailPage() {
                   </div>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Statut de l'application */}
-        <div className="rounded-xl bg-white p-4 shadow-sm">
-          <h3 className="mb-3 font-head text-sm font-semibold text-k2l-gray-800">Statut de l'application</h3>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                user.appInstalled ? 'bg-k2l-success/10' : 'bg-k2l-red/10'
-              }`}>
-                {user.appInstalled ? (
-                  <RiCheckLine className={`text-xl ${user.appInstalled ? 'text-k2l-success' : 'text-k2l-red'}`} />
-                ) : (
-                  <RiCloseLine className="text-xl text-k2l-red" />
-                )}
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-k2l-gray-800">
-                  {user.appInstalled ? 'Application installée' : 'Application non installée'}
-                </div>
-                <div className="text-[11px] text-k2l-gray-400">
-                  {user.lastActive ? `Dernière activité: ${new Date(user.lastActive).toLocaleString('fr-FR')}` : 'Jamais active'}
-                </div>
-              </div>
-            </div>
-            {!user.appInstalled && (
-              <button className="flex items-center gap-1.5 rounded-lg bg-k2l-primary px-3 py-2 text-[11px] font-semibold text-white">
-                <RiDownloadLine />
-                Envoyer lien
-              </button>
             )}
           </div>
         </div>
