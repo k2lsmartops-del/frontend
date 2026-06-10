@@ -13,6 +13,7 @@ import ProfilePage from '@/features/profile/pages/ProfilePage';
 // Supervisor pages
 import SupervisorHomePage from '@/features/supervisor/pages/SupervisorHomePage';
 import TeamPage from '@/features/supervisor/pages/TeamPage';
+import UserDetailPage from '@/features/supervisor/pages/UserDetailPage';
 // Admin pages
 import AdminLayout from '@/features/admin/components/AdminLayout';
 import AdminDashboardPage from '@/features/admin/pages/AdminDashboardPage';
@@ -79,6 +80,7 @@ export default function App() {
             <Route path="submissions/:id/edit" element={<EditSubmissionPage />} />
             {/* Supervisor routes */}
             <Route path="team" element={<TeamPage />} />
+            <Route path="team/:userId" element={<UserDetailPage />} />
             {/* Common routes */}
             <Route path="profile" element={<ProfilePage />} />
           </Route>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { RiLoader4Line, RiAddLine, RiCloseLine, RiDeleteBinLine, RiEditLine, RiEyeLine, RiEyeOffLine, RiMore2Fill, RiCheckLine, RiStopLine } from 'react-icons/ri';
 import api from '@/common/services/api';
 
@@ -24,6 +25,7 @@ interface FormData {
 type Filter = 'all' | 'active' | 'inactive';
 
 export default function TeamPage() {
+  const navigate = useNavigate();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>('all');
@@ -322,7 +324,8 @@ export default function TeamPage() {
             return (
               <div
                 key={member.id}
-                className="flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm"
+                onClick={() => navigate(`/team/${member.id}`)}
+                className="flex cursor-pointer items-center gap-3 rounded-xl bg-white p-3 shadow-sm active:bg-k2l-gray-50 transition-colors"
               >
                 {/* Avatar avec indicateur statut */}
                 <div className="relative">
