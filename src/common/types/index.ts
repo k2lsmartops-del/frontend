@@ -1,7 +1,7 @@
 export type Role = 'ADMIN' | 'COORDINATEUR' | 'SUPERVISEUR' | 'COMMERCIAL' | 'CLIENT';
 export type AgentStatus = 'ACTIF' | 'SUSPENDU' | 'EN_ATTENTE' | 'DESACTIVE';
 export type SubmissionType = 'PROSPECT' | 'MARCHAND';
-export type SubmissionStatus = 'DRAFT' | 'SUBMITTED' | 'SUPERVISOR_APPROVED' | 'VALIDATED' | 'REJECTED_L1' | 'REJECTED_L2';
+export type SubmissionStatus = 'DRAFT' | 'SUBMITTED' | 'VALIDATED' | 'REJECTED';
 export type AppStatus = 'INSTALLED' | 'INSTALLED_ACTIVATED';
 export type SyncStatus = 'PENDING' | 'SYNCED' | 'FAILED';
 export type Gender = 'HOMME' | 'FEMME';
@@ -17,11 +17,9 @@ export interface User {
   isActive: boolean;
   avatarUrl?: string | null;
   gender?: Gender | null;
-  zoneId?: string | null;
-  secteurId?: string | null;
+  clusterId?: string | null;
   supervisorId?: string | null;
-  zone?: { id: string; name: string } | null;
-  secteur?: { id: string; name: string } | null;
+  cluster?: { id: string; name: string } | null;
   supervisor?: { id: string; fullName: string; matricule: string } | null;
   createdAt: string;
 }
@@ -47,7 +45,7 @@ export interface Submission {
   type: SubmissionType;
   status: SubmissionStatus;
   commercialId: string;
-  zoneId?: string | null;
+  clusterId?: string | null;
   commune: string;
   quartier?: string | null;
   latitude?: number | null;
@@ -59,8 +57,7 @@ export interface Submission {
   prospectGender?: string | null;
   prospectAge?: number | null;
   appStatus?: AppStatus | null;
-  phoneType?: string | null;
-  bankAccount?: string | null;
+  sponsorCode?: string | null;
   observations?: string | null;
   merchantName?: string | null;
   merchantOwner?: string | null;
@@ -90,8 +87,7 @@ export interface CreateSubmissionPayload {
   prospectGender?: string;
   prospectAge?: number;
   appStatus?: AppStatus;
-  phoneType?: string;
-  bankAccount?: string;
+  sponsorCode?: string;
   observations?: string;
   merchantName?: string;
   merchantOwner?: string;

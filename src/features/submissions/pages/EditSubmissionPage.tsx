@@ -45,8 +45,7 @@ interface SubmissionData {
   prospectGender?: string;
   prospectAge?: string;
   appStatus?: string;
-  phoneType?: string;
-  bankAccount?: string;
+  sponsorCode?: string;
   observations?: string;
   merchantName?: string;
   merchantOwner?: string;
@@ -154,8 +153,7 @@ export default function EditSubmissionPage() {
         payload.prospectGender = form.prospectGender;
         payload.prospectAge = form.prospectAge;
         payload.appStatus = form.appStatus;
-        payload.phoneType = form.phoneType;
-        payload.bankAccount = form.bankAccount;
+        payload.sponsorCode = form.sponsorCode;
       } else {
         payload.merchantName = form.merchantName;
         payload.merchantOwner = form.merchantOwner;
@@ -201,10 +199,10 @@ export default function EditSubmissionPage() {
   // ── Soumission non modifiable ──
   if (blocked) {
     const statusLabels: Record<string, string> = {
-      SUPERVISOR_APPROVED: 'Validée niveau 1',
+      SUPERVISOR_APPROVED: 'En cours de validation',
       VALIDATED: 'Validée',
-      REJECTED_L1: 'Rejetée niveau 1',
-      REJECTED_L2: 'Rejetée niveau 2',
+      REJECTED_L1: 'Rejetée',
+      REJECTED_L2: 'Rejetée',
     };
     return (
       <div className="flex min-h-full flex-col items-center justify-center bg-k2l-gray-100 px-6 text-center">
@@ -259,8 +257,7 @@ export default function EditSubmissionPage() {
             <FormSelect label="Genre" value={form.prospectGender || ''} onChange={set('prospectGender')} options={['', 'HOMME', 'FEMME']} />
             <FormInput label="Âge" value={form.prospectAge || ''} onChange={set('prospectAge')} />
             <FormSelect label="Statut app" value={form.appStatus || ''} onChange={set('appStatus')} options={[{ value: '', label: '— Choisir —' }, { value: 'INSTALLED', label: 'Installée' }, { value: 'INSTALLED_ACTIVATED', label: 'Installée + Activée' }]} />
-            <FormInput label="Type téléphone" value={form.phoneType || ''} onChange={set('phoneType')} />
-            <FormSelect label="Compte bancaire" value={form.bankAccount || ''} onChange={set('bankAccount')} options={['', 'OUI', 'NON']} />
+            <FormInput label="Code parrain" value={form.sponsorCode || ''} onChange={set('sponsorCode')} placeholder="Code du commercial parrain" />
           </FormCard>
         )}
 
@@ -275,56 +272,35 @@ export default function EditSubmissionPage() {
           </FormCard>
         )}
 
-        {/* Photos */}
-        <FormCard title="Photos" icon={RiCameraLine}>
-          {form.type === 'PROSPECT' ? (
-            <>
-              <PhotoCapture
-                category="APP_SCREEN"
-                label="Ecran avec l'app installee"
-                clientUuid={form.clientUuid}
-                uploadImmediately
-                onUploaded={onPhotoUploaded}
-                existingUrl={getExistingPhotoUrl('APP_SCREEN')}
-              />
-              <PhotoCapture
-                category="ID_DOCUMENT"
-                label="CNI du client"
-                clientUuid={form.clientUuid}
-                uploadImmediately
-                onUploaded={onPhotoUploaded}
-                existingUrl={getExistingPhotoUrl('ID_DOCUMENT')}
-              />
-            </>
-          ) : (
-            <>
-              <PhotoCapture
-                category="STOREFRONT"
-                label="Facade du commerce"
-                clientUuid={form.clientUuid}
-                uploadImmediately
-                onUploaded={onPhotoUploaded}
-                existingUrl={getExistingPhotoUrl('STOREFRONT')}
-              />
-              <PhotoCapture
-                category="QR_CODE"
-                label="QR Code"
-                clientUuid={form.clientUuid}
-                uploadImmediately
-                onUploaded={onPhotoUploaded}
-                existingUrl={getExistingPhotoUrl('QR_CODE')}
-              />
-              <PhotoCapture
-                category="ID_DOCUMENT"
-                label="CNI du proprietaire"
-                clientUuid={form.clientUuid}
-                uploadImmediately
-                onUploaded={onPhotoUploaded}
-                existingUrl={getExistingPhotoUrl('ID_DOCUMENT')}
-              />
-            </>
-          )}
-        </FormCard>
+        {/* Photos (marchand uniquement) */}
+        {form.type === 'MARCHAND' && (
+          <FormCard title="Photos" icon={RiCameraLine}>
+            <PhotoCapture
+              category="STOREFRONT"
+              label="Facade du commerce"
+              clientUuid={form.clientUuid}
+              uploadImmediately
+              onUploaded={onPhotoUploaded}
+              existingUrl={getExistingPhotoUrl('STOREFRONT')}
+            />
+            <PhotoCapture
+              category="QR_CODE"
+              label="QR Code"
+              clientUuid={form.clientUuid}
+              uploadImmediately
+              onUploaded={onPhotoUploaded}
+              existingUrl={getExistingPhotoUrl('QR_CODE')}
+            />
+            <PhotoCapture
+              category="ID_DOCUMENT"
+              label="CNI du proprietaire"
+              clientUuid={form.clientUuid}
+              uploadImmediately
+              onUploaded={onPhotoUploaded}
+              existingUrl={getExistingPhotoUrl('ID_DOCUMENT')}
+            />
+          </FormCard>
+        )}
 
         {/* Observations */}
         <FormCard title="Observations" icon={RiFileList2Line}>

@@ -4,7 +4,6 @@ import {
   RiHome5Line,
   RiTeamLine,
   RiMapPin2Line,
-  RiSettings4Line,
   RiLogoutBoxRLine,
   RiSearchLine,
   RiLeafLine,
@@ -20,9 +19,10 @@ interface NavItem {
 
 const adminNav: NavItem[] = [
   { to: '/admin', icon: RiHome5Line, label: 'Tableau de bord', roles: ['ADMIN', 'COORDINATEUR'] },
-  { to: '/admin/validations', icon: RiCheckboxCircleLine, label: 'Validations', roles: ['COORDINATEUR'] },
-  { to: '/admin/zones', icon: RiMapPin2Line, label: 'Zones', roles: ['ADMIN'] },
-  { to: '/admin/secteurs', icon: RiSettings4Line, label: 'Secteurs', roles: ['ADMIN', 'COORDINATEUR'] },
+  { to: '/admin/validations', icon: RiCheckboxCircleLine, label: 'Validations en attente', roles: ['COORDINATEUR'] },
+  { to: '/admin/validation-history', icon: RiCheckboxCircleLine, label: 'Historique validations', roles: ['ADMIN', 'COORDINATEUR'] },
+  { to: '/admin/validation-map', icon: RiMapPin2Line, label: 'Carte des soumissions', roles: ['ADMIN', 'COORDINATEUR'] },
+  { to: '/admin/clusters', icon: RiMapPin2Line, label: 'Clusters', roles: ['ADMIN'] },
   { to: '/admin/users', icon: RiTeamLine, label: 'Utilisateurs', roles: ['ADMIN', 'COORDINATEUR'] },
 ];
 
@@ -44,9 +44,10 @@ export default function AdminLayout() {
   const pageTitle = (() => {
     if (location.pathname === '/admin') return 'Tableau de bord';
     if (location.pathname.includes('/users')) return 'Gestion des utilisateurs';
-    if (location.pathname.includes('/zones')) return 'Zones';
-    if (location.pathname.includes('/secteurs')) return 'Secteurs';
-    if (location.pathname.includes('/validations')) return 'Validations N2';
+    if (location.pathname.includes('/clusters')) return 'Clusters';
+    if (location.pathname.includes('/validations') && !location.pathname.includes('validation-history') && !location.pathname.includes('validation-map')) return 'Validations en attente';
+    if (location.pathname.includes('validation-history')) return 'Historique validations';
+    if (location.pathname.includes('validation-map')) return 'Carte des soumissions';
     if (location.pathname.includes('/commerciaux')) return 'Mes Commerciaux';
     return 'Back-office';
   })();
@@ -74,9 +75,9 @@ export default function AdminLayout() {
           </div>
         </div>
 
-        {user?.role === 'COORDINATEUR' && user?.zone && (
+        {user?.role === 'COORDINATEUR' && user?.cluster && (
           <div className="mx-4 mt-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-[11px] text-white">
-            Périmètre : <span className="font-head font-bold">{user.zone.name}</span>
+            Périmètre : <span className="font-head font-bold">{user.cluster.name}</span>
           </div>
         )}
 
@@ -131,9 +132,9 @@ export default function AdminLayout() {
                 className="w-48 bg-transparent text-[13px] text-k2l-gray-600 outline-none placeholder:text-k2l-gray-400"
               />
             </div>
-            {user?.role === 'COORDINATEUR' && user?.zone ? (
+            {user?.role === 'COORDINATEUR' && user?.cluster ? (
               <div className="flex items-center gap-1.5 rounded-lg bg-k2l-navy px-3 py-1.5 text-[12px] font-semibold text-white">
-                {user.zone.name}
+                {user.cluster.name}
               </div>
             ) : (
               <div className="flex items-center gap-1.5 rounded-full bg-k2l-success-light px-3 py-1.5 text-[11px] font-semibold text-k2l-success">

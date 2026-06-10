@@ -1,10 +1,8 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
-import type { IconType } from 'react-icons';
 import {
   RiArrowLeftLine, RiCameraLine, RiLoader4Line,
-  RiShoppingCartLine, RiMedicineBottleLine, RiRestaurant2Line, RiBuilding2Line,
   RiStore2Line, RiMapPinLine,
 } from '@/common/icons';
 import FormCard from '@/common/components/FormCard';
@@ -19,12 +17,15 @@ import { useMyZoneCommunes, type Quartier } from '@/common/hooks/useMyZoneCommun
 
 const OTHER_OPTION = '__OTHER__';
 
-interface CommerceType { value: string; label: string; icon: IconType }
-const TYPES_COMMERCE: CommerceType[] = [
-  { value: 'boutique', label: 'Boutique', icon: RiShoppingCartLine },
-  { value: 'pharmacie', label: 'Pharmacie', icon: RiMedicineBottleLine },
-  { value: 'restaurant', label: 'Restaurant', icon: RiRestaurant2Line },
-  { value: 'autre', label: 'Autre', icon: RiBuilding2Line },
+const TYPES_COMMERCE = [
+  { value: 'boutique', label: 'Boutique' },
+  { value: 'pharmacie', label: 'Pharmacie' },
+  { value: 'restaurant', label: 'Restaurant' },
+  { value: 'supermarche', label: 'Supermarché' },
+  { value: 'quincaillerie', label: 'Quincaillerie' },
+  { value: 'pressing', label: 'Pressing' },
+  { value: 'salon_coiffure', label: 'Salon de coiffure' },
+  { value: 'autre', label: 'Autre' },
 ];
 
 export default function MarchandFormPage() {
@@ -178,26 +179,12 @@ export default function MarchandFormPage() {
       <div className="flex-1 space-y-3.5 p-4">
         {/* Type de commerce */}
         <FormCard title="Type de commerce" icon={RiStore2Line}>
-          <div className="grid grid-cols-2 gap-2">
-            {TYPES_COMMERCE.map((t) => {
-              const Icon = t.icon;
-              return (
-                <button
-                  key={t.value}
-                  type="button"
-                  onClick={() => setTypeCommerce(t.value)}
-                  className={`flex flex-col items-center rounded-sm border-[1.5px] px-2.5 py-3 transition-all ${
-                    typeCommerce === t.value
-                      ? 'border-k2l-primary bg-k2l-primary-light'
-                      : 'border-k2l-gray-200 bg-white'
-                  }`}
-                >
-                  <Icon className="text-[22px] text-k2l-gray-900" />
-                  <span className="mt-1.5 text-xs font-medium text-k2l-gray-900">{t.label}</span>
-                </button>
-              );
-            })}
-          </div>
+          <FormSelect
+            label="Type de commerce *"
+            value={typeCommerce}
+            onChange={setTypeCommerce}
+            options={TYPES_COMMERCE}
+          />
         </FormCard>
 
         {/* Infos commerce */}

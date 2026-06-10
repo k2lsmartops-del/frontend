@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  RiCheckboxCircleLine, RiLoader4Line, RiWifiLine, RiWifiOffLine,
-  RiUserLine, RiStore2Line,
+  RiLoader4Line, RiWifiLine, RiWifiOffLine,
+  RiUserLine, RiStore2Line, RiTeamLine,
 } from '@/common/icons';
 import { useAuthStore } from '@/common/stores/auth.store';
 import { useOnlineStatus } from '@/common/hooks/useOnlineStatus';
@@ -19,8 +19,9 @@ interface SubmissionSummary {
 }
 
 interface Stats {
-  pending: number;
+  totalSubmissions: number;
   validated: number;
+  pending: number;
   activeAgents: number;
   totalAgents: number;
 }
@@ -30,21 +31,27 @@ export default function SupervisorHomePage() {
   const user = useAuthStore((s) => s.user);
   const isOnline = useOnlineStatus();
 
-  const [stats, setStats] = useState<Stats>({ pending: 0, validated: 0, activeAgents: 0, totalAgents: 0 });
+  const [stats, setStats] = useState<Stats>({ totalSubmissions: 0, validated: 0, pending: 0, activeAgents: 0, totalAgents: 0 });
   const [recent, setRecent] = useState<SubmissionSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
     try {
-      // Charger les soumissions en attente de validation (SUBMITTED)
+      // Charger les soumissions du cluster
+      const { data: allData } = await api.get('/submissions', {
+        params: { limit: 100 },
+      });
+      const totalSubmissions = allData.meta?.total || allData.data?.length || 0;
+
+      // Soumissions en attente
       const { data: pendingData } = await api.get('/submissions', {
         params: { status: 'SUBMITTED', limit: 100 },
       });
       const pendingCount = pendingData.meta?.total || pendingData.data?.length || 0;
 
-      // Charger les soumissions validées par ce superviseur
+      // Soumissions validées
       const { data: validatedData } = await api.get('/submissions', {
-        params: { status: 'SUPERVISOR_APPROVED', limit: 100 },
+        params: { status: 'VALIDATED', limit: 100 },
       });
       const validatedCount = validatedData.meta?.total || validatedData.data?.length || 0;
 
@@ -60,13 +67,14 @@ export default function SupervisorHomePage() {
       }
 
       setStats({
-        pending: pendingCount,
+        totalSubmissions,
         validated: validatedCount,
+        pending: pendingCount,
         activeAgents,
         totalAgents,
       });
 
-      // Activité récente — TOUTES les soumissions récentes (pas seulement en attente)
+      // Activité récente
       const { data: recentData } = await api.get('/submissions', {
         params: { limit: 10 },
       });
@@ -109,7 +117,7 @@ export default function SupervisorHomePage() {
           <div className="flex-1">
             <div className="font-head text-base font-semibold text-white">{user?.fullName ?? 'Superviseur'}</div>
             <div className="mt-0.5 truncate text-xs text-white/70">
-              {['Superviseur', user?.secteur?.name, user?.zone?.name].filter(Boolean).join(' · ')}
+              {['Superviseur', user?.zone?.name ? `Cluster ${user.zone.name}` : ''].filter(Boolean).join(' · ')}
             </div>
             {user?.matricule && (
               <div className="text-[10px] text-white/50">{user.matricule}</div>
@@ -123,24 +131,11 @@ export default function SupervisorHomePage() {
         </div>
       </div>
 
-      {/* Alerte fiches en attente */}
-      {stats.pending > 0 && (
-        <div className="mx-4 -mt-4">
-          <div className="flex items-center gap-3 rounded-xl bg-k2l-amber-light p-3 shadow-[0_2px_12px_rgba(0,0,0,0.07)]">
-            <span className="text-2xl">⏳</span>
-            <div>
-              <div className="font-head text-sm font-semibold text-[#854F0B]">{stats.pending} fiche{stats.pending > 1 ? 's' : ''} à valider</div>
-              <div className="text-[11px] text-[#854F0B]/80">En attente de votre validation</div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* KPIs */}
       <div className="grid grid-cols-3 gap-2 px-4 py-4">
         <div className="rounded-xl bg-white p-3 text-center shadow-sm">
-          <div className="font-head text-xl font-bold text-k2l-amber">{loading ? '—' : stats.pending}</div>
-          <div className="mt-0.5 text-[9px] uppercase tracking-wider text-k2l-gray-400">À valider</div>
+          <div className="font-head text-xl font-bold text-k2l-primary">{loading ? '—' : stats.totalSubmissions}</div>
+          <div className="mt-0.5 text-[9px] uppercase tracking-wider text-k2l-gray-400">Soumissions</div>
         </div>
         <div className="rounded-xl bg-white p-3 text-center shadow-sm">
           <div className="font-head text-xl font-bold text-k2l-success">{loading ? '—' : stats.validated}</div>
@@ -148,19 +143,18 @@ export default function SupervisorHomePage() {
         </div>
         <div className="rounded-xl bg-white p-3 text-center shadow-sm">
           <div className="font-head text-xl font-bold text-k2l-primary">{loading ? '—' : `${stats.activeAgents}/${stats.totalAgents}`}</div>
-          <div className="mt-0.5 text-[9px] uppercase tracking-wider text-k2l-gray-400">Actifs</div>
+          <div className="mt-0.5 text-[9px] uppercase tracking-wider text-k2l-gray-400">Agents actifs</div>
         </div>
       </div>
 
-      {/* Bouton validation */}
+      {/* Bouton gérer l'équipe */}
       <div className="px-4 pb-4">
         <button
-          onClick={() => navigate('/validation')}
-          disabled={stats.pending === 0}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-k2l-success py-4 font-head text-[15px] font-semibold text-white transition-all active:scale-[0.98] disabled:opacity-50"
+          onClick={() => navigate('/team')}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-k2l-navy py-4 font-head text-[15px] font-semibold text-white transition-all active:scale-[0.98]"
         >
-          <RiCheckboxCircleLine className="text-lg" />
-          Valider les fiches →
+          <RiTeamLine className="text-lg" />
+          Gérer mon équipe
         </button>
       </div>
 
@@ -184,17 +178,16 @@ export default function SupervisorHomePage() {
               const initials = name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
               const statusConfig: Record<string, { label: string; bg: string; text: string }> = {
                 SUBMITTED: { label: 'En attente', bg: 'bg-k2l-amber-light', text: 'text-[#854F0B]' },
-                SUPERVISOR_APPROVED: { label: 'Validé L1', bg: 'bg-k2l-success-light', text: 'text-k2l-success' },
+                SUPERVISOR_APPROVED: { label: 'En validation', bg: 'bg-k2l-amber-light', text: 'text-[#854F0B]' },
                 VALIDATED: { label: 'Validé', bg: 'bg-k2l-success-light', text: 'text-k2l-success' },
                 REJECTED_L1: { label: 'Rejeté', bg: 'bg-k2l-red-light', text: 'text-k2l-red' },
-                REJECTED_L2: { label: 'Rejeté L2', bg: 'bg-k2l-red-light', text: 'text-k2l-red' },
+                REJECTED_L2: { label: 'Rejeté', bg: 'bg-k2l-red-light', text: 'text-k2l-red' },
               };
               const status = statusConfig[s.status] || { label: s.status, bg: 'bg-k2l-gray-100', text: 'text-k2l-gray-500' };
               return (
                 <div
                   key={s.id}
-                  onClick={() => navigate(`/validation/${s.id}`)}
-                  className="flex cursor-pointer items-center gap-3 rounded-xl bg-white p-3 shadow-sm active:bg-k2l-gray-100"
+                  className="flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm"
                 >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-k2l-success-light font-head text-sm font-bold text-k2l-navy">
                     {initials}
@@ -210,7 +203,7 @@ export default function SupervisorHomePage() {
                       {s.type === 'PROSPECT' ? 'Prospect' : 'Marchand'} · {formatTimeAgo(s.createdAt)}
                     </div>
                   </div>
-                  {s.type === 'PROSPECT' 
+                  {s.type === 'PROSPECT'
                     ? <RiUserLine className="text-lg text-k2l-gray-400" />
                     : <RiStore2Line className="text-lg text-k2l-gray-400" />
                   }

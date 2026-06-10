@@ -11,40 +11,39 @@ interface User {
   role: string;
   status: string;
   isActive: boolean;
-  zone?: {
+  cluster?: {
     id: string;
     name: string;
-    coordinator?: { id: string; fullName: string; matricule: string } | null;
+    supervisor?: { id: string; fullName: string; matricule: string } | null;
   } | null;
-  secteur?: { id: string; name: string } | null;
   supervisor?: { id: string; fullName: string } | null;
   createdAt: string;
   updatedAt: string;
 }
 
-interface Zone {
+interface Cluster {
   id: string;
   name: string;
 }
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
-  const [zones, setZones] = useState<Zone[]>([]);
+  const [clusters, setClusters] = useState<Cluster[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('');
-  const [zoneFilter, setZoneFilter] = useState<string>('');
+  const [clusterFilter, setClusterFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
 
-  // Charger les zones au montage
+  // Charger les clusters au montage
   useEffect(() => {
-    api.get('/zones').then((res) => setZones(res.data || [])).catch(() => {});
+    api.get('/clusters').then((res) => setClusters(res.data || [])).catch(() => {});
   }, []);
 
   // Charger les utilisateurs
@@ -55,7 +54,7 @@ export default function UsersPage() {
         const params = new URLSearchParams({ page: String(page), limit: '500' });
         if (search) params.set('search', search);
         if (roleFilter) params.set('role', roleFilter);
-        if (zoneFilter) params.set('zoneId', zoneFilter);
+        if (clusterFilter) params.set('clusterId', clusterFilter);
         if (statusFilter) params.set('status', statusFilter);
         const res = await api.get(`/users?${params}`);
         setUsers(res.data.data || []);
@@ -67,7 +66,7 @@ export default function UsersPage() {
       }
     };
     loadUsers();
-  }, [page, search, roleFilter, zoneFilter, statusFilter]);
+  }, [page, search, roleFilter, clusterFilter, statusFilter]);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -75,7 +74,7 @@ export default function UsersPage() {
       const params = new URLSearchParams({ page: String(page), limit: '500' });
       if (search) params.set('search', search);
       if (roleFilter) params.set('role', roleFilter);
-      if (zoneFilter) params.set('zoneId', zoneFilter);
+      if (clusterFilter) params.set('clusterId', clusterFilter);
       if (statusFilter) params.set('status', statusFilter);
       const res = await api.get(`/users?${params}`);
       setUsers(res.data.data || []);
@@ -195,18 +194,18 @@ export default function UsersPage() {
           ))}
         </div>
 
-        {/* Ligne 2: Filtres zone + statut + recherche */}
+        {/* Ligne 2: Filtres cluster + statut + recherche */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Zone filter - PROMINENT */}
+          {/* Cluster filter - PROMINENT */}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-k2l-gray-400 uppercase tracking-wider">Zone :</span>
+            <span className="text-xs font-semibold text-k2l-gray-400 uppercase tracking-wider">Cluster :</span>
             <select
-              value={zoneFilter}
-              onChange={(e) => { setZoneFilter(e.target.value); setPage(1); }}
+              value={clusterFilter}
+              onChange={(e) => { setClusterFilter(e.target.value); setPage(1); }}
               className="rounded-lg border-2 border-[#1D9E75] bg-white px-4 py-2 text-sm font-semibold text-[#1D9E75] outline-none hover:bg-[#1D9E75]/5 transition-colors cursor-pointer"
             >
-              <option value="">  Toutes les zones</option>
-              {zones.map((z) => (
+              <option value="">  Tous les clusters</option>
+              {clusters.map((z) => (
                 <option key={z.id} value={z.id}>{z.name}</option>
               ))}
             </select>
@@ -395,51 +394,40 @@ function UserCard({ user, onEdit, onResetPassword, onAction }: UserCardProps) {
         <p className="text-[9px] font-semibold uppercase tracking-wider text-k2l-gray-400 mb-1">Rattachement</p>
         {user.role === 'COORDINATEUR' && (
           <div className="text-[11px] text-k2l-gray-600">
-            {user.zone?.name ? (
+            {user.cluster?.name ? (
               <div className="flex items-center gap-1.5">
                 <RiMapPinLine className="text-[#1F5C99]" />
-                <span className="font-medium">{user.zone.name}</span>
+                <span className="font-medium">{user.cluster.name}</span>
               </div>
             ) : (
-              <span className="text-k2l-gray-400 italic">Aucune zone assignée</span>
+              <span className="text-k2l-gray-400 italic">Aucun cluster assigné</span>
             )}
           </div>
         )}
         {user.role === 'SUPERVISEUR' && (
           <div className="text-[11px] space-y-0.5">
-            {user.zone?.coordinator?.fullName && (
+            {user.cluster?.supervisor?.fullName && (
               <div className="flex items-center gap-1.5 text-[#1F5C99]">
                 <RiShieldUserLine />
-                <span className="font-medium">Coord: {user.zone.coordinator.fullName}</span>
+                <span className="font-medium">Superviseur: {user.cluster.supervisor.fullName}</span>
               </div>
             )}
-            {user.secteur?.name ? (
+            {user.cluster?.name ? (
               <div className="flex items-center gap-1.5 text-k2l-gray-600">
                 <RiMapPinLine />
-                <span>{user.secteur.name}</span>
+                <span>{user.cluster.name}</span>
               </div>
             ) : (
-              <span className="text-k2l-gray-400 italic">Aucun secteur assigné</span>
+              <span className="text-k2l-gray-400 italic">Aucun cluster assigné</span>
             )}
           </div>
         )}
         {user.role === 'COMMERCIAL' && (
           <div className="text-[11px] space-y-0.5">
-            {user.zone?.coordinator?.fullName && (
-              <div className="flex items-center gap-1.5 text-[#1F5C99]">
-                <RiShieldUserLine />
-                <span className="font-medium">Coord: {user.zone.coordinator.fullName}</span>
-              </div>
-            )}
             {user.supervisor?.fullName ? (
               <div className="flex items-center gap-1.5 text-k2l-gray-600">
                 <RiBriefcaseLine />
                 <span>Sup: {user.supervisor.fullName}</span>
-              </div>
-            ) : user.secteur?.name ? (
-              <div className="flex items-center gap-1.5 text-k2l-gray-600">
-                <RiMapPinLine />
-                <span>Secteur: {user.secteur.name}</span>
               </div>
             ) : (
               <span className="text-k2l-gray-400 italic">Non assigné</span>
@@ -514,10 +502,8 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
-    // Charge uniquement les superviseurs qui ont un secteur assigné
     api.get('/users?role=SUPERVISEUR&limit=100').then((res) => {
-      const sups = (res.data.data || []).filter((s: { secteurId?: string }) => s.secteurId);
-      setSupervisors(sups);
+      setSupervisors(res.data.data || []);
     }).catch(() => {});
   }, []);
 
@@ -600,7 +586,7 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
                 <option value="">-- Choisir un superviseur (obligatoire) --</option>
                 {supervisors.map((s) => <option key={s.id} value={s.id}>{s.fullName} ({s.matricule})</option>)}
               </select>
-              <p className="text-[11px] text-k2l-gray-400 -mt-1">Le secteur et la zone seront hérités automatiquement du superviseur</p>
+              <p className="text-[11px] text-k2l-gray-400 -mt-1">Le cluster sera hérité automatiquement du superviseur</p>
             </>
           )}
         </div>
@@ -630,10 +616,8 @@ function EditUserModal({ user, onClose }: EditUserModalProps) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // Charge les superviseurs qui ont un secteur assigné
     api.get('/users?role=SUPERVISEUR&limit=100').then((res) => {
-      const sups = (res.data.data || []).filter((s: { secteurId?: string }) => s.secteurId);
-      setSupervisors(sups);
+      setSupervisors(res.data.data || []);
     }).catch(() => {});
   }, []);
 
@@ -705,17 +689,17 @@ function EditUserModal({ user, onClose }: EditUserModalProps) {
                   <option key={s.id} value={s.id}>{s.fullName} ({s.matricule})</option>
                 ))}
               </select>
-              <p className="text-[11px] text-k2l-gray-400 mt-1">Le secteur et la zone seront mis à jour automatiquement</p>
+              <p className="text-[11px] text-k2l-gray-400 mt-1">Le cluster sera mis à jour automatiquement</p>
             </div>
           )}
 
           {user.role === 'SUPERVISEUR' && (
             <div className="rounded-lg bg-k2l-gray-100 p-3 text-[12px]">
               <p className="text-k2l-gray-600">
-                <strong>Secteur actuel :</strong> {user.secteur?.name || 'Aucun'}
+                <strong>Cluster actuel :</strong> {user.cluster?.name || 'Aucun'}
               </p>
               <p className="text-k2l-gray-400 mt-1">
-                Pour changer le secteur, allez dans la page Secteurs.
+                Pour changer le cluster, allez dans la page Clusters.
               </p>
             </div>
           )}
@@ -723,10 +707,10 @@ function EditUserModal({ user, onClose }: EditUserModalProps) {
           {user.role === 'COORDINATEUR' && (
             <div className="rounded-lg bg-k2l-gray-100 p-3 text-[12px]">
               <p className="text-k2l-gray-600">
-                <strong>Zone actuelle :</strong> {user.zone?.name || 'Aucune'}
+                <strong>Cluster actuel :</strong> {user.cluster?.name || 'Aucun'}
               </p>
               <p className="text-k2l-gray-400 mt-1">
-                Pour changer la zone, allez dans la page Zones.
+                Pour changer le cluster, allez dans la page Clusters.
               </p>
             </div>
           )}

@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import {
   RiArrowLeftLine, RiArrowLeftSLine, RiArrowRightSLine,
   RiLoader4Line, RiUserLine, RiStore2Line,
-  RiCheckboxCircleLine, RiCheckboxCircleFill, RiCloseLine, RiCloseCircleFill,
+  RiCheckboxCircleFill, RiCloseCircleFill,
   RiMapPinLine, RiPhoneLine, RiTimeLine, RiDraftLine, RiImageLine,
 } from '@/common/icons';
 import { useToastStore } from '@/common/stores/toast.store';
@@ -20,7 +20,7 @@ interface Submission {
   prospectProfession?: string;
   prospectGender?: string;
   appStatus?: string;
-  phoneType?: string;
+  sponsorCode?: string;
   merchantName?: string;
   merchantOwner?: string;
   merchantPhone?: string;
@@ -43,10 +43,10 @@ interface Submission {
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; icon: ReactNode }> = {
   DRAFT: { label: 'Brouillon', bg: 'bg-k2l-gray-100', text: 'text-k2l-gray-600', icon: <RiDraftLine className="text-xl" /> },
   SUBMITTED: { label: 'En attente de validation', bg: 'bg-k2l-amber-light', text: 'text-[#854F0B]', icon: <RiTimeLine className="text-xl" /> },
-  SUPERVISOR_APPROVED: { label: 'Validé par superviseur', bg: 'bg-k2l-success-light', text: 'text-k2l-success', icon: <RiCheckboxCircleFill className="text-xl" /> },
-  VALIDATED: { label: 'Validé (final)', bg: 'bg-k2l-success-light', text: 'text-k2l-success', icon: <RiCheckboxCircleFill className="text-xl" /> },
-  REJECTED_L1: { label: 'Rejeté par superviseur', bg: 'bg-k2l-red-light', text: 'text-k2l-red', icon: <RiCloseCircleFill className="text-xl" /> },
-  REJECTED_L2: { label: 'Rejeté par coordinateur', bg: 'bg-k2l-red-light', text: 'text-k2l-red', icon: <RiCloseCircleFill className="text-xl" /> },
+  SUPERVISOR_APPROVED: { label: 'En cours de validation', bg: 'bg-k2l-amber-light', text: 'text-[#854F0B]', icon: <RiTimeLine className="text-xl" /> },
+  VALIDATED: { label: 'Validé', bg: 'bg-k2l-success-light', text: 'text-k2l-success', icon: <RiCheckboxCircleFill className="text-xl" /> },
+  REJECTED_L1: { label: 'Rejeté', bg: 'bg-k2l-red-light', text: 'text-k2l-red', icon: <RiCloseCircleFill className="text-xl" /> },
+  REJECTED_L2: { label: 'Rejeté', bg: 'bg-k2l-red-light', text: 'text-k2l-red', icon: <RiCloseCircleFill className="text-xl" /> },
 };
 
 export default function SubmissionDetailPage() {
@@ -56,7 +56,6 @@ export default function SubmissionDetailPage() {
 
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
 
   const loadSubmission = useCallback(async () => {
@@ -75,37 +74,6 @@ export default function SubmissionDetailPage() {
   useEffect(() => {
     loadSubmission();
   }, [loadSubmission]);
-
-  const handleValidate = async () => {
-    if (!submission) return;
-    setProcessing(true);
-    try {
-      await api.patch(`/submissions/${submission.id}/approve-l1`, {});
-      showToast('Fiche validée', 'success');
-      navigate(-1);
-    } catch {
-      showToast('Erreur lors de la validation', 'error');
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const handleReject = async () => {
-    if (!submission) return;
-    const comment = prompt('Motif du rejet :');
-    if (!comment) return;
-
-    setProcessing(true);
-    try {
-      await api.patch(`/submissions/${submission.id}/reject-l1`, { comment });
-      showToast('Fiche rejetée', 'success');
-      navigate(-1);
-    } catch {
-      showToast('Erreur lors du rejet', 'error');
-    } finally {
-      setProcessing(false);
-    }
-  };
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '—';
@@ -138,7 +106,6 @@ export default function SubmissionDetailPage() {
   const photos = submission.photos || [];
   const photo = photos[photoIndex]?.url;
   const statusInfo = STATUS_CONFIG[submission.status] || STATUS_CONFIG.DRAFT;
-  const canValidate = submission.status === 'SUBMITTED';
 
   const name = submission.prospectFullName || submission.merchantName || '—';
   const phone = submission.prospectPhone || submission.merchantPhone || '—';
@@ -273,10 +240,10 @@ export default function SubmissionDetailPage() {
                     </p>
                   </div>
                 )}
-                {submission.phoneType && (
+                {submission.sponsorCode && (
                   <div>
-                    <span className="text-k2l-gray-400">Téléphone</span>
-                    <p className="font-medium text-k2l-gray-900">{submission.phoneType}</p>
+                    <span className="text-k2l-gray-400">Code parrain</span>
+                    <p className="font-medium text-k2l-gray-900">{submission.sponsorCode}</p>
                   </div>
                 )}
               </>
@@ -353,32 +320,12 @@ export default function SubmissionDetailPage() {
         </div>
       </div>
 
-      {/* Footer actions */}
+      {/* Footer - statut uniquement (le superviseur ne valide plus) */}
       <div className="px-4 pb-6 pt-2">
-        {canValidate ? (
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={handleReject}
-              disabled={processing}
-              className="flex items-center justify-center gap-2 rounded-xl border-2 border-k2l-red bg-k2l-red-light py-3.5 font-head text-sm font-semibold text-k2l-red transition-all active:scale-[0.98] disabled:opacity-50"
-            >
-              <RiCloseLine className="text-lg" /> Rejeter
-            </button>
-            <button
-              onClick={handleValidate}
-              disabled={processing}
-              className="flex items-center justify-center gap-2 rounded-xl bg-k2l-success py-3.5 font-head text-sm font-semibold text-white transition-all active:scale-[0.98] disabled:opacity-50"
-            >
-              {processing ? <RiLoader4Line className="animate-spin" /> : <RiCheckboxCircleLine className="text-lg" />}
-              Valider
-            </button>
-          </div>
-        ) : (
-          <div className={`flex items-center justify-center gap-2 rounded-xl py-4 ${statusInfo.bg}`}>
-            <span className="text-xl">{statusInfo.icon}</span>
-            <span className={`font-head text-sm font-semibold ${statusInfo.text}`}>{statusInfo.label}</span>
-          </div>
-        )}
+        <div className={`flex items-center justify-center gap-2 rounded-xl py-4 ${statusInfo.bg}`}>
+          <span className="text-xl">{statusInfo.icon}</span>
+          <span className={`font-head text-sm font-semibold ${statusInfo.text}`}>{statusInfo.label}</span>
+        </div>
       </div>
     </div>
   );

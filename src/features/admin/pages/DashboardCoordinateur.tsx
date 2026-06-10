@@ -1,19 +1,28 @@
 import { useState, useEffect, useMemo } from 'react';
 import api from '@/common/services/api';
-import { useAuthStore } from '@/common/stores/auth.store';
 import {
-  RiMap2Line,
   RiUserStarLine,
   RiTeamLine,
-  RiMapPinLine,
+  RiCheckboxCircleLine,
+  RiLoader4Line,
 } from 'react-icons/ri';
 
 /* ─── Types ─── */
-interface SecteurSummary {
-  id: string;
-  name: string;
-  supervisor?: { id: string; fullName: string; matricule: string } | null;
-  _count: { quartiers: number; members: number };
+interface ValidationStats {
+  total: number;
+  byStatus: {
+    draft: number;
+    submitted: number;
+    supervisorApproved: number;
+    validated: number;
+    rejectedL1: number;
+    rejectedL2: number;
+  };
+  byType: { prospects: number; marchands: number };
+  today: { total: number; validated: number };
+  week: { total: number; validated: number };
+  validationRate: number;
+  pending: { level1: number; level2: number };
 }
 
 interface UserItem {
@@ -23,27 +32,23 @@ interface UserItem {
   role: string;
   isActive: boolean;
   status: string;
-  secteur?: { id: string; name: string } | null;
   supervisor?: { id: string; fullName: string } | null;
 }
-
-/* ─── Page principale ─── */
 export default function DashboardCoordinateur() {
-  const user = useAuthStore((s) => s.user);
-  const [secteurs, setSecteurs] = useState<SecteurSummary[]>([]);
   const [users, setUsers] = useState<UserItem[]>([]);
+  const [validationStats, setValidationStats] = useState<ValidationStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedSecteurId, setSelectedSecteurId] = useState('');
+  const [selectedSupervisorId, setSelectedSupervisorId] = useState('');
 
   useEffect(() => {
     async function load() {
       try {
-        const [secteursRes, usersRes] = await Promise.all([
-          api.get('/secteurs'),
+        const [usersRes, statsRes] = await Promise.all([
           api.get('/users?limit=100'),
+          api.get('/submissions/stats').catch(() => ({ data: null })),
         ]);
-        setSecteurs(Array.isArray(secteursRes.data) ? secteursRes.data : []);
         setUsers(usersRes.data?.data || []);
+        if (statsRes.data) setValidationStats(statsRes.data);
       } catch {
         /* ignore */
       } finally {
@@ -60,23 +65,21 @@ export default function DashboardCoordinateur() {
 
   const commerciaux = useMemo(() => {
     let result = users.filter((u) => u.role === 'COMMERCIAL');
-    if (selectedSecteurId) {
-      result = result.filter((u) => u.secteur?.id === selectedSecteurId);
+    if (selectedSupervisorId) {
+      result = result.filter((u) => u.supervisor?.id === selectedSupervisorId);
     }
     return result;
-  }, [users, selectedSecteurId]);
+  }, [users, selectedSupervisorId]);
 
   const stats = useMemo(() => {
     const allCommerciaux = users.filter((u) => u.role === 'COMMERCIAL');
     return {
-      secteurs: secteurs.length,
       superviseurs: superviseurs.filter((s) => s.isActive).length,
-      totalSuperviseurs: secteurs.length,
+      totalSuperviseurs: superviseurs.length,
       commerciauxActifs: allCommerciaux.filter((c) => c.isActive).length,
       totalCommerciaux: allCommerciaux.length,
-      quartiers: secteurs.reduce((a, s) => a + s._count.quartiers, 0),
     };
-  }, [secteurs, superviseurs, users]);
+  }, [superviseurs, users]);
 
   if (loading) {
     return (
@@ -88,20 +91,105 @@ export default function DashboardCoordinateur() {
 
   return (
     <div>
-      {/* Header */}
-      <p className="mb-5 text-xs text-k2l-gray-400">
-        Zone : {user?.zone?.name || 'Non assignée'}
-      </p>
+      {/* KPIs - Validation */}
+      {validationStats && (
+        <>
+          <div className="mb-2 font-head text-[13px] font-semibold uppercase tracking-wider text-k2l-gray-600">
+            Validations
+          </div>
+          <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <KpiCard
+              label="Total soumissions"
+              value={validationStats.total}
+              icon={<RiCheckboxCircleLine />}
+              bg="bg-k2l-primary-light"
+            />
+            <KpiCard
+              label="Validées"
+              value={validationStats.byStatus.validated}
+              icon={<RiCheckboxCircleLine />}
+              bg="bg-k2l-success-light"
+            />
+            <KpiCard
+              label="En attente"
+              value={validationStats.byStatus.submitted}
+              icon={<RiLoader4Line />}
+              bg="bg-k2l-amber-light"
+            />
+            <KpiCard
+              label="Rejetées"
+              value={validationStats.byStatus.rejectedL1 + validationStats.byStatus.rejectedL2}
+              icon={<RiCheckboxCircleLine />}
+              bg="bg-k2l-red-light"
+            />
+          </div>
 
-      {/* KPIs */}
-      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KpiCard label="Mes secteurs" value={stats.secteurs} icon={<RiMap2Line />} bg="bg-k2l-primary-light" sub="dans ma zone" />
+          {/* Taux de validation + Aujourd'hui + Cette semaine */}
+          <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
+              <p className="text-xs font-medium text-k2l-gray-400 uppercase tracking-wider">Taux de validation</p>
+              <p className="mt-2 font-head text-4xl font-bold text-k2l-success">{validationStats.validationRate}%</p>
+              <div className="mt-2 h-2 rounded-full bg-k2l-gray-100">
+                <div
+                  className="h-2 rounded-full bg-k2l-success transition-all"
+                  style={{ width: `${validationStats.validationRate}%` }}
+                />
+              </div>
+            </div>
+            <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
+              <p className="text-xs font-medium text-k2l-gray-400 uppercase tracking-wider">Aujourd'hui</p>
+              <p className="mt-2 font-head text-3xl font-bold text-k2l-gray-900">{validationStats.today.total}</p>
+              <p className="text-[12px] text-k2l-success font-semibold">{validationStats.today.validated} validées</p>
+            </div>
+            <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
+              <p className="text-xs font-medium text-k2l-gray-400 uppercase tracking-wider">Cette semaine</p>
+              <p className="mt-2 font-head text-3xl font-bold text-k2l-gray-900">{validationStats.week.total}</p>
+              <p className="text-[12px] text-k2l-success font-semibold">{validationStats.week.validated} validées</p>
+            </div>
+          </div>
+
+          {/* Par type et par statut */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
+              <p className="text-xs font-medium text-k2l-gray-400 uppercase tracking-wider mb-3">Par type</p>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-sm text-k2l-gray-700">
+                    <RiUserStarLine className="text-k2l-primary" /> Prospects
+                  </span>
+                  <span className="font-head text-lg font-bold text-k2l-gray-900">{validationStats.byType.prospects}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-sm text-k2l-gray-700">
+                    <RiTeamLine className="text-k2l-amber" /> Marchands
+                  </span>
+                  <span className="font-head text-lg font-bold text-k2l-gray-900">{validationStats.byType.marchands}</span>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
+              <p className="text-xs font-medium text-k2l-gray-400 uppercase tracking-wider mb-3">Par statut</p>
+              <div className="space-y-2">
+                <StatusRow label="Brouillons" value={validationStats.byStatus.draft} color="bg-k2l-gray-300" />
+                <StatusRow label="En attente" value={validationStats.byStatus.submitted} color="bg-k2l-amber" />
+                <StatusRow label="Validées" value={validationStats.byStatus.validated} color="bg-k2l-success" />
+                <StatusRow label="Rejetées" value={validationStats.byStatus.rejectedL1 + validationStats.byStatus.rejectedL2} color="bg-k2l-red" />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* KPIs - Équipe */}
+      <div className="mb-2 font-head text-[13px] font-semibold uppercase tracking-wider text-k2l-gray-600">
+        Équipe
+      </div>
+      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-3">
         <KpiCard
-          label="Mes superviseurs"
+          label="Superviseurs"
           value={stats.superviseurs}
           icon={<RiUserStarLine />}
           bg="bg-k2l-amber-light"
-          sub={stats.superviseurs < stats.totalSuperviseurs ? `${stats.totalSuperviseurs - stats.superviseurs} secteur(s) sans sup.` : undefined}
           valueSub={`/${stats.totalSuperviseurs}`}
         />
         <KpiCard
@@ -113,77 +201,44 @@ export default function DashboardCoordinateur() {
           sub={stats.totalCommerciaux > 0 ? `${Math.round((stats.commerciauxActifs / stats.totalCommerciaux) * 100)}%` : undefined}
           subGreen
         />
-        <KpiCard label="Quartiers couverts" value={stats.quartiers} icon={<RiMapPinLine />} bg="bg-k2l-primary-light" />
       </div>
 
-      {/* Secteur filter chips */}
+      {/* Supervisor filter chips */}
       <div className="mb-4 flex flex-wrap gap-2">
         <button
-          onClick={() => setSelectedSecteurId('')}
+          onClick={() => setSelectedSupervisorId('')}
           className={`rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-colors ${
-            !selectedSecteurId
+            !selectedSupervisorId
               ? 'border-k2l-primary bg-k2l-primary text-white'
               : 'border-k2l-gray-200 bg-white text-k2l-gray-600 hover:bg-k2l-gray-100'
           }`}
         >
-          Tous les secteurs
+          Tous les superviseurs
         </button>
-        {secteurs.map((s) => (
+        {superviseurs.map((s) => (
           <button
             key={s.id}
-            onClick={() => setSelectedSecteurId(s.id)}
+            onClick={() => setSelectedSupervisorId(s.id)}
             className={`rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-colors ${
-              selectedSecteurId === s.id
+              selectedSupervisorId === s.id
                 ? 'border-k2l-primary bg-k2l-primary text-white'
                 : 'border-k2l-gray-200 bg-white text-k2l-gray-600 hover:bg-k2l-gray-100'
             }`}
           >
-            {s.name}
+            {s.fullName}
           </button>
         ))}
       </div>
 
-      {/* Secteurs cards */}
-      <div className="mb-2 font-head text-[13px] font-semibold uppercase tracking-wider text-k2l-gray-600">
-        Mes secteurs
-      </div>
-      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-        {secteurs.map((secteur) => {
-          const nbComm = users.filter((u) => u.role === 'COMMERCIAL' && u.secteur?.id === secteur.id).length;
-          const hasSup = !!secteur.supervisor;
-          return (
-            <div
-              key={secteur.id}
-              className={`rounded-xl border-l-4 bg-white p-4 shadow-sm ${hasSup ? 'border-k2l-success' : 'border-k2l-red'}`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-head text-[15px] font-semibold text-k2l-gray-900">{secteur.name}</span>
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
-                    hasSup ? 'bg-k2l-success-light text-k2l-success' : 'bg-k2l-red-light text-k2l-red'
-                  }`}
-                >
-                  {hasSup ? secteur.supervisor!.fullName : 'Non assigné'}
-                </span>
-              </div>
-              <div className="mt-2 text-[12px] text-k2l-gray-400">
-                {secteur._count.quartiers} quartiers · {nbComm} commerciaux
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
       {/* Superviseurs table */}
       <div className="mb-2 font-head text-[13px] font-semibold uppercase tracking-wider text-k2l-gray-600">
-        Mes superviseurs
+        Superviseurs
       </div>
       <div className="mb-6 rounded-xl border border-k2l-gray-200 bg-white">
         <table className="w-full text-[13px]">
           <thead>
             <tr className="border-b border-k2l-gray-200">
               <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-k2l-gray-400">Superviseur</th>
-              <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-k2l-gray-400">Secteur</th>
               <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-k2l-gray-400">Commerciaux</th>
               <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-k2l-gray-400">Statut</th>
             </tr>
@@ -197,7 +252,6 @@ export default function DashboardCoordinateur() {
                     <Initials name={sup.fullName} />
                     {sup.fullName}
                   </td>
-                  <td className="px-4 py-3 text-k2l-gray-600">{sup.secteur?.name || '—'}</td>
                   <td className="px-4 py-3">{nbComm}</td>
                   <td className="px-4 py-3">
                     <StatusBadge isActive={sup.isActive} status={sup.status} />
@@ -206,17 +260,17 @@ export default function DashboardCoordinateur() {
               );
             })}
             {superviseurs.length === 0 && (
-              <tr><td colSpan={4} className="px-4 py-6 text-center text-k2l-gray-400">Aucun superviseur</td></tr>
+              <tr><td colSpan={3} className="px-4 py-6 text-center text-k2l-gray-400">Aucun superviseur</td></tr>
             )}
           </tbody>
         </table>
       </div>
 
       {/* Commerciaux filtered list */}
-      {selectedSecteurId && (
+      {selectedSupervisorId && (
         <>
           <div className="mb-2 font-head text-[13px] font-semibold uppercase tracking-wider text-k2l-gray-600">
-            Commerciaux — {secteurs.find((s) => s.id === selectedSecteurId)?.name}
+            Commerciaux — {superviseurs.find((s) => s.id === selectedSupervisorId)?.fullName}
           </div>
           <div className="rounded-xl border border-k2l-gray-200 bg-white">
             <table className="w-full text-[13px]">
@@ -258,7 +312,7 @@ export default function DashboardCoordinateur() {
 function KpiCard({
   label, value, icon, bg, sub, valueSub, subGreen,
 }: {
-  label: string; value: number; icon: React.ReactNode; bg: string; sub?: string; valueSub?: string; subGreen?: boolean;
+  label: string; value: number | string; icon: React.ReactNode; bg: string; sub?: string; valueSub?: string; subGreen?: boolean;
 }) {
   return (
     <div className="relative rounded-xl border border-k2l-gray-200 bg-white p-5">
@@ -296,4 +350,14 @@ function StatusBadge({ isActive, status }: { isActive: boolean; status: string }
     return <span className="rounded-full bg-k2l-success-light px-2.5 py-0.5 text-[10px] font-semibold text-k2l-success">Actif</span>;
   }
   return <span className="rounded-full bg-k2l-red-light px-2.5 py-0.5 text-[10px] font-semibold text-k2l-red">Inactif</span>;
+}
+
+function StatusRow({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className={`h-2.5 w-2.5 rounded-full ${color}`} />
+      <span className="flex-1 text-sm text-k2l-gray-700">{label}</span>
+      <span className="font-head text-sm font-bold text-k2l-gray-900">{value}</span>
+    </div>
+  );
 }

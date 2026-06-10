@@ -30,7 +30,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   /**
-   * Recharge le profil depuis /auth/me (zone, secteur, superviseur à jour).
+   * Recharge le profil depuis /auth/me (zone, superviseur à jour).
    * Utile au démarrage : les sessions existantes récupèrent les infos de
    * hiérarchie même si elles avaient été stockées avant cet ajout côté serveur.
    */

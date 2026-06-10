@@ -4,18 +4,17 @@ import { useAuthStore } from '@/common/stores/auth.store';
 import DashboardCoordinateur from './DashboardCoordinateur';
 import {
   RiLayoutGridLine,
-  RiMap2Line,
   RiUserStarLine,
   RiTeamLine,
 } from 'react-icons/ri';
 
 /* ─── Types ─── */
-interface ZoneSummary {
+interface ClusterSummary {
   id: string;
   name: string;
-  coordinator?: { id: string; fullName: string; matricule: string } | null;
+  supervisor?: { id: string; fullName: string; matricule: string } | null;
   communes: { id: string; name: string }[];
-  _count: { secteurs: number; members: number };
+  _count: { members: number };
 }
 
 interface UserSummary {
@@ -24,8 +23,7 @@ interface UserSummary {
   matricule: string;
   role: string;
   isActive: boolean;
-  zone?: { id: string; name: string } | null;
-  secteur?: { id: string; name: string } | null;
+  cluster?: { id: string; name: string } | null;
   createdAt: string;
 }
 
@@ -38,19 +36,19 @@ export default function AdminDashboardPage() {
 
 /* ─── ADMIN Dashboard ─── */
 function DashboardAdmin() {
-  const [zones, setZones] = useState<ZoneSummary[]>([]);
-  const [selectedZoneId, setSelectedZoneId] = useState('');
+  const [clusters, setClusters] = useState<ClusterSummary[]>([]);
+  const [selectedClusterId, setSelectedClusterId] = useState('');
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const [zonesRes, usersRes] = await Promise.all([
-          api.get('/zones'),
+        const [clustersRes, usersRes] = await Promise.all([
+          api.get('/clusters'),
           api.get('/users?limit=1000'),
         ]);
-        setZones(Array.isArray(zonesRes.data) ? zonesRes.data : []);
+        setClusters(Array.isArray(clustersRes.data) ? clustersRes.data : []);
         setUsers(usersRes.data?.data || []);
       } catch {
         /* ignore */
@@ -62,22 +60,19 @@ function DashboardAdmin() {
   }, []);
 
   const filteredUsers = useMemo(() => {
-    if (!selectedZoneId) return users;
-    return users.filter((u) => u.zone?.id === selectedZoneId);
-  }, [users, selectedZoneId]);
+    if (!selectedClusterId) return users;
+    return users.filter((u) => u.cluster?.id === selectedClusterId);
+  }, [users, selectedClusterId]);
 
   const stats = useMemo(() => {
     const src = filteredUsers;
     return {
-      totalZones: zones.length,
-      totalSecteurs: selectedZoneId
-        ? zones.find((z) => z.id === selectedZoneId)?._count.secteurs || 0
-        : zones.reduce((a, z) => a + z._count.secteurs, 0),
+      totalClusters: clusters.length,
       totalSuperviseurs: src.filter((u) => u.role === 'SUPERVISEUR' && u.isActive).length,
       totalCommerciaux: src.filter((u) => u.role === 'COMMERCIAL' && u.isActive).length,
       totalUsers: src.length,
     };
-  }, [zones, filteredUsers, selectedZoneId]);
+  }, [clusters, filteredUsers]);
 
   const recentUsers = useMemo(() => {
     return [...filteredUsers]
@@ -99,16 +94,16 @@ function DashboardAdmin() {
       <div className="mb-5 flex items-center justify-between">
         <div>
           <p className="text-xs text-k2l-gray-400">
-            Vue globale {selectedZoneId ? `— ${zones.find((z) => z.id === selectedZoneId)?.name}` : '— toutes les zones'}
+            Vue globale {selectedClusterId ? `— ${clusters.find((z) => z.id === selectedClusterId)?.name}` : '— tous les clusters'}
           </p>
         </div>
         <select
-          value={selectedZoneId}
-          onChange={(e) => setSelectedZoneId(e.target.value)}
+          value={selectedClusterId}
+          onChange={(e) => setSelectedClusterId(e.target.value)}
           className="rounded-lg border border-k2l-primary bg-k2l-primary-light px-4 py-2.5 text-[13px] font-semibold text-k2l-primary-dark outline-none"
         >
-          <option value="">Toutes les zones</option>
-          {zones.map((z) => (
+          <option value="">Tous les clusters</option>
+          {clusters.map((z) => (
             <option key={z.id} value={z.id}>{z.name}</option>
           ))}
         </select>
@@ -116,8 +111,7 @@ function DashboardAdmin() {
 
       {/* KPIs */}
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KpiCard label="Zones" value={stats.totalZones} icon={<RiLayoutGridLine />} bg="bg-k2l-primary-light" />
-        <KpiCard label="Secteurs" value={stats.totalSecteurs} icon={<RiMap2Line />} bg="bg-k2l-primary-light" />
+        <KpiCard label="Clusters" value={stats.totalClusters} icon={<RiLayoutGridLine />} bg="bg-k2l-primary-light" />
         <KpiCard label="Superviseurs actifs" value={stats.totalSuperviseurs} icon={<RiUserStarLine />} bg="bg-k2l-amber-light" />
         <KpiCard
           label="Commerciaux actifs"
@@ -128,13 +122,13 @@ function DashboardAdmin() {
         />
       </div>
 
-      {/* Zones overview */}
+      {/* Clusters overview */}
       <div className="mb-2 font-head text-[13px] font-semibold uppercase tracking-wider text-k2l-gray-600">
-        Vue d'ensemble des zones
+        Vue d'ensemble des clusters
       </div>
       <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-        {zones.map((zone) => (
-          <ZoneCard key={zone.id} zone={zone} users={users} />
+        {clusters.map((cluster) => (
+          <ClusterCard key={cluster.id} cluster={cluster} users={users} />
         ))}
       </div>
 
@@ -157,7 +151,7 @@ function DashboardAdmin() {
                   <RoleBadge role={u.role} />
                 </td>
                 <td className="px-4 py-3 text-k2l-gray-400">
-                  {u.zone?.name || '—'}
+                  {u.cluster?.name || '—'}
                 </td>
                 <td className="px-4 py-3 text-k2l-gray-400 text-[12px]">
                   {timeAgo(u.createdAt)}
@@ -190,18 +184,18 @@ function KpiCard({ label, value, icon, bg, sub }: { label: string; value: number
   );
 }
 
-function ZoneCard({ zone, users }: { zone: ZoneSummary; users: UserSummary[] }) {
-  const zoneUsers = users.filter((u) => u.zone?.id === zone.id);
-  const commerciaux = zoneUsers.filter((u) => u.role === 'COMMERCIAL').length;
-  const hasCoord = !!zone.coordinator;
+function ClusterCard({ cluster, users }: { cluster: ClusterSummary; users: UserSummary[] }) {
+  const clusterUsers = users.filter((u) => u.cluster?.id === cluster.id);
+  const commerciaux = clusterUsers.filter((u) => u.role === 'COMMERCIAL').length;
+  const hasSupervisor = !!cluster.supervisor;
 
   return (
-    <div className={`rounded-xl border-l-4 bg-white p-4 shadow-sm ${hasCoord ? 'border-k2l-success' : 'border-k2l-red'}`}>
-      <div className="font-head text-[15px] font-semibold text-k2l-gray-900">{zone.name}</div>
+    <div className={`rounded-xl border-l-4 bg-white p-4 shadow-sm ${hasSupervisor ? 'border-k2l-success' : 'border-k2l-red'}`}>
+      <div className="font-head text-[15px] font-semibold text-k2l-gray-900">{cluster.name}</div>
       <div className="mt-1 text-[12px] leading-relaxed text-k2l-gray-400">
-        {hasCoord
-          ? `Coordinateur : ${zone.coordinator!.fullName} · ${zone._count.secteurs} secteurs · ${commerciaux} commerciaux`
-          : `Aucun coordinateur assigné · ${zone._count.secteurs} secteurs · ${commerciaux} commerciaux`}
+        {hasSupervisor
+          ? `Superviseur : ${cluster.supervisor!.fullName} · ${commerciaux} commerciaux`
+          : `Aucun superviseur assigné · ${commerciaux} commerciaux`}
       </div>
     </div>
   );

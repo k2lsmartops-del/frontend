@@ -127,7 +127,7 @@ export default function HomePage() {
           <div className="flex-1">
             <div className="font-head text-base font-semibold text-white">{user?.fullName ?? 'Agent K2L'}</div>
             <div className="mt-0.5 truncate text-xs text-white/70">
-              {[user?.zone?.name, user?.secteur?.name].filter(Boolean).join(' · ') || 'Zone non assignee'}
+              {user?.zone?.name || 'Cluster non assigne'}
             </div>
             {user?.matricule && (
               <div className="text-[10px] text-white/50">{user.matricule}</div>

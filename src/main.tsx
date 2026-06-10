@@ -9,7 +9,7 @@ import { cleanupOldData } from './lib/cleanupService'
 
 useAuthStore.getState().hydrate()
 
-// Rafraîchit le profil (zone, secteur, superviseur) depuis le serveur si connecté
+// Rafraîchit le profil (zone, superviseur) depuis le serveur si connecté
 useAuthStore.getState().refreshProfile()
 
 // Nettoyage léger des fiches synced > 7 jours (non bloquant)

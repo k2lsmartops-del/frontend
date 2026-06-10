@@ -45,7 +45,7 @@ export default function ProfilePage() {
     { icon: <RiUserLine />, label: 'Matricule', value: user?.matricule ?? '—' },
     { icon: <RiPhoneLine />, label: 'Telephone', value: user?.phone ?? '—' },
     { icon: <RiMailLine />, label: 'Email', value: user?.email ?? 'Non renseigne' },
-    { icon: <RiMapPin2Line />, label: 'Zone', value: user?.zone?.name ?? 'Non assignee' },
+    { icon: <RiMapPin2Line />, label: 'Cluster', value: user?.zone?.name ?? 'Non assignee' },
     {
       icon: <RiCalendarLine />,
       label: 'Inscrit le',

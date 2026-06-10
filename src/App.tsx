@@ -19,9 +19,10 @@ import TeamPage from '@/features/supervisor/pages/TeamPage';
 import AdminLayout from '@/features/admin/components/AdminLayout';
 import AdminDashboardPage from '@/features/admin/pages/AdminDashboardPage';
 import UsersPage from '@/features/admin/pages/UsersPage';
-import ZonesPage from '@/features/admin/pages/ZonesPage';
-import SecteursPage from '@/features/admin/pages/SecteursPage';
+import ClustersPage from '@/features/admin/pages/ClustersPage';
 import ValidationCoordinateurPage from '@/features/admin/pages/ValidationCoordinateurPage';
+import ValidationHistoryPage from '@/features/admin/pages/ValidationHistoryPage';
+import ValidationMapPage from '@/features/admin/pages/ValidationMapPage';
 import { useAuthStore } from '@/common/stores/auth.store';
 
 function RoleBasedHomePage() {
@@ -57,9 +58,10 @@ export default function App() {
           >
             <Route index element={<AdminDashboardPage />} />
             <Route path="users" element={<UsersPage />} />
-            <Route path="zones" element={<ZonesPage />} />
-            <Route path="secteurs" element={<SecteursPage />} />
+            <Route path="clusters" element={<ClustersPage />} />
             <Route path="validations" element={<ValidationCoordinateurPage />} />
+            <Route path="validation-history" element={<ValidationHistoryPage />} />
+            <Route path="validation-map" element={<ValidationMapPage />} />
           </Route>
 
           {/* Mobile PWA routes */}

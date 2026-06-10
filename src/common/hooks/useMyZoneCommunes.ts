@@ -4,7 +4,6 @@ import api from '@/common/services/api';
 export interface Quartier {
   id: string;
   name: string;
-  secteurId: string | null;
 }
 
 export interface Commune {

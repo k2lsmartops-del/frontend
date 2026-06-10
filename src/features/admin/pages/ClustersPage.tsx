@@ -2,25 +2,25 @@ import { useState, useEffect, useMemo } from 'react';
 import { RiLoader4Line, RiSearchLine, RiPencilLine, RiDeleteBinLine, RiMapPinLine, RiTeamLine } from 'react-icons/ri';
 import api from '@/common/services/api';
 
-interface Zone {
+interface Cluster {
   id: string;
   name: string;
   description?: string;
-  coordinator?: { id: string; fullName: string; matricule: string } | null;
+  supervisor?: { id: string; fullName: string; matricule: string } | null;
   communes: { id: string; name: string }[];
-  _count: { secteurs: number; members: number };
+  _count: { members: number };
 }
 
 interface Commune { id: string; name: string; }
 interface Coordinator { id: string; fullName: string; matricule: string; }
 
-export default function ZonesPage() {
-  const [zones, setZones] = useState<Zone[]>([]);
+export default function ClustersPage() {
+  const [clusters, setClusters] = useState<Cluster[]>([]);
   const [communes, setCommunes] = useState<Commune[]>([]);
   const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editZone, setEditZone] = useState<Zone | null>(null);
+  const [editCluster, setEditCluster] = useState<Cluster | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'complete' | 'incomplete'>('all');
 
@@ -31,13 +31,13 @@ export default function ZonesPage() {
   async function loadData() {
     setLoading(true);
     try {
-      const [zRes, cRes, uRes] = await Promise.all([
-        api.get('/zones'),
+      const [cRes, commRes, uRes] = await Promise.all([
+        api.get('/clusters'),
         api.get('/communes'),
-        api.get('/users?role=COORDINATEUR&limit=100'),
+        api.get('/users?role=SUPERVISEUR&limit=100'),
       ]);
-      setZones(zRes.data);
-      setCommunes(cRes.data);
+      setClusters(cRes.data);
+      setCommunes(commRes.data);
       setCoordinators(uRes.data.data || []);
     } catch {
       // ignore
@@ -46,53 +46,49 @@ export default function ZonesPage() {
     }
   }
 
-  // Fonction pour déterminer le statut d'une zone
-  const getZoneStatus = (zone: Zone): 'ok' | 'warn' | 'danger' => {
-    const hasCoordinator = !!zone.coordinator;
-    const hasSecteurs = zone._count.secteurs > 0;
-    
-    if (hasCoordinator && hasSecteurs) return 'ok';
-    if (hasSecteurs && !hasCoordinator) return 'warn';
+  // Fonction pour déterminer le statut d'un cluster
+  const getClusterStatus = (cluster: Cluster): 'ok' | 'warn' | 'danger' => {
+    const hasSupervisor = !!cluster.supervisor;
+    if (hasSupervisor) return 'ok';
     return 'danger';
   };
 
-  // Zones filtrées par recherche et statut
-  const filteredZones = useMemo(() => {
-    let result = zones;
+  // Clusters filtrés par recherche et statut
+  const filteredClusters = useMemo(() => {
+    let result = clusters;
     
     // Filtre par recherche
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter((z) => 
-        z.name.toLowerCase().includes(query) ||
-        z.coordinator?.fullName.toLowerCase().includes(query)
+      result = result.filter((c) => 
+        c.name.toLowerCase().includes(query) ||
+        c.supervisor?.fullName.toLowerCase().includes(query)
       );
     }
     
     // Filtre par statut
     if (statusFilter === 'complete') {
-      result = result.filter((z) => getZoneStatus(z) === 'ok');
+      result = result.filter((c) => getClusterStatus(c) === 'ok');
     } else if (statusFilter === 'incomplete') {
-      result = result.filter((z) => getZoneStatus(z) !== 'ok');
+      result = result.filter((c) => getClusterStatus(c) !== 'ok');
     }
     
     return result;
-  }, [zones, searchQuery, statusFilter]);
+  }, [clusters, searchQuery, statusFilter]);
 
   // KPIs calculés
   const kpis = useMemo(() => {
-    const totalZones = zones.length;
-    const assignedCoordinators = zones.filter((z) => z.coordinator).length;
-    const totalSecteurs = zones.reduce((sum, z) => sum + z._count.secteurs, 0);
-    const totalCommerciaux = zones.reduce((sum, z) => sum + z._count.members, 0);
-    
-    return { totalZones, assignedCoordinators, totalSecteurs, totalCommerciaux };
-  }, [zones]);
+    const totalClusters = clusters.length;
+    const assignedSupervisors = clusters.filter((c) => c.supervisor).length;
+    const totalCommerciaux = clusters.reduce((sum, c) => sum + c._count.members, 0);
 
-  const handleDelete = async (id: string, zoneName: string) => {
-    if (!confirm(`Supprimer la zone "${zoneName}" ?`)) return;
+    return { totalClusters, assignedSupervisors, totalCommerciaux };
+  }, [clusters]);
+
+  const handleDelete = async (id: string, clusterName: string) => {
+    if (!confirm(`Supprimer le cluster "${clusterName}" ?`)) return;
     try {
-      await api.delete(`/zones/${id}`);
+      await api.delete(`/clusters/${id}`);
       loadData();
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Erreur';
@@ -100,43 +96,43 @@ export default function ZonesPage() {
     }
   };
 
-  const handleOpenModal = (zone: Zone | null) => {
-    setEditZone(zone);
+  const handleOpenModal = (cluster: Cluster | null) => {
+    setEditCluster(cluster);
     setShowModal(true);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setEditZone(null);
+    setEditCluster(null);
   };
 
   if (loading) {
     return <div className="flex items-center justify-center py-20"><RiLoader4Line className="animate-spin text-2xl text-[#1D9E75]" /></div>;
   }
 
-  const completeCount = zones.filter((z) => getZoneStatus(z) === 'ok').length;
-  const incompleteCount = zones.filter((z) => getZoneStatus(z) !== 'ok').length;
+  const completeCount = clusters.filter((c) => getClusterStatus(c) === 'ok').length;
+  const incompleteCount = clusters.filter((c) => getClusterStatus(c) !== 'ok').length;
 
   return (
     <div>
       {/* Bandeau KPI */}
       <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
         <KpiCard
-          label="Zones créées"
-          value={kpis.totalZones}
+          label="Clusters créés"
+          value={kpis.totalClusters}
           icon={<RiMapPinLine />}
           color="blue"
         />
         <KpiCard
-          label="Coordinateurs assignés"
-          value={`${kpis.assignedCoordinators} / ${kpis.totalZones}`}
+          label="Superviseurs assignés"
+          value={`${kpis.assignedSupervisors} / ${kpis.totalClusters}`}
           icon={<RiTeamLine />}
-          color={kpis.assignedCoordinators === kpis.totalZones ? 'green' : 'amber'}
+          color={kpis.assignedSupervisors === kpis.totalClusters ? 'green' : 'amber'}
         />
         <KpiCard
-          label="Secteurs au total"
-          value={kpis.totalSecteurs}
-          icon={<RiMapPinLine />}
+          label="Membres au total"
+          value={kpis.totalCommerciaux}
+          icon={<RiTeamLine />}
           color="blue"
         />
       </div>
@@ -148,7 +144,7 @@ export default function ZonesPage() {
           <RiSearchLine className="text-sm text-k2l-gray-400" />
           <input
             type="text"
-            placeholder="Rechercher une zone..."
+            placeholder="Rechercher un cluster..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-transparent text-[13px] outline-none placeholder:text-k2l-gray-400 md:w-64"
@@ -165,7 +161,7 @@ export default function ZonesPage() {
                 : 'bg-white text-k2l-gray-600 border border-k2l-gray-200 hover:border-[#1D9E75]'
             }`}
           >
-            Toutes ({zones.length})
+            Toutes ({clusters.length})
           </button>
           <button
             onClick={() => setStatusFilter('complete')}
@@ -192,35 +188,35 @@ export default function ZonesPage() {
             onClick={() => handleOpenModal(null)}
             className="ml-auto rounded-lg bg-[#1D9E75] px-4 py-2 text-[13px] font-semibold text-white hover:bg-[#0F6E56] transition-colors"
           >
-            + Créer une zone
+            + Créer un cluster
           </button>
         </div>
       </div>
 
       {/* Grille de cartes */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {filteredZones.map((zone) => (
-          <ZoneCard
-            key={zone.id}
-            zone={zone}
-            status={getZoneStatus(zone)}
-            onEdit={() => handleOpenModal(zone)}
-            onDelete={() => handleDelete(zone.id, zone.name)}
+        {filteredClusters.map((cluster) => (
+          <ClusterCard
+            key={cluster.id}
+            cluster={cluster}
+            status={getClusterStatus(cluster)}
+            onEdit={() => handleOpenModal(cluster)}
+            onDelete={() => handleDelete(cluster.id, cluster.name)}
           />
         ))}
-        {filteredZones.length === 0 && (
+        {filteredClusters.length === 0 && (
           <div className="col-span-2 rounded-xl border border-k2l-gray-200 bg-white p-12 text-center">
-            <p className="text-k2l-gray-400">Aucune zone trouvée</p>
+            <p className="text-k2l-gray-400">Aucun cluster trouvé</p>
           </div>
         )}
       </div>
 
       {/* Modale */}
       {showModal && (
-        <ZoneFormModal
-          zone={editZone}
-          communes={communes.filter((c) => !zones.some((z) => z.id !== editZone?.id && z.communes.some((zc) => zc.id === c.id)))}
-          coordinators={coordinators.filter((co) => !zones.some((z) => z.id !== editZone?.id && z.coordinator?.id === co.id))}
+        <ClusterFormModal
+          cluster={editCluster}
+          communes={communes.filter((c) => !clusters.some((cl) => cl.id !== editCluster?.id && cl.communes.some((clc) => clc.id === c.id)))}
+          supervisors={coordinators.filter((co) => !clusters.some((cl) => cl.id !== editCluster?.id && cl.supervisor?.id === co.id))}
           onSave={() => { handleCloseModal(); loadData(); }}
           onClose={handleCloseModal}
         />
@@ -256,14 +252,14 @@ function KpiCard({ label, value, icon, color }: KpiCardProps) {
   );
 }
 
-interface ZoneCardProps {
-  zone: Zone;
+interface ClusterCardProps {
+  cluster: Cluster;
   status: 'ok' | 'warn' | 'danger';
   onEdit: () => void;
   onDelete: () => void;
 }
 
-function ZoneCard({ zone, status, onEdit, onDelete }: ZoneCardProps) {
+function ClusterCard({ cluster, status, onEdit, onDelete }: ClusterCardProps) {
   const statusConfig = {
     ok: {
       border: 'border-l-[#1D9E75]',
@@ -273,7 +269,7 @@ function ZoneCard({ zone, status, onEdit, onDelete }: ZoneCardProps) {
     warn: {
       border: 'border-l-[#EF9F27]',
       badge: 'bg-k2l-amber-light text-[#EF9F27]',
-      label: '⚠ Coordinateur manquant',
+      label: '⚠ Superviseur manquant',
     },
     danger: {
       border: 'border-l-[#E24B4A]',
@@ -297,33 +293,33 @@ function ZoneCard({ zone, status, onEdit, onDelete }: ZoneCardProps) {
       </div>
 
       {/* Titre */}
-      <h3 className="mb-3 font-head text-lg font-bold text-k2l-gray-900 pr-32">{zone.name}</h3>
+      <h3 className="mb-3 font-head text-lg font-bold text-k2l-gray-900 pr-32">{cluster.name}</h3>
 
-      {/* Coordinateur */}
-      {zone.coordinator ? (
+      {/* Superviseur */}
+      {cluster.supervisor ? (
         <div className="mb-3 flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-k2l-success-light text-[11px] font-bold text-[#1D9E75] font-head">
-            {zone.coordinator.fullName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
+            {cluster.supervisor.fullName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
           </div>
           <div>
-            <p className="text-[13px] font-semibold text-k2l-gray-900">{zone.coordinator.fullName}</p>
-            <p className="text-[11px] text-k2l-gray-400">{zone.coordinator.matricule}</p>
+            <p className="text-[13px] font-semibold text-k2l-gray-900">{cluster.supervisor.fullName}</p>
+            <p className="text-[11px] text-k2l-gray-400">{cluster.supervisor.matricule}</p>
           </div>
         </div>
       ) : (
         <div className="mb-3 rounded-lg bg-k2l-red-light p-3">
-          <p className="text-[12px] font-semibold text-[#E24B4A]">⚠️ Aucun coordinateur — Cliquez pour en assigner un</p>
+          <p className="text-[12px] font-semibold text-[#E24B4A]">⚠️ Aucun superviseur — Cliquez pour en assigner un</p>
         </div>
       )}
 
       {/* Communes */}
       <div className="mb-3 flex flex-wrap gap-1.5">
-        {zone.communes.map((c) => (
+        {cluster.communes.map((c) => (
           <span key={c.id} className="inline-block rounded-full bg-[#E6F1FB] px-2.5 py-0.5 text-[11px] font-semibold text-[#1F5C99]">
             {c.name}
           </span>
         ))}
-        {zone.communes.length === 0 && (
+        {cluster.communes.length === 0 && (
           <span className="text-[12px] text-k2l-gray-400">Aucune commune</span>
         )}
       </div>
@@ -331,12 +327,8 @@ function ZoneCard({ zone, status, onEdit, onDelete }: ZoneCardProps) {
       {/* Stats */}
       <div className="flex items-center gap-4 text-[12px] text-k2l-gray-600">
         <span className="flex items-center gap-1">
-          <RiMapPinLine className="text-sm" />
-          <strong>{zone._count.secteurs}</strong> secteurs
-        </span>
-        <span className="flex items-center gap-1">
           <RiTeamLine className="text-sm" />
-          <strong>{zone._count.members}</strong> commerciaux
+          <strong>{cluster._count.members}</strong> membres
         </span>
       </div>
 
@@ -361,18 +353,18 @@ function ZoneCard({ zone, status, onEdit, onDelete }: ZoneCardProps) {
   );
 }
 
-interface ZoneFormModalProps {
-  zone: Zone | null;
+interface ClusterFormModalProps {
+  cluster: Cluster | null;
   communes: Commune[];
-  coordinators: Coordinator[];
+  supervisors: Coordinator[];
   onSave: () => void;
   onClose: () => void;
 }
 
-function ZoneFormModal({ zone, communes, coordinators, onSave, onClose }: ZoneFormModalProps) {
-  const [name, setName] = useState(zone?.name || '');
-  const [coordinatorId, setCoordinatorId] = useState(zone?.coordinator?.id || '');
-  const [selectedCommunes, setSelectedCommunes] = useState<string[]>(zone?.communes.map((c) => c.id) || []);
+function ClusterFormModal({ cluster, communes, supervisors, onSave, onClose }: ClusterFormModalProps) {
+  const [name, setName] = useState(cluster?.name || '');
+  const [supervisorId, setSupervisorId] = useState(cluster?.supervisor?.id || '');
+  const [selectedCommunes, setSelectedCommunes] = useState<string[]>(cluster?.communes.map((c) => c.id) || []);
   const [saving, setSaving] = useState(false);
 
   const toggleCommune = (id: string) => {
@@ -383,11 +375,11 @@ function ZoneFormModal({ zone, communes, coordinators, onSave, onClose }: ZoneFo
     e.preventDefault();
     setSaving(true);
     try {
-      const payload = { name, communeIds: selectedCommunes, coordinatorId: coordinatorId || null };
-      if (zone) {
-        await api.patch(`/zones/${zone.id}`, payload);
+      const payload = { name, communeIds: selectedCommunes, supervisorId: supervisorId || null };
+      if (cluster) {
+        await api.patch(`/clusters/${cluster.id}`, payload);
       } else {
-        await api.post('/zones', payload);
+        await api.post('/clusters', payload);
       }
       onSave();
     } catch (err: unknown) {
@@ -405,34 +397,34 @@ function ZoneFormModal({ zone, communes, coordinators, onSave, onClose }: ZoneFo
         className="w-full max-w-[520px] rounded-2xl bg-white p-6 shadow-2xl animate-slideUp"
       >
         <h2 className="mb-5 font-head text-xl font-bold text-k2l-gray-900">
-          {zone ? 'Modifier la zone' : 'Créer une zone'}
+          {cluster ? 'Modifier le cluster' : 'Créer un cluster'}
         </h2>
 
         <div className="space-y-4 text-[13px]">
           {/* Nom */}
           <div>
-            <label className="mb-1.5 block text-[12px] font-medium text-k2l-gray-600">Nom de la zone</label>
+            <label className="mb-1.5 block text-[12px] font-medium text-k2l-gray-600">Nom du cluster</label>
             <input
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 outline-none focus:border-[#1D9E75] transition-colors"
-              placeholder="Ex: Zone Centre"
+              placeholder="Ex: Cluster Centre"
             />
           </div>
 
-          {/* Coordinateur */}
+          {/* Superviseur */}
           <div>
-            <label className="mb-1.5 block text-[12px] font-medium text-k2l-gray-600">Coordinateur de la zone</label>
+            <label className="mb-1.5 block text-[12px] font-medium text-k2l-gray-600">Superviseur du cluster</label>
             <select
-              value={coordinatorId}
-              onChange={(e) => setCoordinatorId(e.target.value)}
+              value={supervisorId}
+              onChange={(e) => setSupervisorId(e.target.value)}
               className="w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 outline-none focus:border-[#1D9E75] transition-colors"
             >
-              <option value="">-- Aucun coordinateur --</option>
-              {coordinators.map((co) => (
-                <option key={co.id} value={co.id}>
-                  {co.fullName} ({co.matricule})
+              <option value="">-- Aucun superviseur --</option>
+              {supervisors.map((sup) => (
+                <option key={sup.id} value={sup.id}>
+                  {sup.fullName} ({sup.matricule})
                 </option>
               ))}
             </select>
@@ -479,7 +471,7 @@ function ZoneFormModal({ zone, communes, coordinators, onSave, onClose }: ZoneFo
             disabled={saving || !name}
             className="flex-1 rounded-lg bg-[#1D9E75] py-2.5 text-[13px] font-semibold text-white hover:bg-[#0F6E56] disabled:opacity-50 transition-colors"
           >
-            {saving ? 'Enregistrement...' : zone ? 'Enregistrer' : 'Créer'}
+            {saving ? 'Enregistrement...' : cluster ? 'Enregistrer' : 'Créer'}
           </button>
         </div>
       </form>
