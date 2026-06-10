@@ -117,7 +117,7 @@ export default function SupervisorHomePage() {
           <div className="flex-1">
             <div className="font-head text-base font-semibold text-white">{user?.fullName ?? 'Superviseur'}</div>
             <div className="mt-0.5 truncate text-xs text-white/70">
-              {['Superviseur', user?.zone?.name ? `Cluster ${user.zone.name}` : ''].filter(Boolean).join(' · ')}
+              {['Superviseur', user?.cluster?.name ? `Cluster ${user.cluster.name}` : ''].filter(Boolean).join(' · ')}
             </div>
             {user?.matricule && (
               <div className="text-[10px] text-white/50">{user.matricule}</div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { RiLoader4Line, RiMapPinLine, RiUserLine, RiStore2Line } from 'react-icons/ri';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -27,19 +27,6 @@ interface Submission {
   longitude?: number;
   submittedAt?: string;
   commercial?: { fullName: string; matricule: string };
-}
-
-interface MapViewProps {
-  center: [number, number];
-  zoom: number;
-}
-
-function MapView({ center, zoom }: MapViewProps) {
-  const map = useMap();
-  useEffect(() => {
-    map.setView(center, zoom);
-  }, [center, zoom, map]);
-  return null;
 }
 
 export default function ValidationMapPage() {
@@ -147,7 +134,6 @@ export default function ValidationMapPage() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <MapView center={center} zoom={12} />
             {submissionsWithCoords.map((submission) => (
               <Marker
                 key={submission.id}
