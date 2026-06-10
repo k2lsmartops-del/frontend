@@ -15,7 +15,6 @@ import {
   RiCloseLine,
   RiLoader4Line,
   RiBarChartLine,
-  RiMoneyDollarCircleLine,
 } from 'react-icons/ri';
 import api from '@/common/services/api';
 
@@ -44,10 +43,10 @@ interface UserStats {
 }
 
 interface PaymentInfo {
-  totalEarned: number;
-  pendingPayment: number;
-  paidAmount: number;
-  ratePerSubmission: number;
+  totalValidated: number;
+  installedCount: number;
+  installedActivatedCount: number;
+  note: string;
 }
 
 export default function UserDetailPage() {
@@ -261,33 +260,32 @@ export default function UserDetailPage() {
         {payment && (
           <div className="rounded-xl bg-white p-4 shadow-sm">
             <h3 className="mb-3 font-head text-sm font-semibold text-k2l-gray-800 flex items-center gap-2">
-              <RiMoneyDollarCircleLine className="text-k2l-primary" />
-              Paiements
+              <RiBarChartLine className="text-k2l-primary" />
+              Statistiques pour paiement
             </h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-k2l-gray-600">Taux par soumission</span>
+                <span className="text-sm text-k2l-gray-600">Total validées</span>
                 <span className="text-sm font-semibold text-k2l-gray-800">
-                  {payment.ratePerSubmission.toLocaleString('fr-FR')} FCFA
+                  {payment.totalValidated}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-k2l-gray-600">Total gagné</span>
+                <span className="text-sm text-k2l-gray-600">Installation simple</span>
+                <span className="text-sm font-semibold text-k2l-primary">
+                  {payment.installedCount}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-k2l-gray-600">Installation + Activation</span>
                 <span className="text-sm font-semibold text-k2l-success">
-                  {payment.totalEarned.toLocaleString('fr-FR')} FCFA
+                  {payment.installedActivatedCount}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-k2l-gray-600">Montant payé</span>
-                <span className="text-sm font-semibold text-k2l-gray-800">
-                  {payment.paidAmount.toLocaleString('fr-FR')} FCFA
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg bg-k2l-primary/10 p-3">
-                <span className="text-sm font-semibold text-k2l-primary">À payer</span>
-                <span className="text-base font-bold text-k2l-primary">
-                  {payment.pendingPayment.toLocaleString('fr-FR')} FCFA
-                </span>
+              <div className="rounded-lg bg-k2l-amber/10 p-3">
+                <p className="text-[11px] text-k2l-gray-600">
+                  {payment.note}
+                </p>
               </div>
             </div>
           </div>
@@ -296,14 +294,10 @@ export default function UserDetailPage() {
         {/* Actions rapides */}
         <div className="rounded-xl bg-white p-4 shadow-sm">
           <h3 className="mb-3 font-head text-sm font-semibold text-k2l-gray-800">Actions rapides</h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <button className="flex items-center justify-center gap-2 rounded-lg border border-k2l-gray-200 px-4 py-3 text-sm font-medium text-k2l-gray-700 hover:bg-k2l-gray-50">
               <RiBarChartLine />
-              Voir détails
-            </button>
-            <button className="flex items-center justify-center gap-2 rounded-lg bg-k2l-primary px-4 py-3 text-sm font-medium text-white hover:bg-k2l-primary/90">
-              <RiMoneyDollarCircleLine />
-              Gérer paiements
+              Voir détails complets
             </button>
           </div>
         </div>
