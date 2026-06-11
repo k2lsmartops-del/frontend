@@ -11,6 +11,7 @@ import {
   RiInformationLine,
 } from 'react-icons/ri';
 import api from '@/common/services/api';
+import { useFilterStore } from '@/common/stores/filter.store';
 
 interface Submission {
   id: string;
@@ -48,6 +49,7 @@ export default function ClientSubmissionsPage() {
   const [merchantCount, setMerchantCount] = useState(0);
   const [showCommuneFilter, setShowCommuneFilter] = useState(false);
   const [showClusterFilter, setShowClusterFilter] = useState(false);
+  const { period } = useFilterStore();
 
   const loadSubmissions = useCallback(async () => {
     try {
@@ -69,7 +71,7 @@ export default function ClientSubmissionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [filter, period]);
 
   useEffect(() => {
     loadSubmissions();

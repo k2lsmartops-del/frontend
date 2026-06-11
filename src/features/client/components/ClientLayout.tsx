@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/common/stores/auth.store';
+import { useFilterStore } from '@/common/stores/filter.store';
 import {
   RiHome5Line,
   RiFileList3Line,
@@ -27,6 +28,7 @@ export default function ClientLayout() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const location = useLocation();
+  const { period, setPeriod } = useFilterStore();
 
   const initials = user?.fullName
     ?.split(' ')
@@ -119,10 +121,46 @@ export default function ClientLayout() {
           </div>
           <div className="flex items-center gap-3">
             <div className="flex gap-1 rounded-lg bg-k2l-gray-100 p-1">
-              <button className="rounded-md px-3 py-1.5 text-xs text-k2l-gray-500">Aujourd'hui</button>
-              <button className="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-k2l-gray-800 shadow-sm">Ce mois</button>
-              <button className="rounded-md px-3 py-1.5 text-xs text-k2l-gray-500">Trimestre</button>
-              <button className="rounded-md px-3 py-1.5 text-xs text-k2l-gray-500">Annee</button>
+              <button 
+                onClick={() => setPeriod('today')}
+                className={`rounded-md px-3 py-1.5 text-xs transition-colors ${
+                  period === 'today' 
+                    ? 'bg-white font-semibold text-k2l-gray-800 shadow-sm' 
+                    : 'text-k2l-gray-500 hover:bg-white/50'
+                }`}
+              >
+                Aujourd'hui
+              </button>
+              <button 
+                onClick={() => setPeriod('month')}
+                className={`rounded-md px-3 py-1.5 text-xs transition-colors ${
+                  period === 'month' 
+                    ? 'bg-white font-semibold text-k2l-gray-800 shadow-sm' 
+                    : 'text-k2l-gray-500 hover:bg-white/50'
+                }`}
+              >
+                Ce mois
+              </button>
+              <button 
+                onClick={() => setPeriod('quarter')}
+                className={`rounded-md px-3 py-1.5 text-xs transition-colors ${
+                  period === 'quarter' 
+                    ? 'bg-white font-semibold text-k2l-gray-800 shadow-sm' 
+                    : 'text-k2l-gray-500 hover:bg-white/50'
+                }`}
+              >
+                Trimestre
+              </button>
+              <button 
+                onClick={() => setPeriod('year')}
+                className={`rounded-md px-3 py-1.5 text-xs transition-colors ${
+                  period === 'year' 
+                    ? 'bg-white font-semibold text-k2l-gray-800 shadow-sm' 
+                    : 'text-k2l-gray-500 hover:bg-white/50'
+                }`}
+              >
+                Annee
+              </button>
             </div>
             <div className="flex items-center gap-1.5 rounded-full bg-k2l-success-light px-3 py-1.5 text-[11px] font-semibold text-k2l-success">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-k2l-success" />

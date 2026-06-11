@@ -9,6 +9,7 @@ import {
   RiLoader4Line,
 } from 'react-icons/ri';
 import api from '@/common/services/api';
+import { useFilterStore } from '@/common/stores/filter.store';
 
 interface Stats {
   prospectsValidated: number;
@@ -37,10 +38,11 @@ export default function ClientDashboardPage() {
   const [topCommunes, setTopCommunes] = useState<TopCommune[]>([]);
   const [professionStats, setProfessionStats] = useState<ProfessionStat[]>([]);
   const [loading, setLoading] = useState(true);
+  const { period } = useFilterStore();
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [period]);
 
   const loadData = async () => {
     try {
