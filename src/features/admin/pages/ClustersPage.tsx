@@ -366,6 +366,7 @@ function ClusterFormModal({ cluster, communes, supervisors, onSave, onClose }: C
   const [supervisorId, setSupervisorId] = useState(cluster?.supervisor?.id || '');
   const [selectedCommunes, setSelectedCommunes] = useState<string[]>(cluster?.communes.map((c) => c.id) || []);
   const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const toggleCommune = (id: string) => {
     setSelectedCommunes((prev) => prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]);
@@ -374,11 +375,41 @@ function ClusterFormModal({ cluster, communes, supervisors, onSave, onClose }: C
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setSuccessMessage('');
+    
     try {
-      const payload = { name, communeIds: selectedCommunes, supervisorId: supervisorId || null };
       if (cluster) {
+        // Mode édition : mettre à jour le cluster
+        const payload = { name, communeIds: selectedCommunes };
         await api.patch(`/clusters/${cluster.id}`, payload);
+
+        // Si le superviseur a changé, utiliser l'endpoint dédié
+        const oldSupervisorId = cluster.supervisor?.id || '';
+        if (supervisorId !== oldSupervisorId) {
+          if (supervisorId) {
+            // Assigner le nouveau superviseur (met à jour les commerciaux automatiquement)
+            const res = await api.patch(`/clusters/${cluster.id}/supervisor`, { supervisorId });
+            const data = res.data as { commerciauxUpdated?: number; newSupervisorName?: string };
+            if (data.commerciauxUpdated && data.commerciauxUpdated > 0) {
+              setSuccessMessage(`✅ ${data.newSupervisorName} assigné. ${data.commerciauxUpdated} commerciaux mis à jour.`);
+              // Attendre un peu pour montrer le message
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            }
+          } else {
+            // Retirer le superviseur (si le cluster n'a pas de commerciaux actifs)
+            try {
+              await api.delete(`/clusters/${cluster.id}/supervisor`);
+            } catch (err: unknown) {
+              const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Erreur';
+              alert(message);
+              setSaving(false);
+              return;
+            }
+          }
+        }
       } else {
+        // Mode création
+        const payload = { name, communeIds: selectedCommunes, supervisorId: supervisorId || null };
         await api.post('/clusters', payload);
       }
       onSave();
@@ -388,6 +419,12 @@ function ClusterFormModal({ cluster, communes, supervisors, onSave, onClose }: C
       setSaving(false);
     }
   };
+
+  // Inclure le superviseur actuel du cluster dans la liste des options
+  const availableSupervisors = [...supervisors];
+  if (cluster?.supervisor && !supervisors.some((s) => s.id === cluster.supervisor?.id)) {
+    availableSupervisors.unshift(cluster.supervisor);
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 animate-fadeIn" onClick={onClose}>
@@ -399,6 +436,13 @@ function ClusterFormModal({ cluster, communes, supervisors, onSave, onClose }: C
         <h2 className="mb-5 font-head text-xl font-bold text-k2l-gray-900">
           {cluster ? 'Modifier le cluster' : 'Créer un cluster'}
         </h2>
+
+        {/* Message de succès */}
+        {successMessage && (
+          <div className="mb-4 rounded-lg bg-k2l-success-light p-3 text-[13px] font-semibold text-[#1D9E75]">
+            {successMessage}
+          </div>
+        )}
 
         <div className="space-y-4 text-[13px]">
           {/* Nom */}
@@ -415,19 +459,31 @@ function ClusterFormModal({ cluster, communes, supervisors, onSave, onClose }: C
 
           {/* Superviseur */}
           <div>
-            <label className="mb-1.5 block text-[12px] font-medium text-k2l-gray-600">Superviseur du cluster</label>
+            <label className="mb-1.5 block text-[12px] font-medium text-k2l-gray-600">
+              Superviseur du cluster
+              {cluster && cluster._count.members > 0 && (
+                <span className="ml-2 text-[11px] text-k2l-gray-400">
+                  ({cluster._count.members} commerciaux seront mis à jour)
+                </span>
+              )}
+            </label>
             <select
               value={supervisorId}
               onChange={(e) => setSupervisorId(e.target.value)}
               className="w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 outline-none focus:border-[#1D9E75] transition-colors"
             >
               <option value="">-- Aucun superviseur --</option>
-              {supervisors.map((sup) => (
+              {availableSupervisors.map((sup) => (
                 <option key={sup.id} value={sup.id}>
                   {sup.fullName} ({sup.matricule})
                 </option>
               ))}
             </select>
+            {cluster && !supervisorId && cluster.supervisor && (
+              <p className="mt-1 text-[11px] text-[#E24B4A]">
+                ⚠️ Retirer le superviseur n'est possible que si le cluster n'a pas de commerciaux actifs.
+              </p>
+            )}
           </div>
 
           {/* Communes */}
