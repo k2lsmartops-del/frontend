@@ -21,7 +21,6 @@ const clientNav: NavItem[] = [
   { to: '/client', icon: RiHome5Line, label: 'Tableau de bord' },
   { to: '/client/submissions', icon: RiFileList3Line, label: 'Soumissions' },
   { to: '/client/map', icon: RiMapPinLine, label: 'Carte temps reel' },
-  { to: '/client/reports', icon: RiFileTextLine, label: 'Rapports' },
 ];
 
 export default function ClientLayout() {
