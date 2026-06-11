@@ -152,11 +152,8 @@ export default function ClientDashboardPage() {
       {/* Graphique + Carte */}
       <div className="grid grid-cols-5 gap-4">
         <div className="col-span-3 rounded-xl border border-k2l-gray-200 bg-white p-5">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4">
             <h3 className="font-head text-sm font-semibold">Evolution sur 30 jours</h3>
-            <button className="flex items-center gap-1 text-xs text-k2l-blue hover:underline">
-              Details <RiArrowRightLine className="text-sm" />
-            </button>
           </div>
           <div className="flex h-[200px] items-end gap-1.5">
             {Array.from({ length: 30 }).map((_, i) => {
