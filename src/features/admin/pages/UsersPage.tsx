@@ -432,6 +432,12 @@ function UserCard({ user, onEdit, onResetPassword, onAction }: UserCardProps) {
             ) : (
               <span className="text-k2l-gray-400 italic">Non assigné</span>
             )}
+            {user.cluster?.name && (
+              <div className="flex items-center gap-1.5 text-[#1F5C99]">
+                <RiMapPinLine />
+                <span className="font-medium">{user.cluster.name}</span>
+              </div>
+            )}
           </div>
         )}
         {user.role === 'ADMIN' && (
