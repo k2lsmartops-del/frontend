@@ -181,6 +181,32 @@ textarea {
 }
 
 /* ========================================
+   PWA : Tailles de texte agrandies pour meilleure lisibilité mobile
+   ======================================== */
+@media (max-width: 768px) {
+  /* Textes de base plus grands */
+  .text-\[10px\] { font-size: 12px !important; }
+  .text-\[11px\] { font-size: 13px !important; }
+  .text-\[12px\] { font-size: 14px !important; }
+  .text-\[13px\] { font-size: 15px !important; }
+  .text-xs { font-size: 13px !important; }
+  .text-sm { font-size: 15px !important; }
+  .text-base { font-size: 17px !important; }
+  
+  /* Labels et titres */
+  .text-\[9px\] { font-size: 11px !important; }
+  
+  /* KPI values */
+  .text-\[22px\] { font-size: 26px !important; }
+  .text-xl { font-size: 22px !important; }
+  .text-2xl { font-size: 26px !important; }
+  .text-3xl { font-size: 32px !important; }
+  
+  /* Icônes légèrement plus grandes */
+  .text-lg { font-size: 20px !important; }
+}
+
+/* ========================================
    Animations pour modales
    ======================================== */
 @keyframes fadeIn {
