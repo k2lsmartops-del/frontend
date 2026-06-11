@@ -5,7 +5,6 @@ import {
   RiHome5Line,
   RiFileList3Line,
   RiMapPinLine,
-  RiFileTextLine,
   RiLogoutBoxRLine,
   RiLeafLine,
   RiLockLine,
