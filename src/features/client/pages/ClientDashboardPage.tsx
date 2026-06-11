@@ -45,36 +45,36 @@ export default function ClientDashboardPage() {
 
   const loadData = async () => {
     try {
-      const [statsRes] = await Promise.all([
-        api.get('/submissions/stats'),
-      ]);
+      const statsRes = await api.get('/submissions/stats');
       
       const data = statsRes.data;
+      const prospectsValidated = data.byStatus?.validated || 0;
+      const merchantsEnrolled = data.byType?.marchands || 0;
+      const appActivatedCount = data.appActivated || 0;
+      
       setStats({
-        prospectsValidated: data.validated || 0,
-        merchantsEnrolled: data.merchants || 0,
-        appActivated: data.appActivated || 0,
+        prospectsValidated,
+        merchantsEnrolled,
+        appActivated: appActivatedCount,
         totalCumulated: data.total || 0,
-        prospectsChange: 12,
-        merchantsChange: 18,
-        appActivatedPercent: data.validated > 0 ? Math.round((data.appActivated / data.validated) * 100) : 0,
+        prospectsChange: data.week?.total > 0 ? Math.round((data.week.validated / data.week.total) * 100) : 0,
+        merchantsChange: data.validationRate || 0,
+        appActivatedPercent: prospectsValidated > 0 ? Math.round((appActivatedCount / prospectsValidated) * 100) : 0,
       });
 
-      setTopCommunes([
-        { name: 'Yopougon', prospects: 724, merchants: 89 },
-        { name: 'Cocody', prospects: 612, merchants: 108 },
-        { name: 'Abobo', prospects: 521, merchants: 72 },
-        { name: 'Marcory', prospects: 398, merchants: 64 },
-        { name: 'Treichville', prospects: 312, merchants: 41 },
-      ]);
+      // Utiliser les donnees du backend pour les communes
+      if (data.topCommunes && data.topCommunes.length > 0) {
+        setTopCommunes(data.topCommunes);
+      } else {
+        setTopCommunes([]);
+      }
 
-      setProfessionStats([
-        { profession: 'Commercant', prospects: 892, activatedPercent: 71 },
-        { profession: 'Salarie', prospects: 654, activatedPercent: 82 },
-        { profession: 'Etudiant', prospects: 521, activatedPercent: 48 },
-        { profession: 'Independant', prospects: 412, activatedPercent: 65 },
-        { profession: 'Autre', prospects: 768, activatedPercent: 53 },
-      ]);
+      // Utiliser les donnees du backend pour les professions
+      if (data.professionStats && data.professionStats.length > 0) {
+        setProfessionStats(data.professionStats);
+      } else {
+        setProfessionStats([]);
+      }
     } catch (error) {
       console.error('Erreur de chargement des donnees', error);
     } finally {
