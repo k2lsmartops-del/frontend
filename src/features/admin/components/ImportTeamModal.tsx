@@ -17,7 +17,7 @@ interface ParsedRow {
   phone: string;
   email?: string;
   password?: string;
-  zone?: string;
+  cluster?: string;
 }
 
 interface ImportResultRow {
@@ -47,7 +47,7 @@ const COLUMNS = [
   'phone',
   'email',
   'password',
-  'zone',
+  'cluster',
 ];
 
 export default function ImportTeamModal({ onClose, onSuccess }: Props) {
@@ -61,9 +61,9 @@ export default function ImportTeamModal({ onClose, onSuccess }: Props) {
   /** Génère et télécharge un modèle Excel avec exemples et instructions. */
   const downloadTemplate = () => {
     const example: ParsedRow[] = [
-      { role: 'COORDINATEUR', fullName: 'Jean Koffi', phone: '0700000001', email: 'jean.koffi@k2l.ci', password: 'Passw0rd1', zone: '' },
-      { role: 'SUPERVISEUR', fullName: 'Awa Traore', phone: '0700000002', email: '', password: 'Passw0rd2', zone: 'Cluster Nord' },
-      { role: 'COMMERCIAL', fullName: 'Yao Brou', phone: '0700000003', email: '', password: 'Passw0rd3', zone: 'Cluster Nord' },
+      { role: 'COORDINATEUR', fullName: 'Jean Koffi', phone: '0700000001', email: 'jean.koffi@k2l.ci', password: 'Passw0rd1', cluster: '' },
+      { role: 'SUPERVISEUR', fullName: 'Awa Traore', phone: '0700000002', email: '', password: 'Passw0rd2', cluster: 'Cluster Nord' },
+      { role: 'COMMERCIAL', fullName: 'Yao Brou', phone: '0700000003', email: '', password: 'Passw0rd3', cluster: 'Cluster Nord' },
     ];
 
     const ws = XLSX.utils.json_to_sheet(example, { header: COLUMNS });
@@ -77,8 +77,8 @@ export default function ImportTeamModal({ onClose, onSuccess }: Props) {
       ['phone', 'TOUS', 'Téléphone (sert d\'identifiant de connexion, unique)'],
       ['email', 'optionnel', 'Adresse email (unique si fournie)'],
       ['password', 'optionnel', 'Mot de passe (min. 8 caractères). Généré si vide'],
-      ['zone', 'SUPERVISEUR, COMMERCIAL', 'Nom du cluster (requis pour SUPERVISEUR et COMMERCIAL)'],
-      ['', '', 'COORDINATEUR: pas de rattachement territorial (zone vide)'],
+      ['cluster', 'SUPERVISEUR, COMMERCIAL', 'Nom du cluster (requis pour SUPERVISEUR et COMMERCIAL)'],
+      ['', '', 'COORDINATEUR: pas de rattachement territorial (cluster vide)'],
       ['', '', 'SUPERVISEUR: lié à un cluster'],
       ['', '', 'COMMERCIAL: lié à un cluster (comme le superviseur)'],
       [],
@@ -121,7 +121,7 @@ export default function ImportTeamModal({ onClose, onSuccess }: Props) {
             phone: String(r.phone ?? '').trim(),
             email: String(r.email ?? '').trim(),
             password: String(r.password ?? '').trim(),
-            zone: String(r.zone ?? '').trim(),
+            cluster: String(r.cluster ?? '').trim(),
           }))
           .filter((r) => r.role || r.fullName || r.phone);
 
@@ -264,7 +264,7 @@ export default function ImportTeamModal({ onClose, onSuccess }: Props) {
                         <td className="px-2 py-1.5 font-medium">{r.fullName}</td>
                         <td className="px-2 py-1.5 text-k2l-gray-600">{r.phone}</td>
                         <td className="px-2 py-1.5 text-k2l-gray-500">
-                          {r.zone || '—'}
+                          {r.cluster || '—'}
                         </td>
                       </tr>
                     ))}
