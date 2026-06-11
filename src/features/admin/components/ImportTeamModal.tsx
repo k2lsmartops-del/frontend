@@ -121,7 +121,8 @@ export default function ImportTeamModal({ onClose, onSuccess }: Props) {
             phone: String(r.phone ?? '').trim(),
             email: String(r.email ?? '').trim(),
             password: String(r.password ?? '').trim(),
-            cluster: String(r.cluster ?? '').trim(),
+            // Rétrocompatibilité : accepte cluster OU zone (ancien nom)
+            cluster: String(r.cluster ?? r.zone ?? '').trim(),
           }))
           .filter((r) => r.role || r.fullName || r.phone);
 
