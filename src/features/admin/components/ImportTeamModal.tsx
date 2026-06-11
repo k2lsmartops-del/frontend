@@ -114,15 +114,35 @@ export default function ImportTeamModal({ onClose, onSuccess }: Props) {
           defval: '',
         });
 
+        // Fonction pour trouver une valeur avec plusieurs noms de colonnes possibles
+        const getValue = (row: Record<string, unknown>, ...keys: string[]): string => {
+          for (const key of keys) {
+            // Cherche la clé exacte ou en minuscules
+            const value = row[key] ?? row[key.toLowerCase()] ?? row[key.toUpperCase()];
+            if (value !== undefined && value !== null && String(value).trim() !== '') {
+              return String(value).trim();
+            }
+          }
+          // Cherche aussi dans toutes les clés de la ligne (insensible à la casse)
+          const rowKeys = Object.keys(row);
+          for (const key of keys) {
+            const found = rowKeys.find(k => k.toLowerCase() === key.toLowerCase());
+            if (found && row[found] !== undefined && row[found] !== null) {
+              return String(row[found]).trim();
+            }
+          }
+          return '';
+        };
+
         const parsed: ParsedRow[] = json
           .map((r) => ({
-            role: String(r.role ?? '').trim(),
-            fullName: String(r.fullName ?? '').trim(),
-            phone: String(r.phone ?? '').trim(),
-            email: String(r.email ?? '').trim(),
-            password: String(r.password ?? '').trim(),
-            // Rétrocompatibilité : accepte cluster OU zone (ancien nom)
-            cluster: String(r.cluster ?? r.zone ?? '').trim(),
+            role: getValue(r as Record<string, unknown>, 'role', 'Role', 'ROLE', 'rôle', 'Rôle'),
+            fullName: getValue(r as Record<string, unknown>, 'fullName', 'fullname', 'FullName', 'FULLNAME', 'nom', 'Nom', 'NOM', 'name', 'Name'),
+            phone: getValue(r as Record<string, unknown>, 'phone', 'Phone', 'PHONE', 'telephone', 'Telephone', 'téléphone', 'Téléphone', 'tel', 'Tel'),
+            email: getValue(r as Record<string, unknown>, 'email', 'Email', 'EMAIL', 'mail', 'Mail'),
+            password: getValue(r as Record<string, unknown>, 'password', 'Password', 'PASSWORD', 'mdp', 'Mdp', 'motdepasse'),
+            // Accepte plusieurs noms pour le cluster
+            cluster: getValue(r as Record<string, unknown>, 'cluster', 'Cluster', 'CLUSTER', 'zone', 'Zone', 'ZONE', 'secteur', 'Secteur', 'SECTEUR'),
           }))
           .filter((r) => r.role || r.fullName || r.phone);
 
