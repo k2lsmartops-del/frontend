@@ -5,7 +5,6 @@ import {
   RiSmartphoneLine,
   RiBarChartLine,
   RiArrowUpLine,
-  RiArrowRightLine,
   RiMapPinLine,
   RiLoader4Line,
 } from 'react-icons/ri';
