@@ -46,6 +46,8 @@ export default function ClientSubmissionsPage() {
   const [total, setTotal] = useState(0);
   const [prospectCount, setProspectCount] = useState(0);
   const [merchantCount, setMerchantCount] = useState(0);
+  const [showCommuneFilter, setShowCommuneFilter] = useState(false);
+  const [showClusterFilter, setShowClusterFilter] = useState(false);
 
   const loadSubmissions = useCallback(async () => {
     try {
@@ -174,15 +176,32 @@ export default function ClientSubmissionsPage() {
         </button>
 
         <div className="ml-auto flex items-center gap-2">
-          <button className="flex items-center gap-1.5 rounded-full border border-k2l-gray-200 bg-white px-3 py-1.5 text-xs text-k2l-gray-600 hover:border-k2l-success">
+          <button 
+            onClick={() => setShowCommuneFilter(!showCommuneFilter)}
+            className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors ${
+              showCommuneFilter 
+                ? 'border-k2l-success bg-k2l-success text-white' 
+                : 'border-k2l-gray-200 bg-white text-k2l-gray-600 hover:border-k2l-success'
+            }`}
+          >
             <RiMapPinLine className="text-sm" />
             Commune
           </button>
-          <button className="flex items-center gap-1.5 rounded-full border border-k2l-gray-200 bg-white px-3 py-1.5 text-xs text-k2l-gray-600 hover:border-k2l-success">
+          <button 
+            onClick={() => setShowClusterFilter(!showClusterFilter)}
+            className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors ${
+              showClusterFilter 
+                ? 'border-k2l-success bg-k2l-success text-white' 
+                : 'border-k2l-gray-200 bg-white text-k2l-gray-600 hover:border-k2l-success'
+            }`}
+          >
             <RiStackLine className="text-sm" />
             Cluster
           </button>
-          <button className="flex items-center gap-1.5 rounded-lg border border-k2l-gray-200 bg-white px-3 py-2 text-xs font-semibold text-k2l-gray-600 hover:border-k2l-success">
+          <button 
+            onClick={() => alert('Export des donnees en cours de developpement')}
+            className="flex items-center gap-1.5 rounded-lg border border-k2l-gray-200 bg-white px-3 py-2 text-xs font-semibold text-k2l-gray-600 hover:border-k2l-success hover:text-k2l-success"
+          >
             <RiDownloadLine className="text-sm" />
             Exporter
           </button>
