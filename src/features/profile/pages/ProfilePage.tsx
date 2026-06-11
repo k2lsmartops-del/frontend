@@ -66,7 +66,7 @@ export default function ProfilePage() {
 
     setSaving(true);
     try {
-      await api.patch(`/users/${user?.id}`, {
+      await api.patch(`/users/${user?.id}/change-password`, {
         password: newPassword,
       });
       alert('Mot de passe modifié avec succès');
