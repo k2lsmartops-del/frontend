@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RiLoader4Line, RiAddLine, RiCloseLine, RiDeleteBinLine, RiEditLine, RiEyeLine, RiEyeOffLine, RiMore2Fill, RiCheckLine, RiStopLine } from 'react-icons/ri';
+import { RiLoader4Line, RiAddLine, RiCloseLine, RiDeleteBinLine, RiEditLine, RiEyeLine, RiEyeOffLine, RiMore2Fill, RiCheckLine, RiStopLine, RiSearchLine } from 'react-icons/ri';
 import api from '@/common/services/api';
 
 interface TeamMember {
@@ -29,6 +29,7 @@ export default function TeamPage() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>('all');
+  const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({ fullName: '', phone: '', email: '', password: '' });
@@ -70,6 +71,14 @@ export default function TeamPage() {
     if (filter === 'active') return m.status === 'ACTIF';
     if (filter === 'inactive') return m.status !== 'ACTIF';
     return true;
+  }).filter((m) => {
+    if (!search) return true;
+    const searchLower = search.toLowerCase();
+    return (
+      m.fullName.toLowerCase().includes(searchLower) ||
+      m.matricule.toLowerCase().includes(searchLower) ||
+      (m.phone && m.phone.includes(searchLower))
+    );
   });
 
   const activeCount = members.filter((m) => m.status === 'ACTIF').length;
@@ -263,6 +272,28 @@ export default function TeamPage() {
           </div>
         </div>
       )}
+
+      {/* Barre de recherche */}
+      <div className="mx-4 mt-4 mb-2">
+        <div className="flex items-center gap-2 rounded-lg border border-k2l-gray-200 bg-white px-3 py-2.5">
+          <RiSearchLine className="text-sm text-k2l-gray-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Rechercher par nom, matricule ou téléphone..."
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-k2l-gray-400"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="text-k2l-gray-400 hover:text-k2l-gray-600"
+            >
+              <RiCloseLine className="text-lg" />
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Filtres */}
       <div className="flex gap-2 overflow-x-auto px-4 py-3">

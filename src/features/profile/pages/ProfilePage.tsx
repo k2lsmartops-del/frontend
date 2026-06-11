@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   RiUserLine, RiLogoutBoxRLine, RiMailLine, RiPhoneLine,
   RiShieldUserLine, RiMapPin2Line, RiCalendarLine, RiFileList3Line,
-} from '@/common/icons';
+  RiLockPasswordLine, RiEyeLine, RiEyeOffLine, RiCloseLine,
+} from 'react-icons/ri';
 import { useAuthStore } from '@/common/stores/auth.store';
 import { useOnlineStatus } from '@/common/hooks/useOnlineStatus';
+import api from '@/common/services/api';
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Administrateur',
@@ -26,6 +29,13 @@ export default function ProfilePage() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const isOnline = useOnlineStatus();
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   const initials = user?.fullName
     ?.split(' ')
@@ -38,6 +48,37 @@ export default function ProfilePage() {
     if (!confirm('Voulez-vous vraiment vous deconnecter ?')) return;
     logout();
     navigate('/login', { replace: true });
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (newPassword !== confirmPassword) {
+      setError('Les mots de passe ne correspondent pas');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setError('Le mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await api.patch(`/users/${user?.id}`, {
+        password: newPassword,
+      });
+      alert('Mot de passe modifié avec succès');
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Erreur';
+      setError(msg);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const infoRows: { icon: React.ReactNode; label: string; value: string }[] = [
@@ -118,6 +159,17 @@ export default function ProfilePage() {
         </button>
       </div>
 
+      {/* Change password button */}
+      <div className="mx-4 mt-3">
+        <button
+          onClick={() => setShowPasswordModal(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-k2l-primary bg-white py-3.5 font-head text-sm font-semibold text-k2l-primary transition-all active:scale-[0.98] active:bg-k2l-primary-light"
+        >
+          <RiLockPasswordLine className="text-lg" />
+          Changer le mot de passe
+        </button>
+      </div>
+
       {/* Logout button */}
       <div className="mx-4 mt-4 pb-6">
         <button
@@ -128,6 +180,79 @@ export default function ProfilePage() {
           Se deconnecter
         </button>
       </div>
+
+      {/* Password change modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-sm rounded-xl bg-white p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-head text-sm font-semibold">Changer le mot de passe</h3>
+              <button onClick={() => setShowPasswordModal(false)} className="text-k2l-gray-400">
+                <RiCloseLine className="text-xl" />
+              </button>
+            </div>
+            <form onSubmit={handlePasswordChange} className="space-y-3">
+              <div>
+                <label className="text-[11px] text-k2l-gray-400">Nouveau mot de passe</label>
+                <div className="relative mt-1">
+                  <input
+                    required
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 text-sm outline-none focus:border-k2l-primary pr-10"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-k2l-gray-400"
+                  >
+                    {showNewPassword ? <RiEyeOffLine className="text-lg" /> : <RiEyeLine className="text-lg" />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="text-[11px] text-k2l-gray-400">Confirmer le mot de passe</label>
+                <div className="relative mt-1">
+                  <input
+                    required
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 text-sm outline-none focus:border-k2l-primary pr-10"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-k2l-gray-400"
+                  >
+                    {showConfirmPassword ? <RiEyeOffLine className="text-lg" /> : <RiEyeLine className="text-lg" />}
+                  </button>
+                </div>
+              </div>
+              {error && <p className="text-xs text-k2l-red">{error}</p>}
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="flex-1 rounded-lg border border-k2l-gray-200 py-2.5 text-sm font-medium text-k2l-gray-600"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 rounded-lg bg-k2l-primary py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  {saving ? 'Modification...' : 'Modifier'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
