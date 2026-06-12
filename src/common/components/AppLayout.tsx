@@ -19,6 +19,8 @@ export default function AppLayout() {
         height: '100dvh',
         // Respecte l'encoche iPhone en haut
         paddingTop: 'env(safe-area-inset-top)',
+        // Respecte la home indicator iPhone en bas
+        paddingBottom: 'env(safe-area-inset-bottom)',
         // Respecte les écrans courbes
         paddingLeft: 'env(safe-area-inset-left)',
         paddingRight: 'env(safe-area-inset-right)',
