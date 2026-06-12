@@ -37,6 +37,8 @@ html {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  /* Fond blanc pour la zone safe area en bas (home indicator iOS) */
+  background-color: white;
 }
 
 body {
