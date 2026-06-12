@@ -31,8 +31,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Navigation principale"
-      className="flex shrink-0 border-t border-k2l-gray-200 bg-white"
-      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
+      className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-k2l-gray-200 bg-white pb-[env(safe-area-inset-bottom)]"
     >
       {navItems.map((item) => {
         const active = location.pathname === item.path || 

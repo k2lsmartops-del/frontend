@@ -12,18 +12,7 @@ export default function AppLayout() {
   const showSync = role === 'COMMERCIAL';
 
   return (
-    <div
-      className="mx-auto flex max-w-[430px] flex-col bg-k2l-gray-100 shadow-lg"
-      style={{
-        // Hauteur réelle de l'écran (fix iOS Safari)
-        height: '100dvh',
-        // Respecte l'encoche iPhone en haut
-        paddingTop: 'env(safe-area-inset-top)',
-        // Respecte les écrans courbes
-        paddingLeft: 'env(safe-area-inset-left)',
-        paddingRight: 'env(safe-area-inset-right)',
-      }}
-    >
+    <div className="mx-auto flex min-h-screen max-w-[430px] flex-col bg-white shadow-lg">
       {/* Écoute les événements de sync pour afficher les toasts */}
       <SyncToastListener />
 
@@ -35,12 +24,11 @@ export default function AppLayout() {
         </div>
       )}
 
-      {/* Zone de contenu scrollable */}
-      <div className="relative flex-1 overflow-hidden">
-        <div className="absolute inset-0 overflow-y-auto overscroll-y-contain">
-          <Outlet />
-        </div>
-      </div>
+      {/* Zone de contenu avec padding pour la nav fixe */}
+      <main className="flex-1 bg-k2l-gray-100 pb-20">
+        <Outlet />
+      </main>
+
       {/* Navigation fixe en bas */}
       <BottomNav />
       <Toast />
