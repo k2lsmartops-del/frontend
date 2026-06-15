@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/common/stores/auth.store';
 import { useFilterStore } from '@/common/stores/filter.store';
 import {
@@ -26,6 +26,7 @@ export default function ClientLayout() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const location = useLocation();
+  const navigate = useNavigate();
   const { period, setPeriod } = useFilterStore();
 
   const initials = user?.fullName
@@ -65,15 +66,18 @@ export default function ClientLayout() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 border-b border-white/10 px-5 py-3">
+        <button
+          onClick={() => navigate('/client/profile')}
+          className="flex items-center gap-2.5 border-b border-white/10 px-5 py-3 w-full hover:bg-white/10 transition-colors cursor-pointer"
+        >
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white font-head text-xs font-bold text-k2l-navy">
             {initials}
           </div>
-          <div>
+          <div className="text-left">
             <div className="text-[13px] font-semibold text-white">{user?.fullName}</div>
             <div className="text-[10px] text-white/60">Acces lecture seule</div>
           </div>
-        </div>
+        </button>
 
         <nav className="flex-1 overflow-y-auto px-3 py-2">
           {clientNav.map((item) => (

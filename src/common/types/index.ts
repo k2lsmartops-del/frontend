@@ -4,7 +4,7 @@ export type SubmissionType = 'PROSPECT' | 'MARCHAND';
 export type SubmissionStatus = 'DRAFT' | 'SUBMITTED' | 'VALIDATED' | 'REJECTED';
 export type AppStatus = 'INSTALLED' | 'INSTALLED_ACTIVATED';
 export type SyncStatus = 'PENDING' | 'SYNCED' | 'FAILED';
-export type Gender = 'HOMME' | 'FEMME';
+export type Gender = 'M' | 'F';
 
 export interface User {
   id: string;

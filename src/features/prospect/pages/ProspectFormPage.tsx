@@ -20,14 +20,12 @@ const PROFESSIONS = [
   'Artisan', 'Transporteur', 'Menagere', 'Sans emploi', 'Autre',
 ];
 
-const OTHER_OPTION = '__OTHER__';
-
 export default function ProspectFormPage() {
   const navigate = useNavigate();
   const showToast = useToastStore((s) => s.show);
   const clientUuid = useMemo(() => uuidv4(), []);
 
-  // Charger les communes/quartiers de la zone
+  // Charger les communes du cluster du commercial
   const { data: zoneData, loading: loadingZone } = useMyZoneCommunes();
 
   const [fullName, setFullName] = useState('');
@@ -36,11 +34,9 @@ export default function ProspectFormPage() {
   const [gender, setGender] = useState('HOMME');
   const [age, setAge] = useState('');
 
-  // Localisation - commune en dropdown, quartier toujours en saisie manuelle
+  // Localisation - commune en dropdown (cluster), quartier en saisie manuelle
   const [communeId, setCommuneId] = useState<string>('');
-  const [communeManual, setCommuneManual] = useState('');
-  const [quartierManual, setQuartierManual] = useState('');
-  const [isManualLocation, setIsManualLocation] = useState(false);
+  const [quartier, setQuartier] = useState('');
 
   const [appStatus, setAppStatus] = useState('INSTALLED');
   const [sponsorCode, setSponsorCode] = useState('');
@@ -48,11 +44,11 @@ export default function ProspectFormPage() {
   const [gps, setGps] = useState<GpsData | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Options communes pour le dropdown
+  const onGpsCapture = useCallback((data: GpsData) => setGps(data), []);
+
+  // Options communes pour le dropdown (sans option de saisie manuelle)
   const communeOptions = useMemo(() => {
-    const options = (zoneData?.communes || []).map(c => ({ value: c.id, label: c.name }));
-    options.push({ value: OTHER_OPTION, label: '📍 Autre (saisie manuelle)' });
-    return options;
+    return (zoneData?.communes || []).map(c => ({ value: c.id, label: c.name }));
   }, [zoneData]);
 
   // Initialiser avec la première commune quand les données arrivent
@@ -63,15 +59,6 @@ export default function ProspectFormPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoneData]);
 
-  // Gérer le changement de commune
-  const handleCommuneChange = (value: string) => {
-    setCommuneId(value);
-    setQuartierManual('');
-    setIsManualLocation(value === OTHER_OPTION);
-  };
-
-  const onGpsCapture = useCallback((data: GpsData) => setGps(data), []);
-
   const handleSubmit = async (asDraft = false) => {
     if (!asDraft) {
       if (!fullName.trim()) { showToast('Nom complet obligatoire', 'error'); return; }
@@ -79,20 +66,16 @@ export default function ProspectFormPage() {
       if (!profession) { showToast('Profession obligatoire', 'error'); return; }
     }
 
-    // Déterminer les valeurs de commune/quartier à envoyer
-    const isManual = communeId === OTHER_OPTION;
-    const finalCommuneId = isManual ? undefined : communeId || undefined;
-    const finalCommune = isManual ? communeManual : (zoneData?.communes.find(c => c.id === communeId)?.name || '');
-
     setSubmitting(true);
     try {
+      const selectedCommune = zoneData?.communes.find(c => c.id === communeId);
       await createSubmission('PROSPECT', {
         type: 'PROSPECT',
         clientUuid,
         requestedStatus: asDraft ? 'DRAFT' : 'SUBMITTED',
-        communeId: finalCommuneId,
-        commune: finalCommune,
-        quartier: quartierManual || undefined,
+        communeId: communeId || undefined,
+        commune: selectedCommune?.name || undefined,
+        quartier: quartier || undefined,
         latitude: gps?.latitude,
         longitude: gps?.longitude,
         gpsAccuracy: gps?.accuracy,
@@ -148,29 +131,16 @@ export default function ProspectFormPage() {
             </div>
           ) : (
             <>
-              {/* Sélection commune */}
               <FormSelect
                 label="Commune *"
                 value={communeId}
-                onChange={handleCommuneChange}
+                onChange={setCommuneId}
                 options={communeOptions}
               />
-
-              {/* Saisie manuelle commune si "Autre" */}
-              {isManualLocation && (
-                <FormInput
-                  label="Nom de la commune *"
-                  value={communeManual}
-                  onChange={setCommuneManual}
-                  placeholder="Entrez le nom de la commune"
-                />
-              )}
-
-              {/* Quartier toujours en saisie manuelle */}
               <FormInput
                 label="Quartier"
-                value={quartierManual}
-                onChange={setQuartierManual}
+                value={quartier}
+                onChange={setQuartier}
                 placeholder="Ex: Remblais"
               />
             </>

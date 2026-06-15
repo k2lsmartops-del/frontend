@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   RiUserLine, RiLogoutBoxRLine, RiMailLine, RiPhoneLine,
   RiShieldUserLine, RiMapPin2Line, RiCalendarLine, RiFileList3Line,
-  RiLockPasswordLine, RiEyeLine, RiEyeOffLine, RiCloseLine,
+  RiLockPasswordLine, RiEyeLine, RiEyeOffLine, RiCloseLine, RiEditLine,
 } from 'react-icons/ri';
 import { useAuthStore } from '@/common/stores/auth.store';
 import { useOnlineStatus } from '@/common/hooks/useOnlineStatus';
@@ -27,15 +27,22 @@ const STATUS_LABELS: Record<string, string> = {
 export default function ProfilePage() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
   const logout = useAuthStore((s) => s.logout);
   const isOnline = useOnlineStatus();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  
+  // États pour l'édition du profil
+  const [editFullName, setEditFullName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editEmail, setEditEmail] = useState('');
 
   const initials = user?.fullName
     ?.split(' ')
@@ -48,6 +55,48 @@ export default function ProfilePage() {
     if (!confirm('Voulez-vous vraiment vous deconnecter ?')) return;
     logout();
     navigate('/login', { replace: true });
+  };
+
+  const handleOpenEditModal = () => {
+    setEditFullName(user?.fullName || '');
+    setEditPhone(user?.phone || '');
+    setEditEmail(user?.email || '');
+    setShowEditModal(true);
+    setError('');
+  };
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!editFullName.trim()) {
+      setError('Le nom complet est requis');
+      return;
+    }
+
+    if (!editPhone.trim()) {
+      setError('Le numéro de téléphone est requis');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await api.patch(`/users/${user?.id}/profile`, {
+        fullName: editFullName.trim(),
+        phone: editPhone.trim(),
+        email: editEmail.trim() || undefined,
+      });
+      
+      // Mettre à jour l'utilisateur dans le store
+      setUser(response.data);
+      alert('Informations mises à jour avec succès');
+      setShowEditModal(false);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Erreur lors de la mise à jour';
+      setError(msg);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
@@ -170,6 +219,17 @@ export default function ProfilePage() {
         </button>
       </div>
 
+      {/* Edit profile button */}
+      <div className="mx-4 mt-3">
+        <button
+          onClick={handleOpenEditModal}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-k2l-gray-300 bg-white py-3.5 font-head text-sm font-semibold text-k2l-gray-700 transition-all active:scale-[0.98] active:bg-k2l-gray-100"
+        >
+          <RiEditLine className="text-lg" />
+          Modifier mes informations
+        </button>
+      </div>
+
       {/* Logout button */}
       <div className="mx-4 mt-4 pb-6">
         <button
@@ -247,6 +307,71 @@ export default function ProfilePage() {
                   className="flex-1 rounded-lg bg-k2l-primary py-2.5 text-sm font-semibold text-white disabled:opacity-50"
                 >
                   {saving ? 'Modification...' : 'Modifier'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit profile modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-sm rounded-xl bg-white p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-head text-sm font-semibold">Modifier mes informations</h3>
+              <button onClick={() => setShowEditModal(false)} className="text-k2l-gray-400">
+                <RiCloseLine className="text-xl" />
+              </button>
+            </div>
+            <form onSubmit={handleProfileUpdate} className="space-y-3">
+              <div>
+                <label className="text-[11px] text-k2l-gray-400">Nom complet</label>
+                <input
+                  required
+                  type="text"
+                  value={editFullName}
+                  onChange={(e) => setEditFullName(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 text-sm outline-none focus:border-k2l-primary"
+                  placeholder="Votre nom complet"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] text-k2l-gray-400">Téléphone</label>
+                <input
+                  required
+                  type="tel"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 text-sm outline-none focus:border-k2l-primary"
+                  placeholder="Votre numéro de téléphone"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] text-k2l-gray-400">Email (optionnel)</label>
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 text-sm outline-none focus:border-k2l-primary"
+                  placeholder="votre@email.com"
+                />
+              </div>
+              {error && <p className="text-xs text-k2l-red">{error}</p>}
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 rounded-lg border border-k2l-gray-200 py-2.5 text-sm font-medium text-k2l-gray-600"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 rounded-lg bg-k2l-primary py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  {saving ? 'Enregistrement...' : 'Enregistrer'}
                 </button>
               </div>
             </form>

@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/common/stores/auth.store';
 import {
   RiHome5Line,
@@ -30,6 +30,7 @@ export default function AdminLayout() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const userRole = user?.role || 'ADMIN';
   const filteredNav = adminNav.filter((item) => item.roles.includes(userRole));
@@ -63,17 +64,20 @@ export default function AdminLayout() {
           <span className="font-head text-base font-bold text-white">K2L SmartOps</span>
         </div>
 
-        <div className="flex items-center gap-2.5 border-b border-white/10 px-5 py-3">
+        <button
+          onClick={() => navigate('/admin/profile')}
+          className="flex items-center gap-2.5 border-b border-white/10 px-5 py-3 w-full hover:bg-white/10 transition-colors cursor-pointer"
+        >
           <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white/30 bg-white/15 font-head text-xs font-bold text-white">
             {initials}
           </div>
-          <div>
+          <div className="text-left">
             <div className="text-[13px] font-semibold text-white">{user?.fullName}</div>
             <div className="text-[11px] text-white/60">
               {user?.role === 'ADMIN' ? 'Administrateur' : user?.role === 'COORDINATEUR' ? 'Coordinateur' : user?.role}
             </div>
           </div>
-        </div>
+        </button>
 
         {user?.role === 'COORDINATEUR' && user?.cluster && (
           <div className="mx-4 mt-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-[11px] text-white">

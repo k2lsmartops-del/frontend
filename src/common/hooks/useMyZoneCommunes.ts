@@ -30,7 +30,7 @@ export function useMyZoneCommunes() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await api.get<MyZoneData>('/communes/my-zone');
+        const response = await api.get<MyZoneData>('/communes/my-cluster');
         setData(response.data);
         setError(null);
       } catch (err) {

@@ -17,6 +17,7 @@ import UserDetailPage from '@/features/supervisor/pages/UserDetailPage';
 // Admin pages
 import AdminLayout from '@/features/admin/components/AdminLayout';
 import AdminDashboardPage from '@/features/admin/pages/AdminDashboardPage';
+import AdminProfilePage from '@/features/admin/pages/AdminProfilePage';
 import UsersPage from '@/features/admin/pages/UsersPage';
 import ClustersPage from '@/features/admin/pages/ClustersPage';
 import ValidationCoordinateurPage from '@/features/admin/pages/ValidationCoordinateurPage';
@@ -25,6 +26,7 @@ import ValidationMapPage from '@/features/admin/pages/ValidationMapPage';
 // Client pages
 import ClientLayout from '@/features/client/components/ClientLayout';
 import ClientDashboardPage from '@/features/client/pages/ClientDashboardPage';
+import ClientProfilePage from '@/features/client/pages/ClientProfilePage';
 import ClientSubmissionsPage from '@/features/client/pages/ClientSubmissionsPage';
 import ClientMapPage from '@/features/client/pages/ClientMapPage';
 import ClientReportsPage from '@/features/client/pages/ClientReportsPage';
@@ -38,7 +40,10 @@ function RoleBasedHomePage() {
 
 function RoleBasedRoot() {
   const user = useAuthStore((s) => s.user);
-  if (user?.role === 'ADMIN' || user?.role === 'COORDINATEUR') {
+  const location = window.location.pathname;
+  
+  // Permettre aux admins/coordinateurs d'accéder à /profile pour modifier leurs infos
+  if ((user?.role === 'ADMIN' || user?.role === 'COORDINATEUR') && location === '/') {
     return <Navigate to="/admin" replace />;
   }
   if (user?.role === 'CLIENT') {
@@ -65,6 +70,7 @@ export default function App() {
             }
           >
             <Route index element={<ClientDashboardPage />} />
+            <Route path="profile" element={<ClientProfilePage />} />
             <Route path="submissions" element={<ClientSubmissionsPage />} />
             <Route path="map" element={<ClientMapPage />} />
             <Route path="reports" element={<ClientReportsPage />} />
@@ -80,6 +86,7 @@ export default function App() {
             }
           >
             <Route index element={<AdminDashboardPage />} />
+            <Route path="profile" element={<AdminProfilePage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="clusters" element={<ClustersPage />} />
             <Route path="validations" element={<ValidationCoordinateurPage />} />
