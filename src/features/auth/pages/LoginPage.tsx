@@ -19,21 +19,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    console.log('[LOGIN] Button clicked');
     if (!phone.trim() || !password.trim()) {
       showToast('Veuillez remplir tous les champs', 'error');
       return;
     }
     setLoading(true);
-    console.log('[LOGIN] Tentative de connexion avec:', { phone, passwordLength: password.length });
     try {
       const response = await authService.login({ identifiant: phone, password });
-      console.log('[LOGIN] Succes:', response);
       setAuth(response.user, { accessToken: response.accessToken, refreshToken: response.refreshToken });
       showToast('Bienvenue ! Connexion reussie.', 'success');
       navigate('/', { replace: true });
-    } catch (error) {
-      console.error('[LOGIN] Erreur:', error);
+    } catch {
       showToast('Identifiants incorrects', 'error');
     } finally {
       setLoading(false);

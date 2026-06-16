@@ -99,11 +99,6 @@ export default function ClientLayout() {
           ))}
         </nav>
 
-        <div className="mx-3 mb-3 flex items-center gap-2 rounded-lg border border-k2l-amber/30 bg-k2l-amber/15 px-3 py-2 text-[10px] text-k2l-amber-light">
-          <RiLockLine className="text-sm flex-shrink-0" />
-          <span>Vous consultez uniquement les fiches validees par K2L</span>
-        </div>
-
         <button
           onClick={() => logout()}
           className="mx-3 mb-4 flex items-center gap-2 rounded-lg px-3 py-2.5 text-[13px] text-white/60 hover:bg-white/8 hover:text-white"

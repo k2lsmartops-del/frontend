@@ -64,7 +64,7 @@ export default function App() {
           <Route
             path="/client"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['CLIENT']}>
                 <ClientLayout />
               </ProtectedRoute>
             }
@@ -80,7 +80,7 @@ export default function App() {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['ADMIN', 'COORDINATEUR']}>
                 <AdminLayout />
               </ProtectedRoute>
             }
@@ -97,7 +97,7 @@ export default function App() {
           {/* Mobile PWA routes */}
           <Route
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['COMMERCIAL', 'SUPERVISEUR']}>
                 <AppLayout />
               </ProtectedRoute>
             }

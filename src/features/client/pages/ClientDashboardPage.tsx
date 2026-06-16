@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   RiUserLine,
   RiStore2Line,
   RiSmartphoneLine,
   RiBarChartLine,
   RiArrowUpLine,
-  RiMapPinLine,
   RiLoader4Line,
 } from 'react-icons/ri';
 import api from '@/common/services/api';
@@ -38,7 +37,23 @@ export default function ClientDashboardPage() {
   const [topCommunes, setTopCommunes] = useState<TopCommune[]>([]);
   const [professionStats, setProfessionStats] = useState<ProfessionStat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
   const { period } = useFilterStore();
+
+  // Générer les données du graphique une seule fois
+  const chartData = useMemo(() => {
+    return Array.from({ length: 30 }, (_, i) => {
+      const h1 = 40 + Math.random() * 120;
+      const h2 = 10 + Math.random() * 50;
+      return {
+        day: i + 1,
+        prospectHeight: h1,
+        merchantHeight: h2,
+        prospectValue: Math.round(h1 / 1.6),
+        merchantValue: Math.round(h2 / 0.6),
+      };
+    });
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -150,51 +165,41 @@ export default function ClientDashboardPage() {
         </div>
       </div>
 
-      {/* Graphique + Carte */}
-      <div className="grid grid-cols-5 gap-4">
-        <div className="col-span-3 rounded-xl border border-k2l-gray-200 bg-white p-5">
-          <div className="mb-4">
-            <h3 className="font-head text-sm font-semibold">Evolution sur 30 jours</h3>
-          </div>
-          <div className="flex h-[200px] items-end gap-1.5">
-            {Array.from({ length: 30 }).map((_, i) => {
-              const h1 = 40 + Math.random() * 120;
-              const h2 = 10 + Math.random() * 50;
-              return (
-                <div key={i} className="flex flex-1 flex-col justify-end gap-0.5">
-                  <div className="rounded-t bg-k2l-amber" style={{ height: h2 }} />
-                  <div className="rounded-t bg-k2l-success" style={{ height: h1 }} />
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-3 flex gap-5 text-xs text-k2l-gray-500">
-            <span className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded bg-k2l-success" />
-              Prospects
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded bg-k2l-amber" />
-              Marchands
-            </span>
-          </div>
+      {/* Graphique */}
+      <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
+        <div className="mb-4">
+          <h3 className="font-head text-sm font-semibold">Evolution sur 30 jours</h3>
         </div>
-
-        <div className="col-span-2 rounded-xl border border-k2l-gray-200 bg-white p-5">
-          <h3 className="mb-4 font-head text-sm font-semibold">Couverture geographique</h3>
-          <div className="relative h-[200px] overflow-hidden rounded-lg border border-k2l-gray-200 bg-gradient-to-br from-k2l-gray-100 to-k2l-gray-200">
-            <div className="absolute bottom-0 left-0 right-0 h-[38%] bg-gradient-to-t from-k2l-blue/20 to-transparent" />
-            <RiMapPinLine className="absolute left-[22%] top-[25%] text-lg text-k2l-success" />
-            <RiMapPinLine className="absolute left-[30%] top-[30%] text-lg text-k2l-success" />
-            <RiStore2Line className="absolute left-[50%] top-[38%] text-lg text-k2l-amber" />
-            <RiMapPinLine className="absolute left-[58%] top-[44%] text-lg text-k2l-success" />
-            <RiMapPinLine className="absolute left-[62%] top-[33%] text-lg text-k2l-success" />
-            <RiStore2Line className="absolute left-[40%] top-[50%] text-lg text-k2l-amber" />
-          </div>
-          <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-k2l-gray-400">
-            <RiMapPinLine className="text-sm" />
-            12 communes couvertes - 4 clusters actifs
-          </div>
+        <div className="flex h-[200px] items-end gap-1.5 relative">
+          {chartData.map((data, i) => (
+            <div 
+              key={i} 
+              className="flex flex-1 flex-col justify-end gap-0.5 relative group"
+              onMouseEnter={() => setHoveredBar(i)}
+              onMouseLeave={() => setHoveredBar(null)}
+            >
+              <div className="rounded-t bg-k2l-amber transition-opacity hover:opacity-80" style={{ height: data.merchantHeight }} />
+              <div className="rounded-t bg-k2l-success transition-opacity hover:opacity-80" style={{ height: data.prospectHeight }} />
+              {hoveredBar === i && (
+                <div className="absolute -top-20 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded shadow-lg whitespace-nowrap z-10">
+                  <div>Jour {data.day}</div>
+                  <div>Prospects: {data.prospectValue}</div>
+                  <div>Marchands: {data.merchantValue}</div>
+                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1 w-2 h-2 bg-gray-900 rotate-45"></div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 flex gap-5 text-xs text-k2l-gray-500">
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded bg-k2l-success" />
+            Prospects
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded bg-k2l-amber" />
+            Marchands
+          </span>
         </div>
       </div>
 
