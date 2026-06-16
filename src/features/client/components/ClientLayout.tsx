@@ -7,7 +7,6 @@ import {
   RiMapPinLine,
   RiLogoutBoxRLine,
   RiLeafLine,
-  RiLockLine,
 } from 'react-icons/ri';
 
 interface NavItem {

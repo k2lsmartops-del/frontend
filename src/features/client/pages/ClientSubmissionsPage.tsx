@@ -2,13 +2,10 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   RiLoader4Line,
   RiUserLine,
-  RiStore2Line,
   RiCloseLine,
   RiMapPin2Line,
   RiCalendarLine,
-  RiUserHeartLine,
   RiIdCardLine,
-  RiCheckLine,
   RiSmartphoneLine,
   RiFileList3Line,
 } from 'react-icons/ri';
