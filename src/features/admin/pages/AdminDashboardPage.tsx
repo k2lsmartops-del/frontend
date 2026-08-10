@@ -3,8 +3,6 @@ import api from '@/common/services/api';
 import { useAuthStore } from '@/common/stores/auth.store';
 import DashboardCoordinateur from './DashboardCoordinateur';
 import {
-  RiLayoutGridLine,
-  RiUserStarLine,
   RiTeamLine,
   RiUserLine,
   RiStore2Line,
@@ -12,8 +10,11 @@ import {
   RiBarChartLine,
   RiArrowUpLine,
   RiCheckboxCircleLine,
-  RiTimeLine,
   RiLoader4Line,
+  RiTrophyLine,
+  RiAlertLine,
+  RiMapPinLine,
+  RiArrowDownLine,
 } from 'react-icons/ri';
 
 /* ─── Types ─── */
@@ -35,29 +36,32 @@ interface UserSummary {
   createdAt: string;
 }
 
-interface ActivityStats {
-  prospectsValidated: number;
-  merchantsEnrolled: number;
-  appActivated: number;
-  totalSubmissions: number;
-  pendingValidation: number;
-  validationRate: number;
-  prospectsChange: number;
-  merchantsChange: number;
-}
-
-interface TopCommune {
-  name: string;
-  prospects: number;
-  merchants: number;
-}
-
-interface TopCommercial {
-  id: string;
-  fullName: string;
-  matricule: string;
-  submissions: number;
-  validated: number;
+interface ComprehensiveKPIs {
+  production: {
+    activeAgents: number;
+    clientsApproached: number;
+    installations: number;
+    activations: number;
+    activeClients: number;
+  };
+  performance: {
+    objective: number;
+    achieved: number;
+    achievementPercent: number;
+    productivityPerAgent: number;
+    clusterPerformance: { clusterId: string; clusterName: string; achieved: number; objective: number }[];
+  };
+  quality: {
+    filesSubmitted: number;
+    filesValidated: number;
+    filesRejected: number;
+    validationRate: number;
+  };
+  pilotage: {
+    coveredZones: number;
+    mainAlerts: { type: string; count: number; message: string }[];
+    globalScore: number;
+  };
 }
 
 /* ─── Main Router ─── */
@@ -74,26 +78,8 @@ function DashboardAdmin() {
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // États pour les stats d'activité
-  const [activityStats, setActivityStats] = useState<ActivityStats | null>(null);
-  const [topCommunes, setTopCommunes] = useState<TopCommune[]>([]);
-  const [topCommerciaux, setTopCommerciaux] = useState<TopCommercial[]>([]);
-  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
-
-  // Générer les données du graphique une seule fois
-  const chartData = useMemo(() => {
-    return Array.from({ length: 30 }, (_, i) => {
-      const h1 = 40 + Math.random() * 120;
-      const h2 = 10 + Math.random() * 50;
-      return {
-        day: i + 1,
-        prospectHeight: h1,
-        merchantHeight: h2,
-        prospectValue: Math.round(h1 / 1.6),
-        merchantValue: Math.round(h2 / 0.6),
-      };
-    });
-  }, []);
+  // États pour les KPIs structurés
+  const [kpis, setKpis] = useState<ComprehensiveKPIs | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -105,42 +91,7 @@ function DashboardAdmin() {
         ]);
         setClusters(Array.isArray(clustersRes.data) ? clustersRes.data : []);
         setUsers(usersRes.data?.data || []);
-        
-        // Traiter les stats d'activité
-        const data = statsRes.data;
-        const prospectsValidated = data.byStatus?.validated || 0;
-        const merchantsEnrolled = data.byType?.marchands || 0;
-        const appActivatedCount = data.appActivated || 0;
-        const pendingCount = data.byStatus?.submitted || 0;
-        
-        setActivityStats({
-          prospectsValidated,
-          merchantsEnrolled,
-          appActivated: appActivatedCount,
-          totalSubmissions: data.total || 0,
-          pendingValidation: pendingCount,
-          validationRate: data.validationRate || 0,
-          prospectsChange: data.week?.total > 0 ? Math.round((data.week.validated / data.week.total) * 100) : 12,
-          merchantsChange: data.validationRate || 8,
-        });
-        
-        // Top communes
-        if (data.topCommunes && data.topCommunes.length > 0) {
-          setTopCommunes(data.topCommunes);
-        }
-        
-        // Top commerciaux (à partir des users)
-        const commerciaux = (usersRes.data?.data || [])
-          .filter((u: UserSummary) => u.role === 'COMMERCIAL' && u.isActive)
-          .slice(0, 5)
-          .map((u: UserSummary) => ({
-            id: u.id,
-            fullName: u.fullName,
-            matricule: u.matricule,
-            submissions: Math.floor(Math.random() * 50) + 10,
-            validated: Math.floor(Math.random() * 40) + 5,
-          }));
-        setTopCommerciaux(commerciaux);
+        setKpis(statsRes.data);
       } catch {
         /* ignore */
       } finally {
@@ -154,16 +105,6 @@ function DashboardAdmin() {
     if (!selectedClusterId) return users;
     return users.filter((u) => u.cluster?.id === selectedClusterId);
   }, [users, selectedClusterId]);
-
-  const stats = useMemo(() => {
-    const src = filteredUsers;
-    return {
-      totalClusters: clusters.length,
-      totalSuperviseurs: src.filter((u) => u.role === 'SUPERVISEUR' && u.isActive).length,
-      totalCommerciaux: src.filter((u) => u.role === 'COMMERCIAL' && u.isActive).length,
-      totalUsers: src.length,
-    };
-  }, [clusters, filteredUsers]);
 
   const recentUsers = useMemo(() => {
     return [...filteredUsers]
@@ -200,192 +141,191 @@ function DashboardAdmin() {
         </select>
       </div>
 
-      {/* KPIs Activité - Ligne 1 */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <div className="relative overflow-hidden rounded-xl border border-k2l-gray-200 bg-white p-5">
-          <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-lg bg-k2l-success-light">
-            <RiUserLine className="text-lg text-k2l-success" />
-          </div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Prospects validés</div>
-          <div className="mt-2 font-head text-3xl font-bold text-k2l-gray-900">
-            {activityStats?.prospectsValidated.toLocaleString('fr-FR') || 0}
-          </div>
-          <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-k2l-success">
-            <RiArrowUpLine className="text-sm" />
-            {activityStats?.prospectsChange || 0}% vs mois dernier
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden rounded-xl border border-k2l-gray-200 bg-white p-5">
-          <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-lg bg-k2l-amber-light">
-            <RiStore2Line className="text-lg text-k2l-amber" />
-          </div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Marchands enrôlés</div>
-          <div className="mt-2 font-head text-3xl font-bold text-k2l-gray-900">
-            {activityStats?.merchantsEnrolled.toLocaleString('fr-FR') || 0}
-          </div>
-          <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-k2l-success">
-            <RiArrowUpLine className="text-sm" />
-            {activityStats?.merchantsChange || 0}% vs mois dernier
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden rounded-xl border border-k2l-gray-200 bg-white p-5">
-          <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-lg bg-k2l-blue-light">
-            <RiSmartphoneLine className="text-lg text-k2l-blue" />
-          </div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">App activées</div>
-          <div className="mt-2 font-head text-3xl font-bold text-k2l-gray-900">
-            {activityStats?.appActivated.toLocaleString('fr-FR') || 0}
-          </div>
-          <div className="mt-1 text-xs font-semibold text-k2l-gray-400">
-            {activityStats?.prospectsValidated ? Math.round((activityStats.appActivated / activityStats.prospectsValidated) * 100) : 0}% des prospects
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden rounded-xl border border-k2l-gray-200 bg-white p-5">
-          <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-lg bg-k2l-success-light">
-            <RiBarChartLine className="text-lg text-k2l-success" />
-          </div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Total soumissions</div>
-          <div className="mt-2 font-head text-3xl font-bold text-k2l-gray-900">
-            {activityStats?.totalSubmissions.toLocaleString('fr-FR') || 0}
-          </div>
-          <div className="mt-1 text-xs font-semibold text-k2l-gray-400">
-            depuis le début
-          </div>
+      {/* 1. Production */}
+      <div>
+        <h2 className="mb-4 font-head text-sm font-semibold uppercase tracking-wider text-k2l-gray-600">Production</h2>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+          <KpiCard 
+            label="Agents actifs" 
+            value={kpis?.production.activeAgents || 0} 
+            icon={<RiTeamLine />} 
+            bg="bg-k2l-primary-light" 
+          />
+          <KpiCard 
+            label="Clients approchés" 
+            value={kpis?.production.clientsApproached || 0} 
+            icon={<RiUserLine />} 
+            bg="bg-k2l-success-light" 
+          />
+          <KpiCard 
+            label="Installations" 
+            value={kpis?.production.installations || 0} 
+            icon={<RiSmartphoneLine />} 
+            bg="bg-k2l-blue-light" 
+          />
+          <KpiCard 
+            label="Activations" 
+            value={kpis?.production.activations || 0} 
+            icon={<RiCheckboxCircleLine />} 
+            bg="bg-k2l-amber-light" 
+          />
+          <KpiCard 
+            label="Clients actifs" 
+            value={kpis?.production.activeClients || 0} 
+            icon={<RiStore2Line />} 
+            bg="bg-k2l-purple-light" 
+          />
         </div>
       </div>
 
-      {/* KPIs Équipe - Ligne 2 */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KpiCard label="Clusters" value={stats.totalClusters} icon={<RiLayoutGridLine />} bg="bg-k2l-primary-light" />
-        <KpiCard label="Superviseurs actifs" value={stats.totalSuperviseurs} icon={<RiUserStarLine />} bg="bg-k2l-amber-light" />
-        <KpiCard
-          label="Commerciaux actifs"
-          value={stats.totalCommerciaux}
-          icon={<RiTeamLine />}
-          bg="bg-k2l-success-light"
-          sub={`/${filteredUsers.filter((u) => u.role === 'COMMERCIAL').length}`}
-        />
-        <div className="relative overflow-hidden rounded-xl border border-k2l-gray-200 bg-white p-5">
-          <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-lg bg-k2l-amber-light">
-            <RiTimeLine className="text-lg text-k2l-amber" />
-          </div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">En attente validation</div>
-          <div className="mt-2 font-head text-3xl font-bold text-k2l-gray-900">
-            {activityStats?.pendingValidation || 0}
-          </div>
-          <div className="mt-1 text-xs font-semibold text-k2l-amber">
-            à traiter
-          </div>
+      {/* 2. Performance */}
+      <div>
+        <h2 className="mb-4 font-head text-sm font-semibold uppercase tracking-wider text-k2l-gray-600">Performance</h2>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <KpiCard 
+            label="Objectif" 
+            value={kpis?.performance.objective || 0} 
+            icon={<RiTrophyLine />} 
+            bg="bg-k2l-gray-100" 
+          />
+          <KpiCard 
+            label="Réalisé" 
+            value={kpis?.performance.achieved ?? 0} 
+            icon={<RiBarChartLine />} 
+            bg="bg-k2l-success-light" 
+          />
+          <KpiCard 
+            label="% atteinte" 
+            value={kpis?.performance.achievementPercent ?? 0} 
+            suffix="%" 
+            icon={<RiArrowUpLine />} 
+            bg={(kpis?.performance.achievementPercent ?? 0) >= 80 ? 'bg-k2l-success-light' : (kpis?.performance.achievementPercent ?? 0) >= 50 ? 'bg-k2l-amber-light' : 'bg-k2l-red-light'}
+          />
+          <KpiCard 
+            label="Productivité/agent" 
+            value={kpis?.performance.productivityPerAgent || 0} 
+            icon={<RiUserLine />} 
+            bg="bg-k2l-blue-light" 
+          />
         </div>
-      </div>
-
-      {/* Graphique d'évolution sur 30 jours */}
-      <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="font-head text-sm font-semibold">Évolution sur 30 jours</h3>
-          <div className="flex items-center gap-2 rounded-lg bg-k2l-gray-100 px-3 py-1.5">
-            <RiCheckboxCircleLine className="text-k2l-success" />
-            <span className="text-xs font-medium text-k2l-gray-600">
-              Taux de validation: <span className="text-k2l-success font-bold">{activityStats?.validationRate || 0}%</span>
-            </span>
-          </div>
-        </div>
-        <div className="flex h-[200px] items-end gap-1.5 relative">
-          {chartData.map((data, i) => (
-            <div 
-              key={i} 
-              className="flex flex-1 flex-col justify-end gap-0.5 relative group cursor-pointer"
-              onMouseEnter={() => setHoveredBar(i)}
-              onMouseLeave={() => setHoveredBar(null)}
-            >
-              <div className="rounded-t bg-k2l-amber transition-all hover:opacity-80" style={{ height: data.merchantHeight }} />
-              <div className="rounded-t bg-k2l-success transition-all hover:opacity-80" style={{ height: data.prospectHeight }} />
-              {hoveredBar === i && (
-                <div className="absolute -top-20 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1.5 rounded shadow-lg whitespace-nowrap z-10">
-                  <div className="font-semibold">Jour {data.day}</div>
-                  <div className="flex items-center gap-1"><span className="h-2 w-2 rounded bg-k2l-success" /> Prospects: {data.prospectValue}</div>
-                  <div className="flex items-center gap-1"><span className="h-2 w-2 rounded bg-k2l-amber" /> Marchands: {data.merchantValue}</div>
-                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1 w-2 h-2 bg-gray-900 rotate-45"></div>
+        
+        {/* Performance par cluster */}
+        {kpis?.performance.clusterPerformance && kpis.performance.clusterPerformance.length > 0 && (
+          <div className="mt-4 rounded-xl border border-k2l-gray-200 bg-white p-5">
+            <h3 className="mb-4 font-head text-sm font-semibold">Performance par cluster</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {kpis.performance.clusterPerformance.map((cluster) => (
+                <div key={cluster.clusterId} className="rounded-lg border border-k2l-gray-200 p-4">
+                  <div className="font-medium text-k2l-gray-900">{cluster.clusterName}</div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-sm text-k2l-gray-500">{cluster.achieved} / {cluster.objective}</span>
+                    <span className={`text-sm font-bold ${cluster.achieved / cluster.objective >= 0.8 ? 'text-k2l-success' : cluster.achieved / cluster.objective >= 0.5 ? 'text-k2l-amber' : 'text-k2l-red'}`}>
+                      {Math.round((cluster.achieved / cluster.objective) * 100)}%
+                    </span>
+                  </div>
+                  <div className="mt-2 h-2 w-full rounded-full bg-k2l-gray-200">
+                    <div 
+                      className={`h-2 rounded-full ${cluster.achieved / cluster.objective >= 0.8 ? 'bg-k2l-success' : cluster.achieved / cluster.objective >= 0.5 ? 'bg-k2l-amber' : 'bg-k2l-red'}`}
+                      style={{ width: `${Math.min((cluster.achieved / cluster.objective) * 100, 100)}%` }}
+                    />
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
-          ))}
-        </div>
-        <div className="mt-3 flex gap-5 text-xs text-k2l-gray-500">
-          <span className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded bg-k2l-success" />
-            Prospects
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded bg-k2l-amber" />
-            Marchands
-          </span>
+          </div>
+        )}
+      </div>
+
+      {/* 3. Qualité */}
+      <div>
+        <h2 className="mb-4 font-head text-sm font-semibold uppercase tracking-wider text-k2l-gray-600">Qualité</h2>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <KpiCard 
+            label="Dossiers soumis" 
+            value={kpis?.quality.filesSubmitted || 0} 
+            icon={<RiBarChartLine />} 
+            bg="bg-k2l-blue-light" 
+          />
+          <KpiCard 
+            label="Dossiers validés" 
+            value={kpis?.quality.filesValidated || 0} 
+            icon={<RiCheckboxCircleLine />} 
+            bg="bg-k2l-success-light" 
+          />
+          <KpiCard 
+            label="Dossiers rejetés" 
+            value={kpis?.quality.filesRejected || 0} 
+            icon={<RiArrowDownLine />} 
+            bg="bg-k2l-red-light" 
+          />
+          <KpiCard 
+            label="Taux validation" 
+            value={kpis?.quality.validationRate !== undefined ? kpis.quality.validationRate : 0} 
+            suffix="%" 
+            icon={<RiTrophyLine />} 
+            bg={kpis?.quality.validationRate !== undefined ? (kpis.quality.validationRate >= 80 ? 'bg-k2l-success-light' : kpis.quality.validationRate >= 60 ? 'bg-k2l-amber-light' : 'bg-k2l-red-light') : 'bg-k2l-gray-100'}
+          />
         </div>
       </div>
 
-      {/* Tableaux de reporting */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Top 5 communes */}
-        <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
-          <h3 className="mb-4 font-head text-sm font-semibold">Top 5 communes</h3>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-k2l-gray-200">
-                <th className="pb-2 text-left text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Commune</th>
-                <th className="pb-2 text-right text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Prospects</th>
-                <th className="pb-2 text-right text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Marchands</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topCommunes.length > 0 ? topCommunes.map((commune) => (
-                <tr key={commune.name} className="border-b border-k2l-gray-100 last:border-0">
-                  <td className="py-2.5 font-medium">{commune.name}</td>
-                  <td className="py-2.5 text-right text-k2l-success font-semibold">{commune.prospects}</td>
-                  <td className="py-2.5 text-right text-k2l-amber font-semibold">{commune.merchants}</td>
-                </tr>
-              )) : (
-                <tr><td colSpan={3} className="py-4 text-center text-k2l-gray-400">Aucune donnée</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+      {/* 4. Pilotage */}
+      <div>
+        <h2 className="mb-4 font-head text-sm font-semibold uppercase tracking-wider text-k2l-gray-600">Pilotage</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Score global */}
+          <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Score global</div>
+                <div className="mt-2 font-head text-4xl font-bold text-k2l-gray-900">
+                  {kpis?.pilotage.globalScore ?? 0}/100
+                </div>
+              </div>
+              <div className={`h-16 w-16 rounded-full flex items-center justify-center ${(kpis?.pilotage.globalScore ?? 0) >= 70 ? 'bg-k2l-success-light' : (kpis?.pilotage.globalScore ?? 0) >= 50 ? 'bg-k2l-amber-light' : 'bg-k2l-red-light'}`}>
+                <RiTrophyLine className={`text-3xl ${(kpis?.pilotage.globalScore ?? 0) >= 70 ? 'text-k2l-success' : (kpis?.pilotage.globalScore ?? 0) >= 50 ? 'text-k2l-amber' : 'text-k2l-red'}`} />
+              </div>
+            </div>
+          </div>
 
-        {/* Top 5 commerciaux */}
-        <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
-          <h3 className="mb-4 font-head text-sm font-semibold">Top 5 commerciaux</h3>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-k2l-gray-200">
-                <th className="pb-2 text-left text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Commercial</th>
-                <th className="pb-2 text-right text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Soumissions</th>
-                <th className="pb-2 text-right text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Validées</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topCommerciaux.length > 0 ? topCommerciaux.map((c) => (
-                <tr key={c.id} className="border-b border-k2l-gray-100 last:border-0">
-                  <td className="py-2.5">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-k2l-primary-light font-head text-[10px] font-bold text-k2l-primary">
-                        {c.fullName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
-                      </span>
-                      <div>
-                        <div className="font-medium">{c.fullName}</div>
-                        <div className="text-[10px] text-k2l-gray-400">{c.matricule}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-2.5 text-right font-semibold">{c.submissions}</td>
-                  <td className="py-2.5 text-right text-k2l-success font-semibold">{c.validated}</td>
-                </tr>
-              )) : (
-                <tr><td colSpan={3} className="py-4 text-center text-k2l-gray-400">Aucun commercial</td></tr>
-              )}
-            </tbody>
-          </table>
+          {/* Zones couvertes */}
+          <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Zones couvertes</div>
+                <div className="mt-2 font-head text-4xl font-bold text-k2l-gray-900">
+                  {kpis?.pilotage.coveredZones || 0}
+                </div>
+              </div>
+              <div className="h-16 w-16 rounded-full bg-k2l-primary-light flex items-center justify-center">
+                <RiMapPinLine className="text-3xl text-k2l-primary" />
+              </div>
+            </div>
+          </div>
+
+          {/* Alertes */}
+          <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Alertes</div>
+                <div className="mt-2 font-head text-4xl font-bold text-k2l-gray-900">
+                  {kpis?.pilotage.mainAlerts?.length || 0}
+                </div>
+              </div>
+              <div className={`h-16 w-16 rounded-full flex items-center justify-center ${(kpis?.pilotage.mainAlerts?.length || 0) > 0 ? 'bg-k2l-red-light' : 'bg-k2l-success-light'}`}>
+                <RiAlertLine className={`text-3xl ${(kpis?.pilotage.mainAlerts?.length || 0) > 0 ? 'text-k2l-red' : 'text-k2l-success'}`} />
+              </div>
+            </div>
+            {kpis?.pilotage.mainAlerts && kpis.pilotage.mainAlerts.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {kpis.pilotage.mainAlerts.slice(0, 3).map((alert, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-xs text-k2l-gray-600">
+                    <RiAlertLine className="text-k2l-amber" />
+                    <span>{alert.message}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -413,7 +353,7 @@ function DashboardAdmin() {
                 <tr key={u.id} className="border-b border-k2l-gray-100 last:border-0">
                   <td className="px-4 py-3">
                     <span className="mr-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-k2l-primary-light font-head text-[11px] font-bold text-k2l-primary">
-                      {u.fullName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
+                      {u.fullName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
                     </span>
                     {u.fullName}
                   </td>
@@ -440,17 +380,16 @@ function DashboardAdmin() {
 }
 
 /* ─── Components ─── */
-function KpiCard({ label, value, icon, bg, sub }: { label: string; value: number; icon: React.ReactNode; bg: string; sub?: string }) {
+function KpiCard({ label, value, icon, bg, suffix }: { label: string; value: number; icon: React.ReactNode; bg: string; suffix?: string }) {
   return (
-    <div className="relative rounded-xl border border-k2l-gray-200 bg-white p-5">
+    <div className="relative overflow-hidden rounded-xl border border-k2l-gray-200 bg-white p-5">
       <div className={`absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-lg ${bg} text-[17px] text-k2l-primary`}>
         {icon}
       </div>
-      <p className="text-xs font-medium text-k2l-gray-400">{label}</p>
-      <p className="mt-1.5 font-head text-3xl font-bold text-k2l-gray-900">
-        {value}
-        {sub && <span className="text-base text-k2l-gray-400">{sub}</span>}
-      </p>
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">{label}</div>
+      <div className="mt-2 font-head text-3xl font-bold text-k2l-gray-900">
+        {value.toLocaleString('fr-FR')}{suffix || ''}
+      </div>
     </div>
   );
 }
