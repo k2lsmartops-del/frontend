@@ -46,11 +46,24 @@ export default function ClientMapPage() {
 
   useEffect(() => {
     loadSubmissions();
-  }, []);
+  }, [period]);
 
   const loadSubmissions = async () => {
+    setLoading(true);
     try {
-      const res = await api.get('/submissions', { params: { status: 'VALIDATED', limit: 100 } });
+      // Mapper les périodes frontend vers backend
+      const periodMap: Record<PeriodFilter, string> = {
+        '24h': 'day',
+        'week': 'week',
+        'month': 'month',
+      };
+      const res = await api.get('/submissions', { 
+        params: { 
+          status: 'VALIDATED', 
+          limit: 1000,
+          period: periodMap[period]
+        } 
+      });
       setSubmissions(res.data.data || []);
     } catch (error) {
       console.error('Erreur de chargement des soumissions', error);
