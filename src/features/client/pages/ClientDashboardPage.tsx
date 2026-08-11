@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   RiUserLine,
+  RiStore2Line,
   RiSmartphoneLine,
   RiBarChartLine,
   RiArrowUpLine,
@@ -122,7 +123,7 @@ export default function ClientDashboardPage() {
       {/* 1. Production */}
       <div>
         <h2 className="mb-4 font-head text-sm font-semibold uppercase tracking-wider text-k2l-gray-600">Production</h2>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
           <KpiCard 
             label="Agents actifs" 
             value={kpis?.production.activeAgents || 0} 
@@ -146,6 +147,12 @@ export default function ClientDashboardPage() {
             value={kpis?.production.activations || 0} 
             icon={<RiCheckboxCircleLine />} 
             bg="bg-k2l-amber-light" 
+          />
+          <KpiCard 
+            label="Clients actifs" 
+            value={kpis?.production.activeClients || 0} 
+            icon={<RiStore2Line />} 
+            bg="bg-k2l-purple-light" 
           />
         </div>
       </div>
