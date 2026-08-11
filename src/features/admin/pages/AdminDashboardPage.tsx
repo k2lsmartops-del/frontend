@@ -83,7 +83,6 @@ export default function AdminDashboardPage() {
 /* ─── ADMIN Dashboard ─── */
 function DashboardAdmin() {
   const [clusters, setClusters] = useState<ClusterSummary[]>([]);
-  const [selectedClusterId, setSelectedClusterId] = useState('');
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>('day');
@@ -108,13 +107,12 @@ function DashboardAdmin() {
     loadInitial();
   }, []);
 
-  // Charger les KPIs quand la période ou le cluster change
+  // Charger les KPIs quand la période change
   useEffect(() => {
     async function loadKpis() {
       setLoading(true);
       try {
-        const clusterParam = selectedClusterId ? `&clusterId=${selectedClusterId}` : '';
-        const statsRes = await api.get(`/submissions/stats?period=${period}${clusterParam}`);
+        const statsRes = await api.get(`/submissions/stats?period=${period}`);
         setKpis(statsRes.data);
       } catch {
         /* ignore */
@@ -123,18 +121,13 @@ function DashboardAdmin() {
       }
     }
     loadKpis();
-  }, [period, selectedClusterId]);
-
-  const filteredUsers = useMemo(() => {
-    if (!selectedClusterId) return users;
-    return users.filter((u) => u.cluster?.id === selectedClusterId);
-  }, [users, selectedClusterId]);
+  }, [period]);
 
   const recentUsers = useMemo(() => {
-    return [...filteredUsers]
+    return [...users]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 5);
-  }, [filteredUsers]);
+  }, [users]);
 
   // Calculer l'objectif selon la période
   const getObjectiveLabel = () => {
@@ -155,12 +148,12 @@ function DashboardAdmin() {
 
   return (
     <div className="space-y-6">
-      {/* Header avec filtre de période et cluster */}
+      {/* Header avec filtre de période */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-head text-xl font-bold text-k2l-gray-900">Tableau de bord Admin</h1>
           <p className="text-sm text-k2l-gray-500">
-            Données : {periodLabels[period]} {selectedClusterId ? `— ${clusters.find((z) => z.id === selectedClusterId)?.name}` : '— tous les clusters'}
+            Données : {periodLabels[period]} — tous les clusters
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -183,17 +176,6 @@ function DashboardAdmin() {
               ))}
             </div>
           </div>
-          {/* Filtre de cluster */}
-          <select
-            value={selectedClusterId}
-            onChange={(e) => setSelectedClusterId(e.target.value)}
-            className="rounded-lg border border-k2l-primary bg-k2l-primary-light px-4 py-2.5 text-[13px] font-semibold text-k2l-primary-dark outline-none"
-          >
-            <option value="">Tous les clusters</option>
-            {clusters.map((z) => (
-              <option key={z.id} value={z.id}>{z.name}</option>
-            ))}
-          </select>
         </div>
       </div>
 
