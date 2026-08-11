@@ -8,6 +8,6 @@ interface FilterState {
 }
 
 export const useFilterStore = create<FilterState>((set) => ({
-  period: 'month',
+  period: 'today',
   setPeriod: (period) => set({ period }),
 }));

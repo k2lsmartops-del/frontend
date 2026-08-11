@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import api from '@/common/services/api';
 import { useAuthStore } from '@/common/stores/auth.store';
+import { useFilterStore } from '@/common/stores/filter.store';
 import DashboardCoordinateur from './DashboardCoordinateur';
 import {
   RiTeamLine,
@@ -77,6 +78,7 @@ function DashboardAdmin() {
   const [selectedClusterId, setSelectedClusterId] = useState('');
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const { period } = useFilterStore();
   
   // États pour les KPIs structurés
   const [kpis, setKpis] = useState<ComprehensiveKPIs | null>(null);
@@ -84,10 +86,19 @@ function DashboardAdmin() {
   useEffect(() => {
     async function load() {
       try {
+        // Mapper les périodes frontend vers backend
+        const periodMap: Record<string, 'day' | 'week' | 'month'> = {
+          today: 'day',
+          month: 'month',
+          quarter: 'month',
+          year: 'month',
+        };
+        const backendPeriod = periodMap[period] || 'day';
+        
         const [clustersRes, usersRes, statsRes] = await Promise.all([
           api.get('/clusters'),
           api.get('/users?limit=1000'),
-          api.get('/submissions/stats'),
+          api.get(`/submissions/stats?period=${backendPeriod}`),
         ]);
         setClusters(Array.isArray(clustersRes.data) ? clustersRes.data : []);
         setUsers(usersRes.data?.data || []);
@@ -99,7 +110,7 @@ function DashboardAdmin() {
       }
     }
     load();
-  }, []);
+  }, [period]);
 
   const filteredUsers = useMemo(() => {
     if (!selectedClusterId) return users;

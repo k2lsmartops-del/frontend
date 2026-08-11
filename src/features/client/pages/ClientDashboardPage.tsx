@@ -55,7 +55,15 @@ export default function ClientDashboardPage() {
 
   const loadData = async () => {
     try {
-      const statsRes = await api.get('/submissions/stats');
+      // Mapper les périodes frontend vers backend
+      const periodMap: Record<string, 'day' | 'week' | 'month'> = {
+        today: 'day',
+        month: 'month',
+        quarter: 'month',
+        year: 'month',
+      };
+      const backendPeriod = periodMap[period] || 'day';
+      const statsRes = await api.get(`/submissions/stats?period=${backendPeriod}`);
       setKpis(statsRes.data);
     } catch (error) {
       console.error('Erreur de chargement des données', error);
