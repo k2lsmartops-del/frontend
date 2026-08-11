@@ -12,9 +12,9 @@ import {
   RiTrophyLine,
   RiMapPinLine,
   RiArrowDownLine,
+  RiCalendarLine,
 } from 'react-icons/ri';
 import api from '@/common/services/api';
-import { useFilterStore } from '@/common/stores/filter.store';
 
 interface ComprehensiveKPIs {
   production: {
@@ -44,31 +44,41 @@ interface ComprehensiveKPIs {
   };
 }
 
+type Period = 'day' | 'week' | 'month';
+
+const periodLabels: Record<Period, string> = {
+  day: "Aujourd'hui",
+  week: 'Cette semaine',
+  month: 'Ce mois',
+};
+
 export default function ClientDashboardPage() {
   const [kpis, setKpis] = useState<ComprehensiveKPIs | null>(null);
   const [loading, setLoading] = useState(true);
-  const { period } = useFilterStore();
+  const [period, setPeriod] = useState<Period>('day');
 
   useEffect(() => {
     loadData();
   }, [period]);
 
   const loadData = async () => {
+    setLoading(true);
     try {
-      // Mapper les périodes frontend vers backend
-      const periodMap: Record<string, 'day' | 'week' | 'month'> = {
-        today: 'day',
-        month: 'month',
-        quarter: 'month',
-        year: 'month',
-      };
-      const backendPeriod = periodMap[period] || 'day';
-      const statsRes = await api.get(`/submissions/stats?period=${backendPeriod}`);
+      const statsRes = await api.get(`/submissions/stats?period=${period}`);
       setKpis(statsRes.data);
     } catch (error) {
       console.error('Erreur de chargement des données', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Calculer l'objectif selon la période
+  const getObjectiveLabel = () => {
+    switch (period) {
+      case 'day': return 'Objectif du jour';
+      case 'week': return 'Objectif semaine';
+      case 'month': return 'Objectif mensuel';
     }
   };
 
@@ -82,6 +92,34 @@ export default function ClientDashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header avec filtre de période */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-head text-xl font-bold text-k2l-gray-900">Tableau de bord</h1>
+          <p className="text-sm text-k2l-gray-500">
+            Données : {periodLabels[period]}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <RiCalendarLine className="text-k2l-gray-400" />
+          <div className="flex rounded-lg border border-k2l-gray-200 bg-white p-1">
+            {(['day', 'week', 'month'] as Period[]).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  period === p
+                    ? 'bg-k2l-primary text-white'
+                    : 'text-k2l-gray-600 hover:bg-k2l-gray-100'
+                }`}
+              >
+                {periodLabels[p]}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* 1. Production */}
       <div>
         <h2 className="mb-4 font-head text-sm font-semibold uppercase tracking-wider text-k2l-gray-600">Production</h2>
@@ -124,7 +162,7 @@ export default function ClientDashboardPage() {
         <h2 className="mb-4 font-head text-sm font-semibold uppercase tracking-wider text-k2l-gray-600">Performance</h2>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <KpiCard 
-            label="Objectif" 
+            label={getObjectiveLabel()} 
             value={kpis?.performance.objective || 0} 
             icon={<RiTrophyLine />} 
             bg="bg-k2l-gray-100" 
@@ -155,23 +193,26 @@ export default function ClientDashboardPage() {
           <div className="mt-4 rounded-xl border border-k2l-gray-200 bg-white p-5">
             <h3 className="mb-4 font-head text-sm font-semibold">Performance par cluster</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {kpis.performance.clusterPerformance.map((cluster) => (
-                <div key={cluster.clusterId} className="rounded-lg border border-k2l-gray-200 p-4">
-                  <div className="font-medium text-k2l-gray-900">{cluster.clusterName}</div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-sm text-k2l-gray-500">{cluster.achieved} / {cluster.objective}</span>
-                    <span className={`text-sm font-bold ${cluster.achieved / cluster.objective >= 0.8 ? 'text-k2l-success' : cluster.achieved / cluster.objective >= 0.5 ? 'text-k2l-amber' : 'text-k2l-red'}`}>
-                      {Math.round((cluster.achieved / cluster.objective) * 100)}%
-                    </span>
+              {kpis.performance.clusterPerformance.map((cluster) => {
+                const percent = cluster.objective > 0 ? (cluster.achieved / cluster.objective) : 0;
+                return (
+                  <div key={cluster.clusterId} className="rounded-lg border border-k2l-gray-200 p-4">
+                    <div className="font-medium text-k2l-gray-900">{cluster.clusterName}</div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-sm text-k2l-gray-500">{cluster.achieved} / {cluster.objective}</span>
+                      <span className={`text-sm font-bold ${percent >= 0.8 ? 'text-k2l-success' : percent >= 0.5 ? 'text-k2l-amber' : 'text-k2l-red'}`}>
+                        {cluster.objective > 0 ? Math.round(percent * 100) : 0}%
+                      </span>
+                    </div>
+                    <div className="mt-2 h-2 w-full rounded-full bg-k2l-gray-200">
+                      <div 
+                        className={`h-2 rounded-full ${percent >= 0.8 ? 'bg-k2l-success' : percent >= 0.5 ? 'bg-k2l-amber' : 'bg-k2l-red'}`}
+                        style={{ width: `${Math.min(percent * 100, 100)}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="mt-2 h-2 w-full rounded-full bg-k2l-gray-200">
-                    <div 
-                      className={`h-2 rounded-full ${cluster.achieved / cluster.objective >= 0.8 ? 'bg-k2l-success' : cluster.achieved / cluster.objective >= 0.5 ? 'bg-k2l-amber' : 'bg-k2l-red'}`}
-                      style={{ width: `${Math.min((cluster.achieved / cluster.objective) * 100, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

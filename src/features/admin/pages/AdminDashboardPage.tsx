@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import api from '@/common/services/api';
 import { useAuthStore } from '@/common/stores/auth.store';
-import { useFilterStore } from '@/common/stores/filter.store';
 import DashboardCoordinateur from './DashboardCoordinateur';
 import {
   RiTeamLine,
@@ -16,6 +15,7 @@ import {
   RiAlertLine,
   RiMapPinLine,
   RiArrowDownLine,
+  RiCalendarLine,
 } from 'react-icons/ri';
 
 /* ─── Types ─── */
@@ -65,6 +65,14 @@ interface ComprehensiveKPIs {
   };
 }
 
+type Period = 'day' | 'week' | 'month';
+
+const periodLabels: Record<Period, string> = {
+  day: "Aujourd'hui",
+  week: 'Cette semaine',
+  month: 'Ce mois',
+};
+
 /* ─── Main Router ─── */
 export default function AdminDashboardPage() {
   const user = useAuthStore((s) => s.user);
@@ -78,27 +86,19 @@ function DashboardAdmin() {
   const [selectedClusterId, setSelectedClusterId] = useState('');
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const { period } = useFilterStore();
+  const [period, setPeriod] = useState<Period>('day');
   
   // États pour les KPIs structurés
   const [kpis, setKpis] = useState<ComprehensiveKPIs | null>(null);
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
       try {
-        // Mapper les périodes frontend vers backend
-        const periodMap: Record<string, 'day' | 'week' | 'month'> = {
-          today: 'day',
-          month: 'month',
-          quarter: 'month',
-          year: 'month',
-        };
-        const backendPeriod = periodMap[period] || 'day';
-        
         const [clustersRes, usersRes, statsRes] = await Promise.all([
           api.get('/clusters'),
           api.get('/users?limit=1000'),
-          api.get(`/submissions/stats?period=${backendPeriod}`),
+          api.get(`/submissions/stats?period=${period}`),
         ]);
         setClusters(Array.isArray(clustersRes.data) ? clustersRes.data : []);
         setUsers(usersRes.data?.data || []);
@@ -123,6 +123,15 @@ function DashboardAdmin() {
       .slice(0, 5);
   }, [filteredUsers]);
 
+  // Calculer l'objectif selon la période
+  const getObjectiveLabel = () => {
+    switch (period) {
+      case 'day': return 'Objectif du jour';
+      case 'week': return 'Objectif semaine';
+      case 'month': return 'Objectif mensuel';
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-200px)] items-center justify-center">
@@ -133,23 +142,46 @@ function DashboardAdmin() {
 
   return (
     <div className="space-y-6">
-      {/* Header + Cluster selector */}
-      <div className="flex items-center justify-between">
+      {/* Header avec filtre de période et cluster */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-xs text-k2l-gray-400">
-            Vue globale {selectedClusterId ? `— ${clusters.find((z) => z.id === selectedClusterId)?.name}` : '— tous les clusters'}
+          <h1 className="font-head text-xl font-bold text-k2l-gray-900">Tableau de bord Admin</h1>
+          <p className="text-sm text-k2l-gray-500">
+            Données : {periodLabels[period]} {selectedClusterId ? `— ${clusters.find((z) => z.id === selectedClusterId)?.name}` : '— tous les clusters'}
           </p>
         </div>
-        <select
-          value={selectedClusterId}
-          onChange={(e) => setSelectedClusterId(e.target.value)}
-          className="rounded-lg border border-k2l-primary bg-k2l-primary-light px-4 py-2.5 text-[13px] font-semibold text-k2l-primary-dark outline-none"
-        >
-          <option value="">Tous les clusters</option>
-          {clusters.map((z) => (
-            <option key={z.id} value={z.id}>{z.name}</option>
-          ))}
-        </select>
+        <div className="flex items-center gap-4">
+          {/* Filtre de période */}
+          <div className="flex items-center gap-2">
+            <RiCalendarLine className="text-k2l-gray-400" />
+            <div className="flex rounded-lg border border-k2l-gray-200 bg-white p-1">
+              {(['day', 'week', 'month'] as Period[]).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPeriod(p)}
+                  className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                    period === p
+                      ? 'bg-k2l-primary text-white'
+                      : 'text-k2l-gray-600 hover:bg-k2l-gray-100'
+                  }`}
+                >
+                  {periodLabels[p]}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Filtre de cluster */}
+          <select
+            value={selectedClusterId}
+            onChange={(e) => setSelectedClusterId(e.target.value)}
+            className="rounded-lg border border-k2l-primary bg-k2l-primary-light px-4 py-2.5 text-[13px] font-semibold text-k2l-primary-dark outline-none"
+          >
+            <option value="">Tous les clusters</option>
+            {clusters.map((z) => (
+              <option key={z.id} value={z.id}>{z.name}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* 1. Production */}
@@ -194,7 +226,7 @@ function DashboardAdmin() {
         <h2 className="mb-4 font-head text-sm font-semibold uppercase tracking-wider text-k2l-gray-600">Performance</h2>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <KpiCard 
-            label="Objectif" 
+            label={getObjectiveLabel()} 
             value={kpis?.performance.objective || 0} 
             icon={<RiTrophyLine />} 
             bg="bg-k2l-gray-100" 
