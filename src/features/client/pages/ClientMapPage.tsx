@@ -34,7 +34,7 @@ interface Submission {
   validatedAt?: string;
 }
 
-type PeriodFilter = '24h' | 'week' | 'month';
+type PeriodFilter = 'all' | '24h' | 'week' | 'month';
 
 export default function ClientMapPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -52,18 +52,17 @@ export default function ClientMapPage() {
     setLoading(true);
     try {
       // Mapper les périodes frontend vers backend
-      const periodMap: Record<PeriodFilter, string> = {
+      const periodMap: Record<PeriodFilter, string | undefined> = {
+        'all': undefined,
         '24h': 'day',
         'week': 'week',
         'month': 'month',
       };
-      const res = await api.get('/submissions', { 
-        params: { 
-          status: 'VALIDATED', 
-          limit: 1000,
-          period: periodMap[period]
-        } 
-      });
+      const params: any = { status: 'VALIDATED', limit: 1000 };
+      if (periodMap[period]) {
+        params.period = periodMap[period];
+      }
+      const res = await api.get('/submissions', { params });
       setSubmissions(res.data.data || []);
     } catch (error) {
       console.error('Erreur de chargement des soumissions', error);
@@ -142,6 +141,14 @@ export default function ClientMapPage() {
         <div className="mt-5">
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-500">Periode</div>
           <div className="flex gap-1 rounded-lg bg-k2l-gray-100 p-1">
+            <button
+              onClick={() => setPeriod('all')}
+              className={`flex-1 rounded-md px-2 py-1.5 text-xs ${
+                period === 'all' ? 'bg-white font-semibold shadow-sm' : 'text-k2l-gray-500'
+              }`}
+            >
+              Tout
+            </button>
             <button
               onClick={() => setPeriod('24h')}
               className={`flex-1 rounded-md px-2 py-1.5 text-xs ${
