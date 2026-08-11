@@ -91,17 +91,30 @@ function DashboardAdmin() {
   // États pour les KPIs structurés
   const [kpis, setKpis] = useState<ComprehensiveKPIs | null>(null);
 
+  // Charger les clusters et users une seule fois
   useEffect(() => {
-    async function load() {
-      setLoading(true);
+    async function loadInitial() {
       try {
-        const [clustersRes, usersRes, statsRes] = await Promise.all([
+        const [clustersRes, usersRes] = await Promise.all([
           api.get('/clusters'),
           api.get('/users?limit=1000'),
-          api.get(`/submissions/stats?period=${period}`),
         ]);
         setClusters(Array.isArray(clustersRes.data) ? clustersRes.data : []);
         setUsers(usersRes.data?.data || []);
+      } catch {
+        /* ignore */
+      }
+    }
+    loadInitial();
+  }, []);
+
+  // Charger les KPIs quand la période ou le cluster change
+  useEffect(() => {
+    async function loadKpis() {
+      setLoading(true);
+      try {
+        const clusterParam = selectedClusterId ? `&clusterId=${selectedClusterId}` : '';
+        const statsRes = await api.get(`/submissions/stats?period=${period}${clusterParam}`);
         setKpis(statsRes.data);
       } catch {
         /* ignore */
@@ -109,8 +122,8 @@ function DashboardAdmin() {
         setLoading(false);
       }
     }
-    load();
-  }, [period]);
+    loadKpis();
+  }, [period, selectedClusterId]);
 
   const filteredUsers = useMemo(() => {
     if (!selectedClusterId) return users;
