@@ -11,6 +11,9 @@ interface User {
   role: string;
   status: string;
   isActive: boolean;
+  sponsorCode?: string | null;
+  commune?: string | null;
+  habitation?: string | null;
   cluster?: {
     id: string;
     name: string;
@@ -388,6 +391,30 @@ function UserCard({ user, onEdit, onResetPassword, onAction }: UserCardProps) {
           <span>{user.phone}</span>
         </div>
       </div>
+
+      {/* Informations supplémentaires (sponsorCode, commune, habitation) */}
+      {(user.sponsorCode || user.commune || user.habitation) && (
+        <div className="mb-2 text-[11px]">
+          {user.sponsorCode && (
+            <div className="flex items-center gap-1.5 text-k2l-gray-600">
+              <span>🏷️</span>
+              <span className="font-semibold text-[#1D9E75]">{user.sponsorCode}</span>
+            </div>
+          )}
+          {user.commune && (
+            <div className="flex items-center gap-1.5 text-k2l-gray-600">
+              <span>📍</span>
+              <span>{user.commune}</span>
+            </div>
+          )}
+          {user.habitation && (
+            <div className="flex items-center gap-1.5 text-k2l-gray-600">
+              <span>🏠</span>
+              <span className="truncate">{user.habitation}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Hiérarchie / Rattachement */}
       <div className="mb-2 rounded-lg bg-k2l-gray-100 p-2">

@@ -17,6 +17,9 @@ export interface User {
   isActive: boolean;
   avatarUrl?: string | null;
   gender?: Gender | null;
+  sponsorCode?: string | null;
+  commune?: string | null;
+  habitation?: string | null;
   clusterId?: string | null;
   supervisorId?: string | null;
   cluster?: { id: string; name: string } | null;
