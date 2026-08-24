@@ -8,7 +8,9 @@ import {
   RiIdCardLine,
   RiSmartphoneLine,
   RiFileList3Line,
+  RiFileExcel2Line,
 } from 'react-icons/ri';
+import * as XLSX from 'xlsx';
 import api from '@/common/services/api';
 
 interface Submission {
@@ -65,6 +67,35 @@ export default function ClientSubmissionsPage() {
     return submissions.filter(s => s.appStatus === appStatusFilter);
   }, [submissions, appStatusFilter]);
 
+  const handleExport = useCallback(() => {
+    const data = filteredSubmissions.map((s) => ({
+      ID: s.id,
+      Type: s.type === 'PROSPECT' ? 'Prospect' : 'Marchand',
+      Statut: s.status,
+      'Statut App': s.appStatus === 'INSTALLED_ACTIVATED' ? 'Installée + Activée' : s.appStatus === 'INSTALLED' ? 'Installée' : 'N/A',
+      'Nom prospect / commerce': s.type === 'PROSPECT' ? s.prospectFullName : s.merchantName,
+      'Téléphone prospect / commerce': s.type === 'PROSPECT' ? s.prospectPhone : s.merchantPhone,
+      'Propriétaire / Genre': s.type === 'PROSPECT' ? s.prospectGender : s.merchantOwner,
+      'Âge / Activité / RCCM': s.type === 'PROSPECT'
+        ? (s.prospectAge ? `${s.prospectAge} ans` : '-')
+        : `Activité: ${s.merchantActivity || '-'} / RCCM: ${s.merchantRccm || '-'}`,
+      Commune: s.commune || '-',
+      Quartier: s.quartier || '-',
+      'Commercial': s.commercial?.fullName || '-',
+      'Matricule commercial': s.commercial?.matricule || '-',
+      'Date de soumission': s.submittedAt
+        ? new Date(s.submittedAt).toLocaleDateString('fr-FR')
+        : new Date(s.createdAt).toLocaleDateString('fr-FR'),
+      'Date de création': new Date(s.createdAt).toLocaleDateString('fr-FR'),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Soumissions');
+    const today = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `soumissions_${today}.xlsx`);
+  }, [filteredSubmissions]);
+
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -116,6 +147,13 @@ export default function ClientSubmissionsPage() {
           >
             <RiCalendarLine className="text-sm" />
             Filtrer
+          </button>
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-1.5 rounded-lg bg-k2l-success px-3 py-2 text-xs font-medium text-white hover:bg-k2l-success/90 transition-colors"
+          >
+            <RiFileExcel2Line className="text-sm" />
+            Exporter Excel
           </button>
           {(startDate || endDate) && (
             <button
