@@ -86,7 +86,7 @@ export default function ProspectFormPage() {
         prospectPhone: phone,
         prospectProfession: profession,
         prospectGender: gender,
-        prospectAge: age ? parseInt(age) : undefined,
+        prospectAge: age && !isNaN(parseInt(age)) ? parseInt(age) : undefined,
         appStatus: appStatus as 'INSTALLED' | 'INSTALLED_ACTIVATED',
         sponsorCode: sponsorCode || undefined,
         observations: observations || undefined,
