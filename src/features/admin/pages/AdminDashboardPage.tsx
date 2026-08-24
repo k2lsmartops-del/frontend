@@ -5,7 +5,6 @@ import DashboardCoordinateur from './DashboardCoordinateur';
 import {
   RiTeamLine,
   RiUserLine,
-  RiStore2Line,
   RiSmartphoneLine,
   RiBarChartLine,
   RiArrowUpLine,

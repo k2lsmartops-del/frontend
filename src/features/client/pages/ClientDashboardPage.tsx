@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
   RiUserLine,
-  RiStore2Line,
   RiBarChartLine,
   RiArrowUpLine,
   RiLoader4Line,
