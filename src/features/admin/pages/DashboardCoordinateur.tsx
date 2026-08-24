@@ -92,7 +92,7 @@ export default function DashboardCoordinateur() {
   return (
     <div>
       {/* KPIs - Validation */}
-      {validationStats && (
+      {validationStats && validationStats.byStatus && (
         <>
           <div className="mb-2 font-head text-[13px] font-semibold uppercase tracking-wider text-k2l-gray-600">
             Validations
@@ -100,25 +100,25 @@ export default function DashboardCoordinateur() {
           <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
             <KpiCard
               label="Total soumissions"
-              value={validationStats.total}
+              value={validationStats.total || 0}
               icon={<RiCheckboxCircleLine />}
               bg="bg-k2l-primary-light"
             />
             <KpiCard
               label="Validées"
-              value={validationStats.byStatus.validated}
+              value={validationStats.byStatus?.validated ?? 0}
               icon={<RiCheckboxCircleLine />}
               bg="bg-k2l-success-light"
             />
             <KpiCard
               label="En attente"
-              value={validationStats.byStatus.submitted}
+              value={validationStats.byStatus?.submitted ?? 0}
               icon={<RiLoader4Line />}
               bg="bg-k2l-amber-light"
             />
             <KpiCard
               label="Rejetées"
-              value={validationStats.byStatus.rejectedL1 + validationStats.byStatus.rejectedL2}
+              value={(validationStats.byStatus?.rejectedL1 ?? 0) + (validationStats.byStatus?.rejectedL2 ?? 0)}
               icon={<RiCheckboxCircleLine />}
               bg="bg-k2l-red-light"
             />
@@ -128,23 +128,23 @@ export default function DashboardCoordinateur() {
           <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
               <p className="text-xs font-medium text-k2l-gray-400 uppercase tracking-wider">Taux de validation</p>
-              <p className="mt-2 font-head text-4xl font-bold text-k2l-success">{validationStats.validationRate}%</p>
+              <p className="mt-2 font-head text-4xl font-bold text-k2l-success">{validationStats.validationRate ?? 0}%</p>
               <div className="mt-2 h-2 rounded-full bg-k2l-gray-100">
                 <div
                   className="h-2 rounded-full bg-k2l-success transition-all"
-                  style={{ width: `${validationStats.validationRate}%` }}
+                  style={{ width: `${validationStats.validationRate ?? 0}%` }}
                 />
               </div>
             </div>
             <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
               <p className="text-xs font-medium text-k2l-gray-400 uppercase tracking-wider">Aujourd'hui</p>
-              <p className="mt-2 font-head text-3xl font-bold text-k2l-gray-900">{validationStats.today.total}</p>
-              <p className="text-[12px] text-k2l-success font-semibold">{validationStats.today.validated} validées</p>
+              <p className="mt-2 font-head text-3xl font-bold text-k2l-gray-900">{validationStats.today?.total ?? 0}</p>
+              <p className="text-[12px] text-k2l-success font-semibold">{validationStats.today?.validated ?? 0} validées</p>
             </div>
             <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
               <p className="text-xs font-medium text-k2l-gray-400 uppercase tracking-wider">Cette semaine</p>
-              <p className="mt-2 font-head text-3xl font-bold text-k2l-gray-900">{validationStats.week.total}</p>
-              <p className="text-[12px] text-k2l-success font-semibold">{validationStats.week.validated} validées</p>
+              <p className="mt-2 font-head text-3xl font-bold text-k2l-gray-900">{validationStats.week?.total ?? 0}</p>
+              <p className="text-[12px] text-k2l-success font-semibold">{validationStats.week?.validated ?? 0} validées</p>
             </div>
           </div>
 
@@ -157,23 +157,23 @@ export default function DashboardCoordinateur() {
                   <span className="flex items-center gap-2 text-sm text-k2l-gray-700">
                     <RiUserStarLine className="text-k2l-primary" /> Prospects
                   </span>
-                  <span className="font-head text-lg font-bold text-k2l-gray-900">{validationStats.byType.prospects}</span>
+                  <span className="font-head text-lg font-bold text-k2l-gray-900">{validationStats.byType?.prospects ?? 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2 text-sm text-k2l-gray-700">
                     <RiTeamLine className="text-k2l-amber" /> Marchands
                   </span>
-                  <span className="font-head text-lg font-bold text-k2l-gray-900">{validationStats.byType.marchands}</span>
+                  <span className="font-head text-lg font-bold text-k2l-gray-900">{validationStats.byType?.marchands ?? 0}</span>
                 </div>
               </div>
             </div>
             <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
               <p className="text-xs font-medium text-k2l-gray-400 uppercase tracking-wider mb-3">Par statut</p>
               <div className="space-y-2">
-                <StatusRow label="Brouillons" value={validationStats.byStatus.draft} color="bg-k2l-gray-300" />
-                <StatusRow label="En attente" value={validationStats.byStatus.submitted} color="bg-k2l-amber" />
-                <StatusRow label="Validées" value={validationStats.byStatus.validated} color="bg-k2l-success" />
-                <StatusRow label="Rejetées" value={validationStats.byStatus.rejectedL1 + validationStats.byStatus.rejectedL2} color="bg-k2l-red" />
+                <StatusRow label="Brouillons" value={validationStats.byStatus?.draft ?? 0} color="bg-k2l-gray-300" />
+                <StatusRow label="En attente" value={validationStats.byStatus?.submitted ?? 0} color="bg-k2l-amber" />
+                <StatusRow label="Validées" value={validationStats.byStatus?.validated ?? 0} color="bg-k2l-success" />
+                <StatusRow label="Rejetées" value={(validationStats.byStatus?.rejectedL1 ?? 0) + (validationStats.byStatus?.rejectedL2 ?? 0)} color="bg-k2l-red" />
               </div>
             </div>
           </div>
