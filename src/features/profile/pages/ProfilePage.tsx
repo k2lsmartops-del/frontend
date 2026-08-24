@@ -4,7 +4,7 @@ import {
   RiUserLine, RiLogoutBoxRLine, RiMailLine, RiPhoneLine,
   RiShieldUserLine, RiMapPin2Line, RiCalendarLine, RiFileList3Line,
   RiLockPasswordLine, RiEyeLine, RiEyeOffLine, RiCloseLine, RiEditLine,
-  RiGiftLine,
+  RiUserStarLine,
 } from 'react-icons/ri';
 import { useAuthStore } from '@/common/stores/auth.store';
 import { useOnlineStatus } from '@/common/hooks/useOnlineStatus';
@@ -137,7 +137,7 @@ export default function ProfilePage() {
     { icon: <RiPhoneLine />, label: 'Telephone', value: user?.phone ?? '—' },
     { icon: <RiMailLine />, label: 'Email', value: user?.email ?? 'Non renseigne' },
     { icon: <RiMapPin2Line />, label: 'Cluster', value: user?.cluster?.name ?? 'Non assignee' },
-    { icon: <RiGiftLine />, label: 'Code parrain', value: user?.sponsorCode ?? '—' },
+    { icon: <RiUserStarLine />, label: 'Code parrain', value: user?.sponsorCode ?? '—' },
     {
       icon: <RiCalendarLine />,
       label: 'Inscrit le',
