@@ -11,6 +11,7 @@ import FormSelect from '@/common/components/FormSelect';
 import GpsCapture, { type GpsData } from '@/common/components/GpsCapture';
 import PhotoCapture from '@/common/components/PhotoCapture';
 import { useToastStore } from '@/common/stores/toast.store';
+import { useAuthStore } from '@/common/stores/auth.store';
 import { createSubmission } from '@/lib/submissionService';
 import type { PhotoCategory } from '@/lib/offlineDb';
 import { useMyZoneCommunes } from '@/common/hooks/useMyZoneCommunes';
@@ -34,6 +35,7 @@ const APP_STATUS_OPTIONS = [
 export default function MarchandFormPage() {
   const navigate = useNavigate();
   const showToast = useToastStore((s) => s.show);
+  const user = useAuthStore((s) => s.user);
   const clientUuid = useMemo(() => uuidv4(), []);
 
   // Charger les communes du cluster du commercial
@@ -107,6 +109,7 @@ export default function MarchandFormPage() {
         merchantActivity: typeCommerce,
         merchantRccm: rccm || undefined,
         appStatus: appStatus || undefined,
+        sponsorCode: user?.sponsorCode || undefined,
         // Les photos sont stockées en Blob local (IndexedDB) et uploadées
         // lors de la synchronisation atomique. On ne passe PAS d'URLs ici.
       });
@@ -158,6 +161,7 @@ export default function MarchandFormPage() {
             onChange={setAppStatus}
             options={APP_STATUS_OPTIONS}
           />
+          <FormInput label="Code parrain" value={user?.sponsorCode || ''} onChange={() => {}} placeholder="Code du commercial parrain" disabled />
         </FormCard>
 
         {/* Localisation */}

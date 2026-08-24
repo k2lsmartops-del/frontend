@@ -4,9 +4,10 @@ interface FormInputProps {
   onChange: (v: string) => void;
   placeholder?: string;
   type?: string;
+  disabled?: boolean;
 }
 
-export default function FormInput({ label, value, onChange, placeholder, type = 'text' }: FormInputProps) {
+export default function FormInput({ label, value, onChange, placeholder, type = 'text', disabled = false }: FormInputProps) {
   return (
     <div>
       <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-k2l-gray-600">
@@ -17,7 +18,8 @@ export default function FormInput({ label, value, onChange, placeholder, type = 
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-sm border-[1.5px] border-k2l-gray-200 bg-white px-3.5 py-3 font-body text-[15px] text-k2l-gray-900 outline-none transition-colors focus:border-k2l-primary"
+        disabled={disabled}
+        className="w-full rounded-sm border-[1.5px] border-k2l-gray-200 bg-white px-3.5 py-3 font-body text-[15px] text-k2l-gray-900 outline-none transition-colors focus:border-k2l-primary disabled:bg-k2l-gray-100 disabled:text-k2l-gray-500"
       />
     </div>
   );
