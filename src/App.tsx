@@ -3,6 +3,7 @@ import AppLayout from '@/common/components/AppLayout';
 import ProtectedRoute from '@/common/components/ProtectedRoute';
 import ErrorBoundary from '@/common/components/ErrorBoundary';
 import UpdatePrompt from '@/common/components/UpdatePrompt';
+import { ThemeProvider } from '@/common/contexts/ThemeContext';
 import LoginPage from '@/features/auth/pages/LoginPage';
 import HomePage from '@/features/home/pages/HomePage';
 import ProspectFormPage from '@/features/prospect/pages/ProspectFormPage';
@@ -55,10 +56,11 @@ function RoleBasedRoot() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
-        <UpdatePrompt />
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
+      <ThemeProvider>
+        <BrowserRouter>
+          <UpdatePrompt />
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
 
           {/* Client portal (desktop web) */}
           <Route
@@ -116,7 +118,8 @@ export default function App() {
             <Route path="profile" element={<ProfilePage />} />
           </Route>
         </Routes>
-      </BrowserRouter>
+        </BrowserRouter>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

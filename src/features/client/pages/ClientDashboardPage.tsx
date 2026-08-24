@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import {
   RiUserLine,
   RiStore2Line,
-  RiSmartphoneLine,
   RiBarChartLine,
   RiArrowUpLine,
   RiLoader4Line,
@@ -13,16 +12,19 @@ import {
   RiMapPinLine,
   RiArrowDownLine,
   RiCalendarLine,
+  RiCheckLine,
 } from 'react-icons/ri';
 import api from '@/common/services/api';
 
 interface ComprehensiveKPIs {
   production: {
-    activeAgents: number;
-    clientsApproached: number;
+    plannedWorkforce: number;  // Effectif prévu
+    recruitedWorkforce: number; // Effectif recruté
+    activeTodayWorkforce: number; // Effectif actif
+    clientsApproached: number; // Clients approchés (nombre brut)
     installations: number;
-    activations: number;
-    activeClients: number;
+    installationsPlusActivations: number; // Installations + Activations
+    activationRate: number; // Taux d'activation
   };
   performance: {
     objective: number;
@@ -85,7 +87,10 @@ export default function ClientDashboardPage() {
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-200px)] items-center justify-center">
-        <RiLoader4Line className="animate-spin text-4xl text-k2l-primary" />
+        <RiLoader4Line 
+          className="animate-spin text-4xl"
+          style={{ color: 'var(--color-theme-primary)' }}
+        />
       </div>
     );
   }
@@ -95,23 +100,42 @@ export default function ClientDashboardPage() {
       {/* Header avec filtre de période */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-head text-xl font-bold text-k2l-gray-900">Tableau de bord</h1>
-          <p className="text-sm text-k2l-gray-500">
+          <h1 
+            className="font-head text-xl font-bold"
+            style={{ color: 'var(--color-theme-text-primary)' }}
+          >
+            Tableau de bord
+          </h1>
+          <p 
+            className="text-sm"
+            style={{ color: 'var(--color-theme-text-secondary)' }}
+          >
             Données : {periodLabels[period]}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <RiCalendarLine className="text-k2l-gray-400" />
-          <div className="flex rounded-lg border border-k2l-gray-200 bg-white p-1">
+          <RiCalendarLine 
+            style={{ color: 'var(--color-theme-text-secondary)' }}
+          />
+          <div 
+            className="flex rounded-lg border p-1"
+            style={{ 
+              borderColor: 'var(--color-theme-border)',
+              backgroundColor: 'var(--color-theme-surface)'
+            }}
+          >
             {(['day', 'week', 'month'] as Period[]).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
                 className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                  period === p
-                    ? 'bg-k2l-primary text-white'
-                    : 'text-k2l-gray-600 hover:bg-k2l-gray-100'
+                  period === p ? 'text-white' : ''
                 }`}
+                style={
+                  period === p
+                    ? { backgroundColor: 'var(--color-theme-primary)' }
+                    : { color: 'var(--color-theme-text-secondary)' }
+                }
               >
                 {periodLabels[p]}
               </button>
@@ -122,92 +146,173 @@ export default function ClientDashboardPage() {
 
       {/* 1. Production */}
       <div>
-        <h2 className="mb-4 font-head text-sm font-semibold uppercase tracking-wider text-k2l-gray-600">Production</h2>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+        <h2 
+          className="mb-4 font-head text-sm font-semibold uppercase tracking-wider"
+          style={{ color: 'var(--color-theme-text-secondary)' }}
+        >
+          Production
+        </h2>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {/* Nouveaux KPIs Effectif */}
           <KpiCard 
-            label="Agents actifs" 
-            value={kpis?.production.activeAgents || 0} 
+            label="Effectif prévu" 
+            value={kpis?.production.plannedWorkforce || 0} 
             icon={<RiTeamLine />} 
-            bg="bg-k2l-primary-light" 
+            variant="neutral" 
+          />
+          <KpiCard 
+            label="Effectif recruté" 
+            value={kpis?.production.recruitedWorkforce || 0} 
+            icon={<RiUserLine />} 
+            variant="primary" 
+          />
+          <KpiCard 
+            label="Effectif actif" 
+            value={kpis?.production.activeTodayWorkforce || 0} 
+            icon={<RiCheckLine />} 
+            variant="success" 
           />
           <KpiCard 
             label="Clients approchés" 
             value={kpis?.production.clientsApproached || 0} 
             icon={<RiUserLine />} 
-            bg="bg-k2l-success-light" 
+            variant="success" 
           />
+        </div>
+        
+        {/* Ligne 2: Installations, Activation + Installation */}
+        <div className="mt-4 grid grid-cols-2 gap-4">
           <KpiCard 
             label="Installations" 
             value={kpis?.production.installations || 0} 
-            icon={<RiSmartphoneLine />} 
-            bg="bg-k2l-blue-light" 
-          />
-          <KpiCard 
-            label="Activations" 
-            value={kpis?.production.activations || 0} 
             icon={<RiCheckboxCircleLine />} 
-            bg="bg-k2l-amber-light" 
+            variant="primary" 
           />
           <KpiCard 
-            label="Clients actifs" 
-            value={kpis?.production.activeClients || 0} 
-            icon={<RiStore2Line />} 
-            bg="bg-k2l-purple-light" 
+            label="Activation + Installation" 
+            value={kpis?.production.installationsPlusActivations || 0} 
+            icon={<RiCheckboxCircleLine />} 
+            variant="success" 
           />
         </div>
       </div>
 
-      {/* 2. Performance */}
+      {/* 2. KPIs Clés - Indicateurs de Performance */}
       <div>
-        <h2 className="mb-4 font-head text-sm font-semibold uppercase tracking-wider text-k2l-gray-600">Performance</h2>
+        <h2 
+          className="mb-4 font-head text-sm font-semibold uppercase tracking-wider"
+          style={{ color: 'var(--color-theme-text-secondary)' }}
+        >
+          Indicateurs Clés
+        </h2>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <KpiCard 
+            label="Taux de validation" 
+            value={kpis?.quality.validationRate ?? 0} 
+            suffix="%" 
+            icon={<RiCheckboxCircleLine />} 
+            variant={(kpis?.quality.validationRate ?? 0) >= 80 ? 'success' : (kpis?.quality.validationRate ?? 0) >= 60 ? 'warning' : 'danger'}
+          />
+          <KpiCard 
+            label="Taux d'activation" 
+            value={kpis?.production.activationRate ?? 0} 
+            suffix="%" 
+            icon={<RiArrowUpLine />} 
+            variant={(kpis?.production.activationRate ?? 0) >= 80 ? 'success' : (kpis?.production.activationRate ?? 0) >= 60 ? 'warning' : 'danger'}
+          />
           <KpiCard 
             label={getObjectiveLabel()} 
             value={kpis?.performance.objective || 0} 
             icon={<RiTrophyLine />} 
-            bg="bg-k2l-gray-100" 
+            variant="neutral" 
           />
+          <KpiCard 
+            label="Réalisation" 
+            value={kpis?.performance.achievementPercent ?? 0} 
+            suffix="%" 
+            icon={<RiBarChartLine />} 
+            variant={(kpis?.performance.achievementPercent ?? 0) >= 80 ? 'success' : (kpis?.performance.achievementPercent ?? 0) >= 50 ? 'warning' : 'danger'}
+          />
+        </div>
+        
+        {/* Ligne 2: Réalisé + Productivité */}
+        <div className="mt-4 grid grid-cols-2 gap-4">
           <KpiCard 
             label="Réalisé" 
             value={kpis?.performance.achieved || 0} 
             icon={<RiBarChartLine />} 
-            bg="bg-k2l-success-light" 
-          />
-          <KpiCard 
-            label="% atteinte" 
-            value={kpis?.performance.achievementPercent ?? 0} 
-            suffix="%" 
-            icon={<RiArrowUpLine />} 
-            bg={(kpis?.performance.achievementPercent ?? 0) >= 80 ? 'bg-k2l-success-light' : (kpis?.performance.achievementPercent ?? 0) >= 50 ? 'bg-k2l-amber-light' : 'bg-k2l-red-light'}
+            variant="success" 
           />
           <KpiCard 
             label="Productivité/agent" 
             value={kpis?.performance.productivityPerAgent || 0} 
             icon={<RiUserLine />} 
-            bg="bg-k2l-blue-light" 
+            variant="primary" 
           />
         </div>
         
         {/* Performance par cluster */}
         {kpis?.performance.clusterPerformance && kpis.performance.clusterPerformance.length > 0 && (
-          <div className="mt-4 rounded-xl border border-k2l-gray-200 bg-white p-5">
-            <h3 className="mb-4 font-head text-sm font-semibold">Performance par cluster</h3>
+          <div 
+            className="mt-4 rounded-xl border p-5"
+            style={{ 
+              backgroundColor: 'var(--color-theme-surface)',
+              borderColor: 'var(--color-theme-border)'
+            }}
+          >
+            <h3 
+              className="mb-4 font-head text-sm font-semibold"
+              style={{ color: 'var(--color-theme-text-primary)' }}
+            >
+              Performance par cluster
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {kpis.performance.clusterPerformance.map((cluster) => {
                 const percent = cluster.objective > 0 ? (cluster.achieved / cluster.objective) : 0;
+                const getColor = () => {
+                  if (percent >= 0.8) return 'var(--color-theme-success)';
+                  if (percent >= 0.5) return 'var(--color-theme-warning)';
+                  return 'var(--color-theme-danger)';
+                };
                 return (
-                  <div key={cluster.clusterId} className="rounded-lg border border-k2l-gray-200 p-4">
-                    <div className="font-medium text-k2l-gray-900">{cluster.clusterName}</div>
+                  <div 
+                    key={cluster.clusterId} 
+                    className="rounded-lg border p-4"
+                    style={{ 
+                      backgroundColor: 'var(--color-theme-surface)',
+                      borderColor: 'var(--color-theme-border)'
+                    }}
+                  >
+                    <div 
+                      className="font-medium"
+                      style={{ color: 'var(--color-theme-text-primary)' }}
+                    >
+                      {cluster.clusterName}
+                    </div>
                     <div className="mt-2 flex items-center justify-between">
-                      <span className="text-sm text-k2l-gray-500">{cluster.achieved} / {cluster.objective}</span>
-                      <span className={`text-sm font-bold ${percent >= 0.8 ? 'text-k2l-success' : percent >= 0.5 ? 'text-k2l-amber' : 'text-k2l-red'}`}>
+                      <span 
+                        className="text-sm"
+                        style={{ color: 'var(--color-theme-text-secondary)' }}
+                      >
+                        {cluster.achieved} / {cluster.objective}
+                      </span>
+                      <span 
+                        className="text-sm font-bold"
+                        style={{ color: getColor() }}
+                      >
                         {cluster.objective > 0 ? Math.round(percent * 100) : 0}%
                       </span>
                     </div>
-                    <div className="mt-2 h-2 w-full rounded-full bg-k2l-gray-200">
+                    <div 
+                      className="mt-2 h-2 w-full rounded-full"
+                      style={{ backgroundColor: 'var(--color-theme-neutral-light)' }}
+                    >
                       <div 
-                        className={`h-2 rounded-full ${percent >= 0.8 ? 'bg-k2l-success' : percent >= 0.5 ? 'bg-k2l-amber' : 'bg-k2l-red'}`}
-                        style={{ width: `${Math.min(percent * 100, 100)}%` }}
+                        className="h-2 rounded-full"
+                        style={{ 
+                          width: `${Math.min(percent * 100, 100)}%`,
+                          backgroundColor: getColor()
+                        }}
                       />
                     </div>
                   </div>
@@ -220,88 +325,175 @@ export default function ClientDashboardPage() {
 
       {/* 3. Qualité */}
       <div>
-        <h2 className="mb-4 font-head text-sm font-semibold uppercase tracking-wider text-k2l-gray-600">Qualité</h2>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <h2 
+          className="mb-4 font-head text-sm font-semibold uppercase tracking-wider"
+          style={{ color: 'var(--color-theme-text-secondary)' }}
+        >
+          Qualité
+        </h2>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
           <KpiCard 
             label="Dossiers soumis" 
             value={kpis?.quality.filesSubmitted || 0} 
             icon={<RiBarChartLine />} 
-            bg="bg-k2l-blue-light" 
+            variant="primary" 
           />
           <KpiCard 
             label="Dossiers validés" 
             value={kpis?.quality.filesValidated || 0} 
             icon={<RiCheckboxCircleLine />} 
-            bg="bg-k2l-success-light" 
+            variant="success" 
           />
           <KpiCard 
             label="Dossiers rejetés" 
             value={kpis?.quality.filesRejected || 0} 
             icon={<RiArrowDownLine />} 
-            bg="bg-k2l-red-light" 
-          />
-          <KpiCard 
-            label="Taux validation" 
-            value={kpis?.quality.validationRate ?? 0} 
-            suffix="%" 
-            icon={<RiTrophyLine />} 
-            bg={(kpis?.quality.validationRate ?? 0) >= 80 ? 'bg-k2l-success-light' : (kpis?.quality.validationRate ?? 0) >= 60 ? 'bg-k2l-amber-light' : 'bg-k2l-red-light'}
+            variant="danger" 
           />
         </div>
       </div>
 
       {/* 4. Pilotage */}
       <div>
-        <h2 className="mb-4 font-head text-sm font-semibold uppercase tracking-wider text-k2l-gray-600">Pilotage</h2>
+        <h2 
+          className="mb-4 font-head text-sm font-semibold uppercase tracking-wider"
+          style={{ color: 'var(--color-theme-text-secondary)' }}
+        >
+          Pilotage
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Score global */}
-          <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
+          <div 
+            className="rounded-xl border p-5"
+            style={{ 
+              backgroundColor: 'var(--color-theme-surface)',
+              borderColor: 'var(--color-theme-border)'
+            }}
+          >
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Score global</div>
-                <div className="mt-2 font-head text-4xl font-bold text-k2l-gray-900">
+                <div 
+                  className="text-[11px] font-semibold uppercase tracking-wide"
+                  style={{ color: 'var(--color-theme-text-secondary)' }}
+                >
+                  Score global
+                </div>
+                <div 
+                  className="mt-2 font-head text-4xl font-bold"
+                  style={{ color: 'var(--color-theme-text-primary)' }}
+                >
                   {kpis?.pilotage.globalScore ?? 0}/100
                 </div>
               </div>
-              <div className={`h-16 w-16 rounded-full flex items-center justify-center ${(kpis?.pilotage.globalScore ?? 0) >= 70 ? 'bg-k2l-success-light' : (kpis?.pilotage.globalScore ?? 0) >= 50 ? 'bg-k2l-amber-light' : 'bg-k2l-red-light'}`}>
-                <RiTrophyLine className={`text-3xl ${(kpis?.pilotage.globalScore ?? 0) >= 70 ? 'text-k2l-success' : (kpis?.pilotage.globalScore ?? 0) >= 50 ? 'text-k2l-amber' : 'text-k2l-red'}`} />
+              <div 
+                className="h-16 w-16 rounded-full flex items-center justify-center"
+                style={{ 
+                  backgroundColor: (kpis?.pilotage.globalScore ?? 0) >= 70 
+                    ? 'var(--color-theme-success-light)' 
+                    : (kpis?.pilotage.globalScore ?? 0) >= 50 
+                      ? 'var(--color-theme-warning-light)' 
+                      : 'var(--color-theme-danger-light)'
+                }}
+              >
+                <RiTrophyLine 
+                  className="text-3xl"
+                  style={{ 
+                    color: (kpis?.pilotage.globalScore ?? 0) >= 70 
+                      ? 'var(--color-theme-success)' 
+                      : (kpis?.pilotage.globalScore ?? 0) >= 50 
+                        ? 'var(--color-theme-warning)' 
+                        : 'var(--color-theme-danger)'
+                  }}
+                />
               </div>
             </div>
           </div>
 
           {/* Zones couvertes */}
-          <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
+          <div 
+            className="rounded-xl border p-5"
+            style={{ 
+              backgroundColor: 'var(--color-theme-surface)',
+              borderColor: 'var(--color-theme-border)'
+            }}
+          >
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Zones couvertes</div>
-                <div className="mt-2 font-head text-4xl font-bold text-k2l-gray-900">
+                <div 
+                  className="text-[11px] font-semibold uppercase tracking-wide"
+                  style={{ color: 'var(--color-theme-text-secondary)' }}
+                >
+                  Zones couvertes
+                </div>
+                <div 
+                  className="mt-2 font-head text-4xl font-bold"
+                  style={{ color: 'var(--color-theme-text-primary)' }}
+                >
                   {kpis?.pilotage.coveredZones || 0}
                 </div>
               </div>
-              <div className="h-16 w-16 rounded-full bg-k2l-primary-light flex items-center justify-center">
-                <RiMapPinLine className="text-3xl text-k2l-primary" />
+              <div 
+                className="h-16 w-16 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: 'var(--color-theme-primary-light)' }}
+              >
+                <RiMapPinLine 
+                  className="text-3xl"
+                  style={{ color: 'var(--color-theme-primary)' }}
+                />
               </div>
             </div>
           </div>
 
           {/* Alertes */}
-          <div className="rounded-xl border border-k2l-gray-200 bg-white p-5">
+          <div 
+            className="rounded-xl border p-5"
+            style={{ 
+              backgroundColor: 'var(--color-theme-surface)',
+              borderColor: 'var(--color-theme-border)'
+            }}
+          >
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Alertes</div>
-                <div className="mt-2 font-head text-4xl font-bold text-k2l-gray-900">
+                <div 
+                  className="text-[11px] font-semibold uppercase tracking-wide"
+                  style={{ color: 'var(--color-theme-text-secondary)' }}
+                >
+                  Alertes
+                </div>
+                <div 
+                  className="mt-2 font-head text-4xl font-bold"
+                  style={{ color: 'var(--color-theme-text-primary)' }}
+                >
                   {kpis?.pilotage.mainAlerts?.length || 0}
                 </div>
               </div>
-              <div className={`h-16 w-16 rounded-full flex items-center justify-center ${(kpis?.pilotage.mainAlerts?.length || 0) > 0 ? 'bg-k2l-red-light' : 'bg-k2l-success-light'}`}>
-                <RiAlertLine className={`text-3xl ${(kpis?.pilotage.mainAlerts?.length || 0) > 0 ? 'text-k2l-red' : 'text-k2l-success'}`} />
+              <div 
+                className="h-16 w-16 rounded-full flex items-center justify-center"
+                style={{ 
+                  backgroundColor: (kpis?.pilotage.mainAlerts?.length || 0) > 0 
+                    ? 'var(--color-theme-danger-light)' 
+                    : 'var(--color-theme-success-light)'
+                }}
+              >
+                <RiAlertLine 
+                  className="text-3xl"
+                  style={{ 
+                    color: (kpis?.pilotage.mainAlerts?.length || 0) > 0 
+                      ? 'var(--color-theme-danger)' 
+                      : 'var(--color-theme-success)'
+                  }}
+                />
               </div>
             </div>
             {kpis?.pilotage.mainAlerts && kpis.pilotage.mainAlerts.length > 0 && (
               <div className="mt-3 space-y-2">
                 {kpis.pilotage.mainAlerts.slice(0, 3).map((alert, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-xs text-k2l-gray-600">
-                    <RiAlertLine className="text-k2l-amber" />
+                  <div 
+                    key={idx} 
+                    className="flex items-center gap-2 text-xs"
+                    style={{ color: 'var(--color-theme-text-secondary)' }}
+                  >
+                    <RiAlertLine style={{ color: 'var(--color-theme-warning)' }} />
                     <span>{alert.message}</span>
                   </div>
                 ))}
@@ -314,20 +506,53 @@ export default function ClientDashboardPage() {
   );
 }
 
-function KpiCard({ label, value, icon, bg, suffix }: { 
+function KpiCard({ label, value, icon, variant = 'primary', suffix }: { 
   label: string; 
   value: number; 
   icon: React.ReactNode; 
-  bg: string; 
+  variant?: 'primary' | 'success' | 'warning' | 'danger' | 'neutral';
   suffix?: string;
 }) {
+  const bgStyles: Record<string, React.CSSProperties> = {
+    primary: { backgroundColor: 'var(--color-theme-primary-light)' },
+    success: { backgroundColor: 'var(--color-theme-success-light)' },
+    warning: { backgroundColor: 'var(--color-theme-warning-light)' },
+    danger: { backgroundColor: 'var(--color-theme-danger-light)' },
+    neutral: { backgroundColor: 'var(--color-theme-neutral-light)' },
+  };
+
+  const iconStyles: Record<string, React.CSSProperties> = {
+    primary: { color: 'var(--color-theme-primary)' },
+    success: { color: 'var(--color-theme-success)' },
+    warning: { color: 'var(--color-theme-warning)' },
+    danger: { color: 'var(--color-theme-danger)' },
+    neutral: { color: 'var(--color-theme-neutral)' },
+  };
+
   return (
-    <div className="relative overflow-hidden rounded-xl border border-k2l-gray-200 bg-white p-5">
-      <div className={`absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-lg ${bg} text-[17px] text-k2l-primary`}>
+    <div 
+      className="relative overflow-hidden rounded-xl border p-5"
+      style={{ 
+        backgroundColor: 'var(--color-theme-surface)',
+        borderColor: 'var(--color-theme-border)'
+      }}
+    >
+      <div 
+        className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-lg text-[17px]"
+        style={{ ...bgStyles[variant], ...iconStyles[variant] }}
+      >
         {icon}
       </div>
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">{label}</div>
-      <div className="mt-2 font-head text-3xl font-bold text-k2l-gray-900">
+      <div 
+        className="text-[11px] font-semibold uppercase tracking-wide"
+        style={{ color: 'var(--color-theme-text-secondary)' }}
+      >
+        {label}
+      </div>
+      <div 
+        className="mt-2 font-head text-3xl font-bold"
+        style={{ color: 'var(--color-theme-text-primary)' }}
+      >
         {value.toLocaleString('fr-FR')}{suffix || ''}
       </div>
     </div>

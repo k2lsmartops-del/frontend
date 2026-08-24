@@ -16,6 +16,7 @@ import {
   RiMapPinLine,
   RiArrowDownLine,
   RiCalendarLine,
+  RiCheckLine,
 } from 'react-icons/ri';
 
 /* ─── Types ─── */
@@ -39,11 +40,13 @@ interface UserSummary {
 
 interface ComprehensiveKPIs {
   production: {
-    activeAgents: number;
-    clientsApproached: number;
+    plannedWorkforce: number;  // Effectif prévu
+    recruitedWorkforce: number; // Effectif recruté
+    activeTodayWorkforce: number; // Effectif actif
+    clientsApproached: number; // Clients approchés (nombre brut)
     installations: number;
-    activations: number;
-    activeClients: number;
+    installationsPlusActivations: number; // Installations + Activations
+    activationRate: number; // Taux d'activation
   };
   performance: {
     objective: number;
@@ -182,12 +185,25 @@ function DashboardAdmin() {
       {/* 1. Production */}
       <div>
         <h2 className="mb-4 font-head text-sm font-semibold uppercase tracking-wider text-k2l-gray-600">Production</h2>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {/* Nouveaux KPIs Effectif */}
           <KpiCard 
-            label="Agents actifs" 
-            value={kpis?.production.activeAgents || 0} 
+            label="Effectif prévu" 
+            value={kpis?.production.plannedWorkforce || 0} 
             icon={<RiTeamLine />} 
+            bg="bg-k2l-gray-100" 
+          />
+          <KpiCard 
+            label="Effectif recruté" 
+            value={kpis?.production.recruitedWorkforce || 0} 
+            icon={<RiUserLine />} 
             bg="bg-k2l-primary-light" 
+          />
+          <KpiCard 
+            label="Effectif actif" 
+            value={kpis?.production.activeTodayWorkforce || 0} 
+            icon={<RiCheckLine />} 
+            bg="bg-k2l-success-light" 
           />
           <KpiCard 
             label="Clients approchés" 
@@ -195,6 +211,10 @@ function DashboardAdmin() {
             icon={<RiUserLine />} 
             bg="bg-k2l-success-light" 
           />
+        </div>
+        
+        {/* Ligne 2: Installations, Activation + Installation */}
+        <div className="mt-4 grid grid-cols-2 gap-4">
           <KpiCard 
             label="Installations" 
             value={kpis?.production.installations || 0} 
@@ -202,24 +222,32 @@ function DashboardAdmin() {
             bg="bg-k2l-blue-light" 
           />
           <KpiCard 
-            label="Activations" 
-            value={kpis?.production.activations || 0} 
+            label="Activation + Installation" 
+            value={kpis?.production.installationsPlusActivations || 0} 
             icon={<RiCheckboxCircleLine />} 
             bg="bg-k2l-amber-light" 
-          />
-          <KpiCard 
-            label="Clients actifs" 
-            value={kpis?.production.activeClients || 0} 
-            icon={<RiStore2Line />} 
-            bg="bg-k2l-purple-light" 
           />
         </div>
       </div>
 
-      {/* 2. Performance */}
+      {/* 2. KPIs Clés - Indicateurs de Performance */}
       <div>
-        <h2 className="mb-4 font-head text-sm font-semibold uppercase tracking-wider text-k2l-gray-600">Performance</h2>
+        <h2 className="mb-4 font-head text-sm font-semibold uppercase tracking-wider text-k2l-gray-600">Indicateurs Clés</h2>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <KpiCard 
+            label="Taux de validation" 
+            value={kpis?.quality.validationRate ?? 0} 
+            suffix="%" 
+            icon={<RiCheckboxCircleLine />} 
+            bg={(kpis?.quality.validationRate ?? 0) >= 80 ? 'bg-k2l-success-light' : (kpis?.quality.validationRate ?? 0) >= 60 ? 'bg-k2l-amber-light' : 'bg-k2l-red-light'}
+          />
+          <KpiCard 
+            label="Taux d'activation" 
+            value={kpis?.production.activationRate ?? 0} 
+            suffix="%" 
+            icon={<RiArrowUpLine />} 
+            bg={(kpis?.production.activationRate ?? 0) >= 80 ? 'bg-k2l-success-light' : (kpis?.production.activationRate ?? 0) >= 60 ? 'bg-k2l-amber-light' : 'bg-k2l-red-light'}
+          />
           <KpiCard 
             label={getObjectiveLabel()} 
             value={kpis?.performance.objective || 0} 
@@ -227,17 +255,21 @@ function DashboardAdmin() {
             bg="bg-k2l-gray-100" 
           />
           <KpiCard 
+            label="Réalisation" 
+            value={kpis?.performance.achievementPercent ?? 0} 
+            suffix="%" 
+            icon={<RiBarChartLine />} 
+            bg={(kpis?.performance.achievementPercent ?? 0) >= 80 ? 'bg-k2l-success-light' : (kpis?.performance.achievementPercent ?? 0) >= 50 ? 'bg-k2l-amber-light' : 'bg-k2l-red-light'}
+          />
+        </div>
+        
+        {/* Ligne 2: Réalisé + Productivité */}
+        <div className="mt-4 grid grid-cols-2 gap-4">
+          <KpiCard 
             label="Réalisé" 
             value={kpis?.performance.achieved ?? 0} 
             icon={<RiBarChartLine />} 
             bg="bg-k2l-success-light" 
-          />
-          <KpiCard 
-            label="% atteinte" 
-            value={kpis?.performance.achievementPercent ?? 0} 
-            suffix="%" 
-            icon={<RiArrowUpLine />} 
-            bg={(kpis?.performance.achievementPercent ?? 0) >= 80 ? 'bg-k2l-success-light' : (kpis?.performance.achievementPercent ?? 0) >= 50 ? 'bg-k2l-amber-light' : 'bg-k2l-red-light'}
           />
           <KpiCard 
             label="Productivité/agent" 
@@ -277,7 +309,7 @@ function DashboardAdmin() {
       {/* 3. Qualité */}
       <div>
         <h2 className="mb-4 font-head text-sm font-semibold uppercase tracking-wider text-k2l-gray-600">Qualité</h2>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
           <KpiCard 
             label="Dossiers soumis" 
             value={kpis?.quality.filesSubmitted || 0} 
@@ -295,13 +327,6 @@ function DashboardAdmin() {
             value={kpis?.quality.filesRejected || 0} 
             icon={<RiArrowDownLine />} 
             bg="bg-k2l-red-light" 
-          />
-          <KpiCard 
-            label="Taux validation" 
-            value={kpis?.quality.validationRate !== undefined ? kpis.quality.validationRate : 0} 
-            suffix="%" 
-            icon={<RiTrophyLine />} 
-            bg={kpis?.quality.validationRate !== undefined ? (kpis.quality.validationRate >= 80 ? 'bg-k2l-success-light' : kpis.quality.validationRate >= 60 ? 'bg-k2l-amber-light' : 'bg-k2l-red-light') : 'bg-k2l-gray-100'}
           />
         </div>
       </div>

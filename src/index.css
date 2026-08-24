@@ -4,6 +4,7 @@
   --font-head: "Space Grotesk", sans-serif;
   --font-body: "DM Sans", sans-serif;
 
+  /* Couleurs K2L (thème admin par défaut) */
   --color-k2l-primary: #2B7CD3;
   --color-k2l-primary-dark: #1C2E4F;
   --color-k2l-primary-light: #E8F1FB;
@@ -23,6 +24,28 @@
   --color-k2l-gray-400: #9CA3AF;
   --color-k2l-gray-600: #4B5563;
   --color-k2l-gray-900: #1F2937;
+
+  /* Variables de thème dynamiques (définies par défaut, modifiées par JS) */
+  --color-theme-primary: #D99954;
+  --color-theme-primary-dark: #1A1714;
+  --color-theme-primary-light: #F4BA77;
+  --color-theme-primary-mid: #E7A966;
+  --color-theme-accent: #B87734;
+  --color-theme-accent-light: #F4BA77;
+  --color-theme-neutral: #3B3633;
+  --color-theme-neutral-dark: #1A1714;
+  --color-theme-neutral-light: #FDFDFB;
+  --color-theme-success: #22B573;
+  --color-theme-success-light: #E1F5EE;
+  --color-theme-warning: #CB8A47;
+  --color-theme-warning-light: #F4BA77;
+  --color-theme-danger: #E24B4A;
+  --color-theme-danger-light: #FCEBEB;
+  --color-theme-background: #FDFDFB;
+  --color-theme-surface: #FFFFFF;
+  --color-theme-text-primary: #1A1714;
+  --color-theme-text-secondary: #3B3633;
+  --color-theme-border: #5B5755;
 
   --radius-sm: 8px;
   --radius-md: 12px;

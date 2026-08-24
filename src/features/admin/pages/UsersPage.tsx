@@ -11,7 +11,6 @@ interface User {
   role: string;
   status: string;
   isActive: boolean;
-  appInstalled?: boolean;
   cluster?: {
     id: string;
     name: string;
@@ -389,24 +388,6 @@ function UserCard({ user, onEdit, onResetPassword, onAction }: UserCardProps) {
           <span>{user.phone}</span>
         </div>
       </div>
-
-      {/* Statut de l'application (pour commerciaux) */}
-      {user.role === 'COMMERCIAL' && (
-        <div className="mb-2 rounded-lg bg-k2l-gray-100 p-2">
-          <p className="text-[9px] font-semibold uppercase tracking-wider text-k2l-gray-400 mb-1">Application</p>
-          {user.appInstalled ? (
-            <div className="flex items-center gap-1.5">
-              <RiCheckLine className="text-k2l-success" />
-              <span className="text-[11px] font-medium text-k2l-success">Installée</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <RiCloseLine className="text-k2l-gray-400" />
-              <span className="text-[11px] text-k2l-gray-400">Non installée</span>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Hiérarchie / Rattachement */}
       <div className="mb-2 rounded-lg bg-k2l-gray-100 p-2">
