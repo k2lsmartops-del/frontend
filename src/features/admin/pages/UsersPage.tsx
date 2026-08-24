@@ -527,7 +527,7 @@ function UserCard({ user, onEdit, onResetPassword, onAction }: UserCardProps) {
 interface Supervisor { id: string; fullName: string; matricule: string; }
 
 function CreateUserModal({ onClose }: { onClose: () => void }) {
-  const [form, setForm] = useState({ fullName: '', phone: '', email: '', password: '', confirmPassword: '', role: 'COMMERCIAL', supervisorId: '' });
+  const [form, setForm] = useState({ fullName: '', phone: '', email: '', password: '', confirmPassword: '', role: 'COMMERCIAL', supervisorId: '', sponsorCode: '' });
   const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
   const [saving, setSaving] = useState(false);
   const [passwordError, setPasswordError] = useState('');
@@ -577,6 +577,10 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
       if (form.email && form.email.trim()) {
         payload.email = form.email.trim();
       }
+      // N'envoyer le code parrain que s'il est non vide (rôle commercial)
+      if (form.role === 'COMMERCIAL' && form.sponsorCode.trim()) {
+        payload.sponsorCode = form.sponsorCode.trim();
+      }
       await api.post('/users', payload);
       onClose();
     } catch (err: unknown) {
@@ -619,6 +623,15 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
                 <option value="">-- Choisir un superviseur (obligatoire) --</option>
                 {supervisors.map((s) => <option key={s.id} value={s.id}>{s.fullName} ({s.matricule})</option>)}
               </select>
+              <input
+                type="text"
+                name="user-sponsor-code"
+                autoComplete="off"
+                placeholder="Code parrain (optionnel - généré automatiquement si vide)"
+                value={form.sponsorCode}
+                onChange={(e) => setForm({ ...form, sponsorCode: e.target.value })}
+                className="w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 outline-none focus:border-k2l-primary"
+              />
               <p className="text-[11px] text-k2l-gray-400 -mt-1">Le cluster sera hérité automatiquement du superviseur</p>
             </>
           )}
