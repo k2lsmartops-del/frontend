@@ -204,12 +204,6 @@ function DashboardAdmin() {
             icon={<RiCheckLine />} 
             bg="bg-k2l-success-light" 
           />
-          <KpiCard 
-            label="Clients approchés" 
-            value={kpis?.production.clientsApproached || 0} 
-            icon={<RiUserLine />} 
-            bg="bg-k2l-success-light" 
-          />
         </div>
         
         {/* Ligne 2: Installations, Activation + Installation */}

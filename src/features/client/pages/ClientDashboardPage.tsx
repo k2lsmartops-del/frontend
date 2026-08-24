@@ -171,12 +171,6 @@ export default function ClientDashboardPage() {
             icon={<RiCheckLine />} 
             variant="success" 
           />
-          <KpiCard 
-            label="Clients approchés" 
-            value={kpis?.production.clientsApproached || 0} 
-            icon={<RiUserLine />} 
-            variant="success" 
-          />
         </div>
         
         {/* Ligne 2: Installations, Activation + Installation */}
