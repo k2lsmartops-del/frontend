@@ -41,6 +41,7 @@ export default function ProspectFormPage() {
   const [quartier, setQuartier] = useState('');
 
   const [appStatus, setAppStatus] = useState('INSTALLED');
+  const [sponsorCode, setSponsorCode] = useState(user?.sponsorCode || '');
   const [observations, setObservations] = useState('');
   const [gps, setGps] = useState<GpsData | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -87,7 +88,7 @@ export default function ProspectFormPage() {
         prospectGender: gender,
         prospectAge: age ? parseInt(age) : undefined,
         appStatus: appStatus as 'INSTALLED' | 'INSTALLED_ACTIVATED',
-        sponsorCode: user?.sponsorCode || undefined,
+        sponsorCode: sponsorCode || undefined,
         observations: observations || undefined,
       });
       showToast(asDraft ? 'Brouillon sauvegarde' : 'Prospect enregistre !', 'success');
@@ -151,7 +152,7 @@ export default function ProspectFormPage() {
 
         <FormCard title="Application mobile" icon={RiSmartphoneLine}>
           <FormSelect label="Statut appli" value={appStatus} onChange={setAppStatus} options={APP_STATUSES} />
-          <FormInput label="Code parrain" value={user?.sponsorCode || ''} onChange={() => {}} placeholder="Code du commercial parrain" disabled />
+          <FormInput label="Code parrain" value={sponsorCode} onChange={setSponsorCode} placeholder="Code du commercial parrain" />
         </FormCard>
 
         <FormCard title="Observations" icon={RiUserLine}>

@@ -47,6 +47,7 @@ export default function MarchandFormPage() {
   const [tel, setTel] = useState('');
   const [rccm, setRccm] = useState('');
   const [appStatus, setAppStatus] = useState('INSTALLED');
+  const [sponsorCode, setSponsorCode] = useState(user?.sponsorCode || '');
 
   // Localisation - commune en dropdown (cluster), quartier en saisie manuelle
   const [communeId, setCommuneId] = useState<string>('');
@@ -109,7 +110,7 @@ export default function MarchandFormPage() {
         merchantActivity: typeCommerce,
         merchantRccm: rccm || undefined,
         appStatus: appStatus || undefined,
-        sponsorCode: user?.sponsorCode || undefined,
+        sponsorCode: sponsorCode || undefined,
         // Les photos sont stockées en Blob local (IndexedDB) et uploadées
         // lors de la synchronisation atomique. On ne passe PAS d'URLs ici.
       });
@@ -161,7 +162,7 @@ export default function MarchandFormPage() {
             onChange={setAppStatus}
             options={APP_STATUS_OPTIONS}
           />
-          <FormInput label="Code parrain" value={user?.sponsorCode || ''} onChange={() => {}} placeholder="Code du commercial parrain" disabled />
+          <FormInput label="Code parrain" value={sponsorCode} onChange={setSponsorCode} placeholder="Code du commercial parrain" />
         </FormCard>
 
         {/* Localisation */}
