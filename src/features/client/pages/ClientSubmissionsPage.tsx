@@ -32,7 +32,7 @@ interface Submission {
   createdAt: string;
   submittedAt?: string;
   level2At?: string;
-  commercial?: { fullName: string; matricule: string };
+  commercial?: { fullName: string; matricule: string; sponsorCode?: string };
 }
 
 export default function ClientSubmissionsPage() {
@@ -83,9 +83,13 @@ export default function ClientSubmissionsPage() {
       Quartier: s.quartier || '-',
       'Commercial': s.commercial?.fullName || '-',
       'Matricule commercial': s.commercial?.matricule || '-',
+      'Code parrain commercial': s.commercial?.sponsorCode || '-',
       'Date de soumission': s.submittedAt
         ? new Date(s.submittedAt).toLocaleDateString('fr-FR')
         : new Date(s.createdAt).toLocaleDateString('fr-FR'),
+      'Heure de soumission': s.submittedAt
+        ? new Date(s.submittedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+        : new Date(s.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       'Date de création': new Date(s.createdAt).toLocaleDateString('fr-FR'),
     }));
 
@@ -185,8 +189,10 @@ export default function ClientSubmissionsPage() {
                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Nom</th>
                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Commune</th>
                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Commercial</th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Code parrain</th>
                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">App Status</th>
                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Date</th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-k2l-gray-400">Heure</th>
               </tr>
             </thead>
             <tbody>
@@ -215,6 +221,7 @@ export default function ClientSubmissionsPage() {
                   </td>
                   <td className="px-4 py-3 text-k2l-gray-600">{s.commune || '-'}</td>
                   <td className="px-4 py-3 text-k2l-gray-600">{s.commercial?.fullName || '-'}</td>
+                  <td className="px-4 py-3 text-k2l-gray-600">{s.commercial?.sponsorCode || '-'}</td>
                   <td className="px-4 py-3">
                     {s.appStatus === 'INSTALLED_ACTIVATED' ? (
                       <span className="rounded-full bg-k2l-success-light px-2.5 py-1 text-[10px] font-semibold text-k2l-success">Installée + Activée</span>
@@ -226,6 +233,9 @@ export default function ClientSubmissionsPage() {
                   </td>
                   <td className="px-4 py-3 text-k2l-gray-400 text-[12px]">
                     {s.submittedAt ? new Date(s.submittedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : new Date(s.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </td>
+                  <td className="px-4 py-3 text-k2l-gray-400 text-[12px]">
+                    {s.submittedAt ? new Date(s.submittedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : new Date(s.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                   </td>
                 </tr>
               ))}
@@ -370,10 +380,20 @@ export default function ClientSubmissionsPage() {
                       {selectedSubmission.commercial?.fullName || '-'} ({selectedSubmission.commercial?.matricule || '-'})
                     </span>
                   </div>
-                  <div className="flex justify-between py-2 text-sm">
+                  <div className="flex justify-between border-b border-k2l-gray-100 py-2 text-sm">
+                    <span className="text-k2l-gray-400">Code parrain</span>
+                    <span className="font-medium">{selectedSubmission.commercial?.sponsorCode || '-'}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-k2l-gray-100 py-2 text-sm">
                     <span className="text-k2l-gray-400">Date de soumission</span>
                     <span className="font-medium">
                       {selectedSubmission.submittedAt ? new Date(selectedSubmission.submittedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : new Date(selectedSubmission.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2 text-sm">
+                    <span className="text-k2l-gray-400">Heure de soumission</span>
+                    <span className="font-medium">
+                      {selectedSubmission.submittedAt ? new Date(selectedSubmission.submittedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : new Date(selectedSubmission.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                 </div>
