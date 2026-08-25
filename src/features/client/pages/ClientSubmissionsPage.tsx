@@ -29,6 +29,7 @@ interface Submission {
   commune?: string;
   quartier?: string;
   appStatus?: string;
+  sponsorCode?: string;
   createdAt: string;
   submittedAt?: string;
   level2At?: string;
@@ -83,7 +84,7 @@ export default function ClientSubmissionsPage() {
       Quartier: s.quartier || '-',
       'Commercial': s.commercial?.fullName || '-',
       'Matricule commercial': s.commercial?.matricule || '-',
-      'Code parrain commercial': s.commercial?.sponsorCode || '-',
+      'Code parrain soumission': s.sponsorCode || s.commercial?.sponsorCode || '-',
       'Date de soumission': s.submittedAt
         ? new Date(s.submittedAt).toLocaleDateString('fr-FR')
         : new Date(s.createdAt).toLocaleDateString('fr-FR'),
@@ -221,7 +222,7 @@ export default function ClientSubmissionsPage() {
                   </td>
                   <td className="px-4 py-3 text-k2l-gray-600">{s.commune || '-'}</td>
                   <td className="px-4 py-3 text-k2l-gray-600">{s.commercial?.fullName || '-'}</td>
-                  <td className="px-4 py-3 text-k2l-gray-600">{s.commercial?.sponsorCode || '-'}</td>
+                  <td className="px-4 py-3 text-k2l-gray-600">{s.sponsorCode || s.commercial?.sponsorCode || '-'}</td>
                   <td className="px-4 py-3">
                     {s.appStatus === 'INSTALLED_ACTIVATED' ? (
                       <span className="rounded-full bg-k2l-success-light px-2.5 py-1 text-[10px] font-semibold text-k2l-success">Installée + Activée</span>
@@ -382,7 +383,7 @@ export default function ClientSubmissionsPage() {
                   </div>
                   <div className="flex justify-between border-b border-k2l-gray-100 py-2 text-sm">
                     <span className="text-k2l-gray-400">Code parrain</span>
-                    <span className="font-medium">{selectedSubmission.commercial?.sponsorCode || '-'}</span>
+                    <span className="font-medium">{selectedSubmission.sponsorCode || selectedSubmission.commercial?.sponsorCode || '-'}</span>
                   </div>
                   <div className="flex justify-between border-b border-k2l-gray-100 py-2 text-sm">
                     <span className="text-k2l-gray-400">Date de soumission</span>
