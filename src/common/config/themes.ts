@@ -76,10 +76,10 @@ export const themes: Record<string, Theme> = {
     },
   },
   
-  // Thème Mansa Banque
+  // Thème Mansa Bank
   mansabanque: {
     id: 'mansabanque',
-    name: 'Mansa Banque',
+    name: 'Mansa Bank',
     logo: '/logo_code.jpg',
     colors: {
       primary: '#D99954',

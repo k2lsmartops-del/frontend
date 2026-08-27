@@ -176,13 +176,13 @@ export default function ClientDashboardPage() {
         {/* Ligne 2: Installations, Activation + Installation */}
         <div className="mt-4 grid grid-cols-2 gap-4">
           <KpiCard 
-            label="Installations" 
+            label="Acquisitions" 
             value={kpis?.production.installations || 0} 
             icon={<RiCheckboxCircleLine />} 
             variant="primary" 
           />
           <KpiCard 
-            label="Activation + Installation" 
+            label="Activation" 
             value={kpis?.production.installationsPlusActivations || 0} 
             icon={<RiCheckboxCircleLine />} 
             variant="success" 

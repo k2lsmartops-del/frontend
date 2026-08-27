@@ -209,13 +209,13 @@ function DashboardAdmin() {
         {/* Ligne 2: Installations, Activation + Installation */}
         <div className="mt-4 grid grid-cols-2 gap-4">
           <KpiCard 
-            label="Installations" 
+            label="Acquisitions" 
             value={kpis?.production.installations || 0} 
             icon={<RiSmartphoneLine />} 
             bg="bg-k2l-blue-light" 
           />
           <KpiCard 
-            label="Activation + Installation" 
+            label="Activation" 
             value={kpis?.production.installationsPlusActivations || 0} 
             icon={<RiCheckboxCircleLine />} 
             bg="bg-k2l-amber-light" 
