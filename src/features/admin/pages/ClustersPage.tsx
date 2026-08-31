@@ -130,7 +130,7 @@ export default function ClustersPage() {
           color={kpis.assignedSupervisors === kpis.totalClusters ? 'green' : 'amber'}
         />
         <KpiCard
-          label="Membres au total"
+          label="Commerciaux au total"
           value={kpis.totalCommerciaux}
           icon={<RiTeamLine />}
           color="blue"
@@ -319,16 +319,13 @@ function ClusterCard({ cluster, status, onEdit, onDelete }: ClusterCardProps) {
             {c.name}
           </span>
         ))}
-        {cluster.communes.length === 0 && (
-          <span className="text-[12px] text-k2l-gray-400">Aucune commune</span>
-        )}
-      </div>
+              </div>
 
       {/* Stats */}
       <div className="flex items-center gap-4 text-[12px] text-k2l-gray-600">
         <span className="flex items-center gap-1">
           <RiTeamLine className="text-sm" />
-          <strong>{cluster._count.members}</strong> membres
+          <strong>{cluster._count.members}</strong> commerciaux
         </span>
       </div>
 
