@@ -14,11 +14,7 @@ import { useMyZoneCommunes } from '@/common/hooks/useMyZoneCommunes';
 const GENDERS = [{ value: 'HOMME', label: 'Homme' }, { value: 'FEMME', label: 'Femme' }];
 const APP_STATUSES = [
   { value: 'INSTALLED', label: 'Installée' },
-  { value: 'INSTALLED_ACTIVATED', label: 'Installée + Activée' },
-];
-const PROFESSIONS = [
-  'Commercant', 'Fonctionnaire', 'Enseignant', 'Etudiant', 'Agriculteur',
-  'Artisan', 'Transporteur', 'Menagere', 'Sans emploi', 'Autre',
+  { value: 'INSTALLED_TRANSACTIONS', label: 'Installée + Transactions' },
 ];
 
 export default function ProspectFormPage() {
@@ -30,15 +26,12 @@ export default function ProspectFormPage() {
   // Charger les communes du cluster du commercial
   const { data: zoneData, loading: loadingZone } = useMyZoneCommunes();
 
-  const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
-  const [profession, setProfession] = useState('');
+  const [phoneError, setPhoneError] = useState('');
   const [gender, setGender] = useState('HOMME');
-  const [age, setAge] = useState('');
 
-  // Localisation - commune en dropdown (cluster), quartier en saisie manuelle
+  // Localisation - commune en dropdown (cluster)
   const [communeId, setCommuneId] = useState<string>('');
-  const [quartier, setQuartier] = useState('');
 
   const [appStatus, setAppStatus] = useState('INSTALLED');
   const [sponsorCode, setSponsorCode] = useState(user?.sponsorCode || '');
@@ -61,11 +54,27 @@ export default function ProspectFormPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoneData]);
 
+  // Validation du téléphone (exactement 10 chiffres)
+  const validatePhone = (value: string) => {
+    const digitsOnly = value.replace(/\D/g, '');
+    if (digitsOnly.length !== 10) {
+      setPhoneError('Le numéro doit contenir exactement 10 chiffres');
+      return false;
+    }
+    setPhoneError('');
+    return true;
+  };
+
+  const handlePhoneChange = (value: string) => {
+    setPhone(value);
+    if (value.trim()) validatePhone(value);
+    else setPhoneError('');
+  };
+
   const handleSubmit = async (asDraft = false) => {
     if (!asDraft) {
-      if (!fullName.trim()) { showToast('Nom complet obligatoire', 'error'); return; }
       if (!phone.trim()) { showToast('Telephone obligatoire', 'error'); return; }
-      if (!profession) { showToast('Profession obligatoire', 'error'); return; }
+      if (!validatePhone(phone)) { showToast('Numéro de téléphone invalide (10 chiffres requis)', 'error'); return; }
     }
 
     setSubmitting(true);
@@ -77,17 +86,13 @@ export default function ProspectFormPage() {
         requestedStatus: asDraft ? 'DRAFT' : 'SUBMITTED',
         communeId: communeId || undefined,
         commune: selectedCommune?.name || undefined,
-        quartier: quartier || undefined,
         latitude: gps?.latitude,
         longitude: gps?.longitude,
         gpsAccuracy: gps?.accuracy,
         gpsCapturedAt: gps?.capturedAt,
-        prospectFullName: fullName,
-        prospectPhone: phone,
-        prospectProfession: profession,
+        prospectPhone: phone.replace(/\D/g, ''),
         prospectGender: gender,
-        prospectAge: age && !isNaN(parseInt(age)) ? parseInt(age) : undefined,
-        appStatus: appStatus as 'INSTALLED' | 'INSTALLED_ACTIVATED',
+        appStatus: appStatus as 'INSTALLED' | 'INSTALLED_TRANSACTIONS',
         sponsorCode: sponsorCode || undefined,
         observations: observations || undefined,
       });
@@ -116,13 +121,17 @@ export default function ProspectFormPage() {
       {/* Form */}
       <div className="flex-1 space-y-3.5 p-4">
         <FormCard title="Identite du prospect" icon={RiUserLine}>
-          <FormInput label="Nom complet *" value={fullName} onChange={setFullName} placeholder="Nom et prenoms" />
-          <FormInput label="Telephone *" value={phone} onChange={setPhone} placeholder="+225 07 00 00 00 00" type="tel" />
-          <FormSelect label="Profession *" value={profession} onChange={setProfession} options={PROFESSIONS} />
-          <div className="grid grid-cols-2 gap-2.5">
-            <FormSelect label="Genre" value={gender} onChange={setGender} options={GENDERS} />
-            <FormInput label="Age" value={age} onChange={setAge} placeholder="25" type="number" />
+          <div>
+            <FormInput 
+              label="Telephone *" 
+              value={phone} 
+              onChange={handlePhoneChange} 
+              placeholder="0700000000" 
+              type="tel" 
+            />
+            {phoneError && <p className="mt-1 text-xs text-red-500">{phoneError}</p>}
           </div>
+          <FormSelect label="Genre" value={gender} onChange={setGender} options={GENDERS} />
         </FormCard>
 
         <FormCard title="Localisation" icon={RiMapPinLine}>
@@ -132,20 +141,12 @@ export default function ProspectFormPage() {
               <span className="ml-2 text-sm text-k2l-gray-500">Chargement des communes...</span>
             </div>
           ) : (
-            <>
-              <FormSelect
-                label="Commune *"
-                value={communeId}
-                onChange={setCommuneId}
-                options={communeOptions}
-              />
-              <FormInput
-                label="Quartier"
-                value={quartier}
-                onChange={setQuartier}
-                placeholder="Ex: Remblais"
-              />
-            </>
+            <FormSelect
+              label="Commune *"
+              value={communeId}
+              onChange={setCommuneId}
+              options={communeOptions}
+            />
           )}
           <GpsCapture onCapture={onGpsCapture} />
         </FormCard>

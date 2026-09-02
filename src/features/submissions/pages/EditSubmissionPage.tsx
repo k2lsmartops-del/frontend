@@ -256,7 +256,7 @@ export default function EditSubmissionPage() {
             <FormSelect label="Profession" value={form.prospectProfession || ''} onChange={set('prospectProfession')} options={PROFESSIONS} />
             <FormSelect label="Genre" value={form.prospectGender || ''} onChange={set('prospectGender')} options={['', 'HOMME', 'FEMME']} />
             <FormInput label="Âge" value={form.prospectAge || ''} onChange={set('prospectAge')} />
-            <FormSelect label="Statut app" value={form.appStatus || ''} onChange={set('appStatus')} options={[{ value: '', label: '— Choisir —' }, { value: 'INSTALLED', label: 'Installée' }, { value: 'INSTALLED_ACTIVATED', label: 'Installée + Activée' }]} />
+            <FormSelect label="Statut app" value={form.appStatus || ''} onChange={set('appStatus')} options={[{ value: '', label: '— Choisir —' }, { value: 'INSTALLED', label: 'Installée' }, { value: 'INSTALLED_TRANSACTIONS', label: 'Installée + Transactions' }]} />
             <FormInput label="Code parrain" value={form.sponsorCode || ''} onChange={set('sponsorCode')} placeholder="Code du commercial parrain" />
           </FormCard>
         )}

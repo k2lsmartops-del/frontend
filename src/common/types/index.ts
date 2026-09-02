@@ -2,7 +2,7 @@ export type Role = 'ADMIN' | 'COORDINATEUR' | 'SUPERVISEUR' | 'COMMERCIAL' | 'CL
 export type AgentStatus = 'ACTIF' | 'SUSPENDU' | 'EN_ATTENTE' | 'DESACTIVE';
 export type SubmissionType = 'PROSPECT' | 'MARCHAND';
 export type SubmissionStatus = 'DRAFT' | 'SUBMITTED' | 'VALIDATED' | 'REJECTED';
-export type AppStatus = 'INSTALLED' | 'INSTALLED_ACTIVATED';
+export type AppStatus = 'INSTALLED' | 'INSTALLED_TRANSACTIONS';
 export type SyncStatus = 'PENDING' | 'SYNCED' | 'FAILED';
 export type Gender = 'M' | 'F';
 

@@ -75,7 +75,7 @@ export default function ClientMapPage() {
     if (!s.latitude || !s.longitude) return false;
     if (s.type === 'PROSPECT' && !showProspects) return false;
     if (s.type === 'MERCHANT' && !showMerchants) return false;
-    if (showActivatedOnly && s.appStatus !== 'INSTALLED_ACTIVATED') return false;
+    if (showActivatedOnly && s.appStatus !== 'INSTALLED_TRANSACTIONS') return false;
     return true;
   });
 

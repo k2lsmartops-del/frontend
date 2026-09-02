@@ -90,7 +90,7 @@ export default function ValidationHistoryPage() {
             >
               <option value="">Tous</option>
               <option value="INSTALLED">Installée</option>
-              <option value="INSTALLED_ACTIVATED">Installée + Activée</option>
+              <option value="INSTALLED_TRANSACTIONS">Installée + Transactions</option>
             </select>
           </div>
           <div className="flex items-center gap-2 rounded-lg border border-k2l-gray-200 bg-white px-3 py-2">
@@ -177,12 +177,12 @@ export default function ValidationHistoryPage() {
                     <td className="px-4 py-3">
                       {s.appStatus ? (
                         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                          s.appStatus === 'INSTALLED_ACTIVATED' ? 'bg-k2l-success/10 text-k2l-success' : 'bg-k2l-amber/10 text-k2l-amber'
+                          s.appStatus === 'INSTALLED_TRANSACTIONS' ? 'bg-k2l-success/10 text-k2l-success' : 'bg-k2l-amber/10 text-k2l-amber'
                         }`}>
-                          {s.appStatus === 'INSTALLED_ACTIVATED' ? (
+                          {s.appStatus === 'INSTALLED_TRANSACTIONS' ? (
                             <>
                               <RiCheckLine />
-                              Installée + Activée
+                              Installée + Transactions
                             </>
                           ) : (
                             <>
@@ -369,14 +369,14 @@ export default function ValidationHistoryPage() {
               <div>
                 {selectedSubmission.appStatus ? (
                   <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold ${
-                    selectedSubmission.appStatus === 'INSTALLED_ACTIVATED' 
+                    selectedSubmission.appStatus === 'INSTALLED_TRANSACTIONS' 
                       ? 'bg-k2l-success/10 text-k2l-success' 
                       : 'bg-k2l-amber/10 text-k2l-amber'
                   }`}>
-                    {selectedSubmission.appStatus === 'INSTALLED_ACTIVATED' ? (
+                    {selectedSubmission.appStatus === 'INSTALLED_TRANSACTIONS' ? (
                       <>
                         <RiCheckLine />
-                        Installée + Activée
+                        Installée + Transactions
                       </>
                     ) : (
                       <>

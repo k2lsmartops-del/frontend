@@ -29,7 +29,7 @@ const TYPES_COMMERCE = [
 
 const APP_STATUS_OPTIONS = [
   { value: 'INSTALLED', label: 'Installée' },
-  { value: 'INSTALLED_ACTIVATED', label: 'Installée + Activée' },
+  { value: 'INSTALLED_TRANSACTIONS', label: 'Installée + Transactions' },
 ];
 
 export default function MarchandFormPage() {

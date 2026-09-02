@@ -73,7 +73,7 @@ export default function ClientSubmissionsPage() {
       ID: s.id,
       Type: s.type === 'PROSPECT' ? 'Prospect' : 'Marchand',
       Statut: s.status,
-      'Statut App': s.appStatus === 'INSTALLED_ACTIVATED' ? 'Installée + Activée' : s.appStatus === 'INSTALLED' ? 'Installée' : 'N/A',
+      'Statut App': s.appStatus === 'INSTALLED_TRANSACTIONS' ? 'Installée + Transactions' : s.appStatus === 'INSTALLED' ? 'Installée' : 'N/A',
       'Nom prospect / commerce': s.type === 'PROSPECT' ? s.prospectFullName : s.merchantName,
       'Téléphone prospect / commerce': s.type === 'PROSPECT' ? s.prospectPhone : s.merchantPhone,
       'Propriétaire / Genre': s.type === 'PROSPECT' ? s.prospectGender : s.merchantOwner,
@@ -125,7 +125,7 @@ export default function ClientSubmissionsPage() {
             >
               <option value="">Tous</option>
               <option value="INSTALLED">Installée</option>
-              <option value="INSTALLED_ACTIVATED">Installée + Activée</option>
+              <option value="INSTALLED_TRANSACTIONS">Installée + Transactions</option>
             </select>
           </div>
           <div className="flex items-center gap-2 rounded-lg border border-k2l-gray-200 bg-white px-3 py-2">
@@ -224,8 +224,8 @@ export default function ClientSubmissionsPage() {
                   <td className="px-4 py-3 text-k2l-gray-600">{s.commercial?.fullName || '-'}</td>
                   <td className="px-4 py-3 text-k2l-gray-600">{s.sponsorCode || s.commercial?.sponsorCode || '-'}</td>
                   <td className="px-4 py-3">
-                    {s.appStatus === 'INSTALLED_ACTIVATED' ? (
-                      <span className="rounded-full bg-k2l-success-light px-2.5 py-1 text-[10px] font-semibold text-k2l-success">Installée + Activée</span>
+                    {s.appStatus === 'INSTALLED_TRANSACTIONS' ? (
+                      <span className="rounded-full bg-k2l-success-light px-2.5 py-1 text-[10px] font-semibold text-k2l-success">Installée + Transactions</span>
                     ) : s.appStatus === 'INSTALLED' ? (
                       <span className="rounded-full bg-k2l-amber-light px-2.5 py-1 text-[10px] font-semibold text-k2l-amber">Installée</span>
                     ) : (
@@ -358,8 +358,8 @@ export default function ClientSubmissionsPage() {
                 </div>
                 <div className="flex justify-between py-2 text-sm">
                   <span className="text-k2l-gray-400">Statut</span>
-                  {selectedSubmission.appStatus === 'INSTALLED_ACTIVATED' ? (
-                    <span className="rounded-full bg-k2l-success-light px-2.5 py-1 text-[10px] font-semibold text-k2l-success">Installée + Activée</span>
+                  {selectedSubmission.appStatus === 'INSTALLED_TRANSACTIONS' ? (
+                    <span className="rounded-full bg-k2l-success-light px-2.5 py-1 text-[10px] font-semibold text-k2l-success">Installée + Transactions</span>
                   ) : selectedSubmission.appStatus === 'INSTALLED' ? (
                     <span className="rounded-full bg-k2l-amber-light px-2.5 py-1 text-[10px] font-semibold text-k2l-amber">Installée</span>
                   ) : (
