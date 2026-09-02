@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   RiUserLine, RiStore2Line, RiFileList3Line, RiRefreshLine,
   RiWifiLine, RiWifiOffLine, RiLoader4Line, RiEditLine, RiDeleteBinLine,
+  RiFileCopyLine,
 } from '@/common/icons';
 import { useAuthStore } from '@/common/stores/auth.store';
 import { useToastStore } from '@/common/stores/toast.store';
@@ -47,6 +48,7 @@ export default function HomePage() {
   const [prospects, setProspects] = useState(0);
   const [marchands, setMarchands] = useState(0);
   const [valides, setValides] = useState(0);
+  const [objectif, setObjectif] = useState(20);
   const [recent, setRecent] = useState<Submission[]>([]);
   const [deleting, setDeleting] = useState<string | null>(null);
 
@@ -63,27 +65,31 @@ export default function HomePage() {
       setDeleting(null);
     }
   };
+
+  const handleCopySponsorCode = () => {
+    if (user?.sponsorCode) {
+      navigator.clipboard.writeText(user.sponsorCode);
+      showToast('Code copie', 'success');
+    }
+  };
+
   const [pendingCount, setPendingCount] = useState(0);
   const [syncing, setSyncing] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
+      // Charger les KPI du jour
+      const kpiResponse = await api.get('/users/me/kpi-today');
+      const kpiData = kpiResponse.data;
+      setProspects(kpiData.prospects);
+      setMarchands(kpiData.marchands);
+      setValides(kpiData.valides);
+      setObjectif(kpiData.objectif);
+
+      // Charger les soumissions récentes
       const { data } = await api.get('/submissions', { params: { limit: 10 } });
       const items: Submission[] = data.data || [];
       setRecent(items.slice(0, 5));
-      setProspects(data.meta?.total ? items.filter((s) => s.type === 'PROSPECT').length : 0);
-      setMarchands(items.filter((s) => s.type === 'MARCHAND').length);
-      setValides(items.filter((s) => s.status === 'VALIDATED').length);
-
-      // Compteurs complets via des requêtes séparées (meta.total = total réel côté serveur)
-      const [pRes, mRes, vRes] = await Promise.all([
-        api.get('/submissions', { params: { type: 'PROSPECT', limit: 1 } }),
-        api.get('/submissions', { params: { type: 'MARCHAND', limit: 1 } }),
-        api.get('/submissions', { params: { status: 'VALIDATED', limit: 1 } }),
-      ]);
-      setProspects(pRes.data.meta?.total ?? 0);
-      setMarchands(mRes.data.meta?.total ?? 0);
-      setValides(vRes.data.meta?.total ?? 0);
     } catch {
       // Silencieux si offline
     }
@@ -139,17 +145,33 @@ export default function HomePage() {
               : <><RiWifiOffLine className="text-sm text-k2l-amber" /><span className="text-[11px] text-white">Hors-ligne</span></>}
           </div>
         </div>
+        
+        {/* Code parrainage */}
+        {user?.sponsorCode && (
+          <div className="mt-4 flex items-center justify-between rounded-lg bg-white/10 px-3 py-2">
+            <div>
+              <div className="text-[10px] text-white/60">Mon code parrainage</div>
+              <div className="font-head text-sm font-semibold text-white">{user.sponsorCode}</div>
+            </div>
+            <button
+              onClick={handleCopySponsorCode}
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-white active:bg-white/30"
+            >
+              <RiFileCopyLine className="text-lg" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* KPIs */}
       <div className="-mt-5 mb-4 grid grid-cols-3 gap-2.5 px-4">
         {[
-          { label: 'Prospects', value: String(prospects), color: 'text-k2l-primary' },
-          { label: 'Marchands', value: String(marchands), color: 'text-k2l-amber' },
-          { label: 'Valides', value: String(valides), color: 'text-k2l-success' },
+          { label: 'Prospects', value: prospects, color: 'text-k2l-primary' },
+          { label: 'Marchands', value: marchands, color: 'text-k2l-amber' },
+          { label: 'Valides', value: valides, color: 'text-k2l-success' },
         ].map((kpi) => (
           <div key={kpi.label} className="rounded-md bg-white px-2.5 py-3 text-center shadow-[0_2px_12px_rgba(0,0,0,0.07)]">
-            <div className={`font-head text-[22px] font-bold ${kpi.color}`}>{kpi.value}</div>
+            <div className={`font-head text-[22px] font-bold ${kpi.color}`}>{kpi.value}/{objectif}</div>
             <div className="mt-0.5 text-[10px] uppercase tracking-wider text-k2l-gray-400">{kpi.label}</div>
           </div>
         ))}

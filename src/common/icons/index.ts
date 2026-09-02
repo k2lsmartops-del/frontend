@@ -60,4 +60,5 @@ export {
   RiIdCardLine,
   RiImageLine,
   RiCloudLine,
+  RiFileCopyLine,
 } from 'react-icons/ri';
