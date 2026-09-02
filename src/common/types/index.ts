@@ -72,7 +72,10 @@ export interface Submission {
   createdOffline: boolean;
   createdAt: string;
   submittedAt?: string | null;
+  validatedAt?: string | null;
+  rejectionReason?: string | null;
   commercial?: { id: string; fullName: string; matricule: string };
+  validator?: { id: string; fullName: string; matricule: string } | null;
 }
 
 export interface CreateSubmissionPayload {

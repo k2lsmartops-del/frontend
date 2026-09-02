@@ -14,6 +14,7 @@ import {
   RiEditLine,
   RiSmartphoneLine,
   RiCloudLine,
+  RiCloseLine,
 } from '@/common/icons';
 import { useToastStore } from '@/common/stores/toast.store';
 import type { OfflineSubmission } from '@/lib/offlineDb';
@@ -42,7 +43,7 @@ const LOCAL_FILTERS: { value: LocalFilter; label: string }[] = [
 ];
 
 // Filtres pour les soumissions serveur (historique)
-type ServerFilter = 'all' | 'prospect' | 'marchand' | 'pending' | 'validated';
+type ServerFilter = 'all' | 'prospect' | 'marchand' | 'pending' | 'validated' | 'rejected';
 
 const SERVER_FILTERS: { key: ServerFilter; label: string }[] = [
   { key: 'all', label: 'Tout' },
@@ -50,6 +51,7 @@ const SERVER_FILTERS: { key: ServerFilter; label: string }[] = [
   { key: 'marchand', label: 'Marchands' },
   { key: 'pending', label: 'En attente' },
   { key: 'validated', label: 'Validés' },
+  { key: 'rejected', label: 'Rejetés' },
 ];
 
 const LOCAL_STATUS_META: Record<string, { label: string; badge: string; border: string }> = {
@@ -64,6 +66,7 @@ const SERVER_STATUS_LABELS: Record<string, string> = {
   SUBMITTED: 'En attente',
   SUPERVISOR_APPROVED: 'Validé N1',
   VALIDATED: 'Validé',
+  REJECTED: 'Rejeté',
   REJECTED_L1: 'Rejeté N1',
   REJECTED_L2: 'Rejeté N2',
 };
@@ -73,6 +76,7 @@ const SERVER_STATUS_STYLES: Record<string, string> = {
   SUBMITTED: 'bg-k2l-amber-light text-[#854F0B]',
   SUPERVISOR_APPROVED: 'bg-k2l-primary-light text-k2l-primary',
   VALIDATED: 'bg-k2l-success-light text-k2l-success',
+  REJECTED: 'bg-k2l-red-light text-k2l-red',
   REJECTED_L1: 'bg-k2l-red-light text-k2l-red',
   REJECTED_L2: 'bg-k2l-red-light text-k2l-red',
 };
@@ -123,6 +127,7 @@ export default function MesSoumissionsPage() {
       if (serverFilter === 'marchand') params.type = 'MARCHAND';
       if (serverFilter === 'pending') params.status = 'SUBMITTED';
       if (serverFilter === 'validated') params.status = 'VALIDATED';
+      if (serverFilter === 'rejected') params.status = 'REJECTED';
       const res = await submissionService.list(params);
       setServerSubmissions(res.data);
     } catch {
@@ -193,6 +198,19 @@ export default function MesSoumissionsPage() {
       showToast(msg, 'error');
     } finally {
       setDeleting(null);
+    }
+  };
+
+  const handleResubmit = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('Re-soumettre cette fiche pour validation ?')) return;
+    try {
+      await api.post(`/submissions/${id}/resubmit`);
+      showToast('Fiche re-soumise', 'success');
+      loadServer();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Erreur';
+      showToast(msg, 'error');
     }
   };
 
@@ -365,48 +383,79 @@ export default function MesSoumissionsPage() {
               <div className="space-y-2.5">
                 {serverSubmissions.map((s) => {
                   const canEdit = s.status === 'DRAFT' || s.status === 'SUBMITTED';
+                  const isRejected = s.status === 'REJECTED';
                   return (
                     <div
                       key={s.id}
-                      className="flex cursor-pointer items-start gap-3 rounded-md bg-white p-3.5 shadow-[0_1px_6px_rgba(0,0,0,0.05)]"
+                      className={`rounded-md bg-white p-3.5 shadow-[0_1px_6px_rgba(0,0,0,0.05)] ${canEdit ? 'cursor-pointer' : ''}`}
                       onClick={() => canEdit && navigate(`/submissions/${s.id}/edit`)}
                     >
-                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-sm text-xl ${s.type === 'PROSPECT' ? 'bg-k2l-primary-light' : 'bg-k2l-amber-light'}`}>
-                        {s.type === 'PROSPECT' ? <RiUserLine className="text-lg text-k2l-navy" /> : <RiStore2Line className="text-lg text-[#854F0B]" />}
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-k2l-gray-900">
-                          {s.type === 'PROSPECT' ? s.prospectFullName : s.merchantName}
+                      <div className="flex items-start gap-3">
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-sm text-xl ${s.type === 'PROSPECT' ? 'bg-k2l-primary-light' : 'bg-k2l-amber-light'}`}>
+                          {s.type === 'PROSPECT' ? <RiUserLine className="text-lg text-k2l-navy" /> : <RiStore2Line className="text-lg text-[#854F0B]" />}
                         </div>
-                        <div className="mt-0.5 text-[11px] text-k2l-gray-400">
-                          {s.type === 'PROSPECT' ? 'Prospect' : 'Marchand'} · {s.commune} · {s.type === 'PROSPECT' ? s.prospectPhone : s.merchantPhone}
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1.5">
-                        <span className="text-[11px] text-k2l-gray-400">
-                          {new Date(s.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                        <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${SERVER_STATUS_STYLES[s.status] ?? ''}`}>
-                          {SERVER_STATUS_LABELS[s.status] ?? s.status}
-                        </span>
-                        {canEdit && (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); navigate(`/submissions/${s.id}/edit`); }}
-                              className="flex items-center gap-0.5 text-[10px] font-medium text-k2l-primary"
-                            >
-                              <RiEditLine className="text-xs" /> Modifier
-                            </button>
-                            <button
-                              onClick={(e) => handleDeleteServer(s.id, e)}
-                              disabled={deleting === s.id}
-                              className="flex items-center gap-0.5 text-[10px] font-medium text-k2l-red disabled:opacity-50"
-                            >
-                              <RiDeleteBinLine className="text-xs" /> Supprimer
-                            </button>
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-k2l-gray-900">
+                            {s.type === 'PROSPECT' ? s.prospectFullName : s.merchantName}
                           </div>
-                        )}
+                          <div className="mt-0.5 text-[11px] text-k2l-gray-400">
+                            {s.type === 'PROSPECT' ? 'Prospect' : 'Marchand'} · {s.commune} · {s.type === 'PROSPECT' ? s.prospectPhone : s.merchantPhone}
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1.5">
+                          <span className="text-[11px] text-k2l-gray-400">
+                            {new Date(s.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${SERVER_STATUS_STYLES[s.status] ?? ''}`}>
+                            {SERVER_STATUS_LABELS[s.status] ?? s.status}
+                          </span>
+                        </div>
                       </div>
+                      {/* Motif de rejet */}
+                      {isRejected && s.rejectionReason && (
+                        <div className="mt-2 flex items-start gap-2 rounded-md bg-k2l-red-light p-2.5">
+                          <RiCloseLine className="mt-0.5 shrink-0 text-sm text-k2l-red" />
+                          <div>
+                            <div className="text-[10px] font-semibold text-k2l-red">Motif du rejet</div>
+                            <div className="text-[11px] text-k2l-gray-700">{s.rejectionReason}</div>
+                          </div>
+                        </div>
+                      )}
+                      {/* Actions */}
+                      {canEdit && (
+                        <div className="mt-2 flex items-center gap-3 border-t border-k2l-gray-100 pt-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); navigate(`/submissions/${s.id}/edit`); }}
+                            className="flex items-center gap-0.5 text-[10px] font-medium text-k2l-primary"
+                          >
+                            <RiEditLine className="text-xs" /> Modifier
+                          </button>
+                          <button
+                            onClick={(e) => handleDeleteServer(s.id, e)}
+                            disabled={deleting === s.id}
+                            className="flex items-center gap-0.5 text-[10px] font-medium text-k2l-red disabled:opacity-50"
+                          >
+                            <RiDeleteBinLine className="text-xs" /> Supprimer
+                          </button>
+                        </div>
+                      )}
+                      {/* Bouton re-soumettre pour les rejetées */}
+                      {isRejected && (
+                        <div className="mt-2 flex items-center gap-3 border-t border-k2l-gray-100 pt-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); navigate(`/submissions/${s.id}/edit`); }}
+                            className="flex items-center gap-0.5 text-[10px] font-medium text-k2l-primary"
+                          >
+                            <RiEditLine className="text-xs" /> Modifier
+                          </button>
+                          <button
+                            onClick={(e) => handleResubmit(s.id, e)}
+                            className="flex items-center gap-0.5 text-[10px] font-medium text-k2l-success"
+                          >
+                            <RiRefreshLine className="text-xs" /> Re-soumettre
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

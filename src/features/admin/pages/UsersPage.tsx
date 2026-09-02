@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { RiSearchLine, RiLoader4Line, RiEyeLine, RiEyeOffLine, RiFileExcel2Line, RiUserLine, RiTeamLine, RiShieldUserLine, RiBriefcaseLine, RiPencilLine, RiLockPasswordLine, RiCheckLine, RiCloseLine, RiDeleteBinLine, RiMapPinLine } from 'react-icons/ri';
+import { RiSearchLine, RiLoader4Line, RiEyeLine, RiEyeOffLine, RiFileExcel2Line, RiUserLine, RiTeamLine, RiShieldUserLine, RiBriefcaseLine, RiPencilLine, RiLockPasswordLine, RiCheckLine, RiCloseLine, RiDeleteBinLine, RiMapPinLine, RiDownloadLine } from 'react-icons/ri';
+import { useToastStore } from '@/common/stores/toast.store';
 import api from '@/common/services/api';
 import ImportTeamModal from '../components/ImportTeamModal';
 
@@ -30,6 +31,7 @@ interface Cluster {
 }
 
 export default function UsersPage() {
+  const showToast = useToastStore((s) => s.show);
   const [users, setUsers] = useState<User[]>([]);
   const [clusters, setClusters] = useState<Cluster[]>([]);
   const [total, setTotal] = useState(0);
@@ -43,6 +45,35 @@ export default function UsersPage() {
   const [showImport, setShowImport] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportCsv = async () => {
+    setExporting(true);
+    try {
+      const params: Record<string, string> = {};
+      if (clusterFilter) params.clusterId = clusterFilter;
+      
+      const response = await api.get('/export/commerciaux/csv', {
+        params,
+        responseType: 'blob',
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `commerciaux_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      showToast('Export CSV téléchargé', 'success');
+    } catch {
+      showToast('Erreur lors de l\'export', 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // Charger les clusters au montage
   useEffect(() => {
@@ -134,6 +165,13 @@ export default function UsersPage() {
           <p className="mt-1 text-sm text-k2l-gray-400">{total} utilisateur(s) au total</p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={handleExportCsv}
+            disabled={exporting}
+            className="flex items-center gap-2 rounded-lg border-2 border-k2l-success px-4 py-2.5 text-[13px] font-semibold text-k2l-success hover:bg-k2l-success/5 transition-colors disabled:opacity-50"
+          >
+            <RiDownloadLine className="text-lg" /> {exporting ? 'Export...' : 'Exporter CSV'}
+          </button>
           <button
             onClick={() => setShowImport(true)}
             className="flex items-center gap-2 rounded-lg border-2 border-[#1D9E75] px-4 py-2.5 text-[13px] font-semibold text-[#1D9E75] hover:bg-[#1D9E75]/5 transition-colors"

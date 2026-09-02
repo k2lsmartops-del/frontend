@@ -9,7 +9,9 @@ import {
   RiUserHeartLine,
   RiIdCardLine,
   RiCheckLine,
+  RiDownloadLine,
 } from 'react-icons/ri';
+import { useToastStore } from '@/common/stores/toast.store';
 import api from '@/common/services/api';
 
 interface Submission {
@@ -35,6 +37,7 @@ interface Submission {
 }
 
 export default function ValidationHistoryPage() {
+  const showToast = useToastStore((s) => s.show);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
@@ -42,6 +45,36 @@ export default function ValidationHistoryPage() {
   const [appStatusFilter, setAppStatusFilter] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportCsv = async () => {
+    setExporting(true);
+    try {
+      const params: Record<string, string> = { status: 'VALIDATED' };
+      if (startDate) params.dateFrom = startDate;
+      if (endDate) params.dateTo = endDate;
+      
+      const response = await api.get('/export/submissions/csv', {
+        params,
+        responseType: 'blob',
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `validations_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      showToast('Export CSV téléchargé', 'success');
+    } catch {
+      showToast('Erreur lors de l\'export', 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const loadSubmissions = useCallback(async () => {
     try {
@@ -131,6 +164,16 @@ export default function ValidationHistoryPage() {
               Effacer
             </button>
           )}
+          <div className="ml-auto">
+            <button
+              onClick={handleExportCsv}
+              disabled={exporting}
+              className="flex items-center gap-1.5 rounded-lg bg-k2l-success px-4 py-2 text-xs font-medium text-white hover:bg-k2l-success/90 transition-colors disabled:opacity-50"
+            >
+              <RiDownloadLine className="text-sm" />
+              {exporting ? 'Export...' : 'Exporter CSV'}
+            </button>
+          </div>
         </div>
       </div>
       {filteredSubmissions.length === 0 ? (
