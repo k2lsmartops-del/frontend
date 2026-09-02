@@ -145,9 +145,9 @@ export default function TeamPage() {
     setError('');
   };
 
-  const handleRemove = async (id: string) => {
+  const handleDelete = async (id: string) => {
     try {
-      await api.patch(`/users/${id}/remove-from-team`);
+      await api.patch(`/users/${id}/delete`);
       setConfirmRemove(null);
       loadTeam();
     } catch (err: unknown) {
@@ -266,9 +266,9 @@ export default function TeamPage() {
       {confirmRemove && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6">
           <div className="w-full max-w-sm rounded-xl bg-white p-5">
-            <h3 className="mb-2 font-head text-sm font-semibold">Retirer de l'équipe ?</h3>
+            <h3 className="mb-2 font-head text-sm font-semibold">Supprimer ce commercial ?</h3>
             <p className="mb-4 text-xs text-k2l-gray-600">
-              Ce commercial sera retiré de votre équipe mais son compte restera actif.
+              Ce commercial sera supprimé et n'apparaîtra plus dans votre équipe. Cette action est irréversible.
             </p>
             <div className="flex gap-2">
               <button
@@ -278,10 +278,10 @@ export default function TeamPage() {
                 Annuler
               </button>
               <button
-                onClick={() => handleRemove(confirmRemove)}
+                onClick={() => handleDelete(confirmRemove)}
                 className="flex-1 rounded-lg bg-k2l-red py-2.5 text-sm font-semibold text-white"
               >
-                Retirer
+                Supprimer
               </button>
             </div>
           </div>
@@ -422,7 +422,7 @@ export default function TeamPage() {
                           onClick={() => { setConfirmRemove(member.id); setMenuOpen(null); }}
                           className="flex w-full items-center gap-2 px-3 py-2 text-xs font-medium text-k2l-red hover:bg-k2l-red/5"
                         >
-                          <RiDeleteBinLine /> Retirer
+                          <RiDeleteBinLine /> Supprimer
                         </button>
                       </div>
                     )}

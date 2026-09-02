@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { RiSearchLine, RiLoader4Line, RiEyeLine, RiEyeOffLine, RiFileExcel2Line, RiUserLine, RiTeamLine, RiShieldUserLine, RiBriefcaseLine, RiPencilLine, RiLockPasswordLine, RiCheckLine, RiCloseLine, RiPauseLine, RiMapPinLine } from 'react-icons/ri';
+import { RiSearchLine, RiLoader4Line, RiEyeLine, RiEyeOffLine, RiFileExcel2Line, RiUserLine, RiTeamLine, RiShieldUserLine, RiBriefcaseLine, RiPencilLine, RiLockPasswordLine, RiCheckLine, RiCloseLine, RiDeleteBinLine, RiMapPinLine } from 'react-icons/ri';
 import api from '@/common/services/api';
 import ImportTeamModal from '../components/ImportTeamModal';
 
@@ -93,7 +93,7 @@ export default function UsersPage() {
     try {
       if (action === 'activate') await api.patch(`/users/${userId}/activate`);
       else if (action === 'deactivate') await api.patch(`/users/${userId}/deactivate`);
-      else if (action === 'suspend') await api.patch(`/users/${userId}/suspend`);
+      else if (action === 'delete') await api.patch(`/users/${userId}/delete`);
       else if (action === 'reset') {
         const user = users.find((u) => u.id === userId);
         if (user) setResetPasswordUser(user);
@@ -495,11 +495,11 @@ function UserCard({ user, onEdit, onResetPassword, onAction }: UserCardProps) {
         {user.isActive && (
           <>
             <button
-              onClick={() => onAction(user.id, 'suspend')}
-              className="flex flex-1 items-center justify-center gap-0.5 rounded border border-k2l-amber px-1.5 py-1 text-[9px] font-semibold text-k2l-amber hover:bg-k2l-amber-light transition-colors"
-              title="Suspendre"
+              onClick={() => onAction(user.id, 'delete')}
+              className="flex flex-1 items-center justify-center gap-0.5 rounded border border-k2l-red px-1.5 py-1 text-[9px] font-semibold text-k2l-red hover:bg-k2l-red/10 transition-colors"
+              title="Supprimer"
             >
-              <RiPauseLine /> Susp.
+              <RiDeleteBinLine /> Suppr.
             </button>
             <button
               onClick={() => onAction(user.id, 'deactivate')}
