@@ -10,6 +10,7 @@ interface TeamMember {
   status: string;
   phone?: string;
   email?: string;
+  sponsorCode?: string;
   submissionCount?: number;
   validatedCount?: number;
   lastActivity?: string;
@@ -20,6 +21,7 @@ interface FormData {
   phone: string;
   email: string;
   password: string;
+  sponsorCode: string;
 }
 
 type Filter = 'all' | 'active' | 'inactive';
@@ -32,7 +34,7 @@ export default function TeamPage() {
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<FormData>({ fullName: '', phone: '', email: '', password: '' });
+  const [formData, setFormData] = useState<FormData>({ fullName: '', phone: '', email: '', password: '', sponsorCode: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
@@ -113,17 +115,21 @@ export default function TeamPage() {
           fullName: formData.fullName,
           phone: formData.phone,
           email: formData.email || null,
+          sponsorCode: formData.sponsorCode || null,
         });
       } else {
         await api.post('/users', {
-          ...formData,
+          fullName: formData.fullName,
+          phone: formData.phone,
+          password: formData.password,
           role: 'COMMERCIAL',
           email: formData.email || null,
+          sponsorCode: formData.sponsorCode || null,
         });
       }
       setShowForm(false);
       setEditingId(null);
-      setFormData({ fullName: '', phone: '', email: '', password: '' });
+      setFormData({ fullName: '', phone: '', email: '', password: '', sponsorCode: '' });
       loadTeam();
     } catch (err: unknown) {
       setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Erreur');
@@ -134,7 +140,7 @@ export default function TeamPage() {
 
   const handleEdit = (m: TeamMember) => {
     setEditingId(m.id);
-    setFormData({ fullName: m.fullName, phone: m.phone || '', email: m.email || '', password: '' });
+    setFormData({ fullName: m.fullName, phone: m.phone || '', email: m.email || '', password: '', sponsorCode: m.sponsorCode || '' });
     setShowForm(true);
     setError('');
   };
@@ -152,7 +158,7 @@ export default function TeamPage() {
   const cancelForm = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData({ fullName: '', phone: '', email: '', password: '' });
+    setFormData({ fullName: '', phone: '', email: '', password: '', sponsorCode: '' });
     setError('');
   };
 
@@ -163,7 +169,7 @@ export default function TeamPage() {
         <div className="flex items-center justify-between">
           <span className="font-head text-[15px] font-semibold text-white">Mon équipe</span>
           <button
-            onClick={() => { setShowForm(true); setEditingId(null); setFormData({ fullName: '', phone: '', email: '', password: '' }); }}
+            onClick={() => { setShowForm(true); setEditingId(null); setFormData({ fullName: '', phone: '', email: '', password: '', sponsorCode: '' }); }}
             className="flex items-center gap-1 rounded-lg bg-white/20 px-3 py-1.5 text-xs font-medium text-white"
           >
             <RiAddLine /> Ajouter
@@ -211,6 +217,15 @@ export default function TeamPage() {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="mt-1 w-full rounded-lg border border-k2l-gray-200 bg-k2l-gray-100 px-3 py-2.5 text-sm outline-none focus:border-k2l-primary"
                 placeholder="jean@example.com"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] text-k2l-gray-400">Code parrainage (optionnel)</label>
+              <input
+                value={formData.sponsorCode}
+                onChange={(e) => setFormData({ ...formData, sponsorCode: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-k2l-gray-200 bg-k2l-gray-100 px-3 py-2.5 text-sm outline-none focus:border-k2l-primary"
+                placeholder="Ex: JEAN2024"
               />
             </div>
             {!editingId && (
@@ -371,6 +386,9 @@ export default function TeamPage() {
                 {/* Infos */}
                 <div className="flex-1 min-w-0">
                   <div className="truncate text-sm font-medium text-k2l-gray-900">{member.fullName}</div>
+                  {member.sponsorCode && (
+                    <div className="text-[11px] font-semibold text-k2l-primary">🏷️ {member.sponsorCode}</div>
+                  )}
                   <div className="text-[11px] text-k2l-gray-400">
                     {member.submissionCount ?? 0} soumissions · {formatTimeAgo(member.lastActivity)}
                   </div>

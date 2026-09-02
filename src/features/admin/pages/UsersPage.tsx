@@ -558,8 +558,8 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
       return;
     }
     
-    if (form.password.length < 8) {
-      setPasswordError('Le mot de passe doit contenir au moins 8 caractères');
+    if (form.password.length < 6) {
+      setPasswordError('Le mot de passe doit contenir au moins 6 caractères');
       return;
     }
     
@@ -600,7 +600,7 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
           <input required type="tel" name="user-phone" autoComplete="off" placeholder="Téléphone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 outline-none focus:border-k2l-primary" />
           <input type="email" name="user-email" autoComplete="off" placeholder="Email (optionnel - ex: nom@email.com)" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 outline-none focus:border-k2l-primary" />
           <div className="relative">
-            <input required type={showPassword ? 'text' : 'password'} name="user-password" autoComplete="new-password" placeholder="Mot de passe (min. 8 caractères)" value={form.password} onChange={(e) => { setForm({ ...form, password: e.target.value }); setPasswordError(''); }} className="w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 outline-none focus:border-k2l-primary pr-10" />
+            <input required type={showPassword ? 'text' : 'password'} name="user-password" autoComplete="new-password" placeholder="Mot de passe (min. 6 caractères)" value={form.password} onChange={(e) => { setForm({ ...form, password: e.target.value }); setPasswordError(''); }} className="w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 outline-none focus:border-k2l-primary pr-10" />
             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-k2l-gray-400 hover:text-k2l-gray-600">
               {showPassword ? <RiEyeOffLine /> : <RiEyeLine />}
             </button>
@@ -657,9 +657,11 @@ function EditUserModal({ user, onClose }: EditUserModalProps) {
     fullName: user.fullName,
     phone: user.phone,
     supervisorId: user.supervisor?.id || '',
+    sponsorCode: user.sponsorCode || '',
   });
   const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     api.get('/users?role=SUPERVISEUR&limit=100').then((res) => {
@@ -670,22 +672,24 @@ function EditUserModal({ user, onClose }: EditUserModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setError('');
     try {
-      const payload: Record<string, string | undefined> = {
+      const payload: Record<string, string | undefined | null> = {
         fullName: form.fullName,
         phone: form.phone,
       };
       
-      // Pour un commercial, on peut changer le superviseur
+      // Pour un commercial, on peut changer le superviseur et le code parrainage
       if (user.role === 'COMMERCIAL') {
         payload.supervisorId = form.supervisorId || undefined;
+        payload.sponsorCode = form.sponsorCode || null;
       }
 
       await api.patch(`/users/${user.id}`, payload);
       onClose();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Erreur';
-      alert(msg);
+      setError(msg);
     } finally {
       setSaving(false);
     }
@@ -722,21 +726,34 @@ function EditUserModal({ user, onClose }: EditUserModalProps) {
           </div>
           
           {user.role === 'COMMERCIAL' && (
-            <div>
-              <label className="text-[11px] text-k2l-gray-400">Superviseur</label>
-              <select 
-                required 
-                value={form.supervisorId} 
-                onChange={(e) => setForm({ ...form, supervisorId: e.target.value })} 
-                className="mt-1 w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 outline-none"
-              >
-                <option value="">-- Choisir un superviseur --</option>
-                {supervisors.map((s) => (
-                  <option key={s.id} value={s.id}>{s.fullName} ({s.matricule})</option>
-                ))}
-              </select>
-              <p className="text-[11px] text-k2l-gray-400 mt-1">Le cluster sera mis à jour automatiquement</p>
-            </div>
+            <>
+              <div>
+                <label className="text-[11px] text-k2l-gray-400">Superviseur</label>
+                <select 
+                  required 
+                  value={form.supervisorId} 
+                  onChange={(e) => setForm({ ...form, supervisorId: e.target.value })} 
+                  className="mt-1 w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 outline-none"
+                >
+                  <option value="">-- Choisir un superviseur --</option>
+                  {supervisors.map((s) => (
+                    <option key={s.id} value={s.id}>{s.fullName} ({s.matricule})</option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-k2l-gray-400 mt-1">Le cluster sera mis à jour automatiquement</p>
+              </div>
+              <div>
+                <label className="text-[11px] text-k2l-gray-400">Code parrainage</label>
+                <input 
+                  value={form.sponsorCode} 
+                  onChange={(e) => setForm({ ...form, sponsorCode: e.target.value })} 
+                  className="mt-1 w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 outline-none focus:border-[#1D9E75]" 
+                  placeholder="Ex: JEAN2024"
+                />
+                <p className="text-[11px] text-k2l-gray-400 mt-1">Laissez vide pour retirer le code</p>
+              </div>
+              {error && <p className="text-xs text-k2l-red font-semibold">{error}</p>}
+            </>
           )}
 
           {user.role === 'SUPERVISEUR' && (
@@ -795,8 +812,8 @@ function ResetPasswordModal({ user, onClose }: ResetPasswordModalProps) {
       return;
     }
     
-    if (newPassword.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères');
+    if (newPassword.length < 6) {
+      setError('Le mot de passe doit contenir au moins 6 caractères');
       return;
     }
     
@@ -830,7 +847,7 @@ function ResetPasswordModal({ user, onClose }: ResetPasswordModalProps) {
             <input 
               required 
               type={showPassword ? 'text' : 'password'} 
-              placeholder="Min. 8 caractères" 
+              placeholder="Min. 6 caractères" 
               value={newPassword} 
               onChange={(e) => { setNewPassword(e.target.value); setError(''); }} 
               className="w-full rounded-lg border border-k2l-gray-200 px-3 py-2.5 outline-none focus:border-k2l-primary pr-10" 
